@@ -1,6 +1,8 @@
 defmodule Battle.Router do
   use Plug.Router
   use Ejoy.Plug.ErrorHandler
+#  Logger.configure(level: :none)
+
 
   alias Plug.Conn
   require Logger
@@ -16,7 +18,6 @@ defmodule Battle.Router do
   @redirect_uri "http://localhost:8080/login/redirect"
 
 
-
   get "/login/one_code" do
     uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
     conn
@@ -28,15 +29,16 @@ defmodule Battle.Router do
 
   get "/login/redirect" do
     code = conn.params["code"]
-    Logger.info("Received code: #{code}")
+    Logger.info("Received code: #{inspect(code)}")
 
-    case OneDemo2.Auth.verify_code(code) do
+    case Battle.Service.RoomService.Auth.verify_code(code) do
       {:ok, user} ->
+        body = Ejoy.Jiffy.encode!(user)
         conn
         |> put_resp_content_type("application/json")
-        |> send_resp(200, Jason.encode!(user))
+        |> send_resp(200, body)
 
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+      {:error, reason} ->
         Logger.error("Verification failed: #{inspect(reason)}")
         conn
         |> put_resp_content_type("application/json")

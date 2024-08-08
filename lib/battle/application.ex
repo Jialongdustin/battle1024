@@ -8,7 +8,7 @@ defmodule Battle.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {Plug.Cowboy, scheme: :http, plug: OneDemo2.Router, options: [port: 8080]}
+      {Plug.Cowboy, scheme: :http, plug: Battle.Router, options: [port: 8080]}
       # Starts a worker by calling: Battle.Worker.start_link(arg)
       # {Battle.Worker, arg}
     ]

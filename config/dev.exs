@@ -1,4 +1,4 @@
-use Mix.Config
+ use Mix.Config
 config :union_config_app,
        config_db: [
          host: "localhost",

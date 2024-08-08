@@ -9,7 +9,6 @@ defmodule Battle.Service.RoomService.Auth do
     10040, # code_not_valid
   ]
 
-
   def verify_code(code) do
     params =  %{
       client_id: @client_id,
@@ -22,20 +21,20 @@ defmodule Battle.Service.RoomService.Auth do
     {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
     Logger.info(resp)
 
+
     case resp do
       %{
         "code" => 0, "access_token" => access_token, "account" => account,
         "expires_in" => expires_in
+        #        这里可以插入moment-token的内容
 
       } ->
-        moment_token = Battle.Token.generate_token(account,access_token)
+        {:ok,moment_token} = Battle.Token.generate_token(account)
         from_product_code = Map.get(resp, "from_product_code")
         {:ok,
           %{
             account: account, access_token: access_token,
-            expires_in: expires_in, from_product_code: from_product_code,
-            moment_token: moment_token
-
+            expires_in: expires_in, moment_token: moment_token
           }
         }
       %{"code" => code} when code in @verify_token_invalid_codes ->
@@ -43,8 +42,8 @@ defmodule Battle.Service.RoomService.Auth do
           code: code,
           message: Map.get(resp, "message")
         }
-        {:error, :one_code_error, %{one_resp: one_resp}}
+        {:error,  %{one_resp: one_resp}}
     end
-
   end
+
 end

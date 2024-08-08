@@ -1,0 +1,25 @@
+<component name="libraryTable">
+  <library name="fast_pbkdf2" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/fast_pbkdf2/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/fast_pbkdf2/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/fast_pbkdf2/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/fast_pbkdf2/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/priv" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/src" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/priv" />
+      <root url="file://$PROJECT_DIR$/deps/fast_pbkdf2/c_src" />
+    </SOURCES>
+  </library>
+</component>
