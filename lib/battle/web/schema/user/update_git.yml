@@ -1,0 +1,17 @@
+api: "/user/update_git"
+request:
+  type: object
+  properties:
+    user_id: 
+      type: string
+    git: 
+      type: string
+  required: [user_id, git]
+
+response:
+  type: object
+  properties:
+    code: 
+      type: number
+    message:
+      type: string

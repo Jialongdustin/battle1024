@@ -1,0 +1,17 @@
+api: "/user/create_AI"
+request:
+  type: object
+  properties:
+    user_id:
+      type: string
+    ai_name:
+      type: string
+  required: [user_id, ai_name]
+
+response:
+  type: object
+  properties:
+    code:
+      type: number
+    message:
+      type: string
