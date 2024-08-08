@@ -1,4 +1,4 @@
-defmodule Battle.WebRouter do
+defmodule Battle.Router do
   use Plug.Router
   use Ejoy.Plug.ErrorHandler
 
@@ -13,9 +13,8 @@ defmodule Battle.WebRouter do
   plug(:dispatch)
 
   @client_id 10052
-  @client_secret "l3PUsNyV1WBfUwwFrSTLGw=="
   @redirect_uri "http://localhost:8080/login/redirect"
-  #  http://localhost:8080/login/one_code
+
 
 
   get "/login/one_code" do
