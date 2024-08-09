@@ -17,7 +17,7 @@
   "ejoy_plug": {:git, "git@gitlab.alibaba-inc.com:battlenet/ejoy_plug.git", "2b674aefd991d266996f5344b406d79ecedbf849", []},
   "ejoy_rate_limiter": {:git, "git@gitlab.alibaba-inc.com:battlenet/ejoy_rate_limiter.git", "95fc35f1542add79a97cfd5c5f486357f7f55214", []},
   "ejoy_token": {:git, "git@gitlab.alibaba-inc.com:battlenet/ejoy_token.git", "c094fb72842f3660cf7c47a01b4ab3bce7ac9610", []},
-  "ejoy_utils": {:git, "git@gitlab.alibaba-inc.com:battlenet/ejoy_utils.git", "0e6663b8898404403f2b825af4903d9eb75b2925", []},
+  "ejoy_utils": {:git, "git@gitlab.alibaba-inc.com:battlenet/ejoy_utils.git", "caf6096db14557ed043f3be5e457b57cd78926b1", []},
   "elixir_rsyslog_backend": {:hex, :elixir_rsyslog_backend, "0.1.0", "7322c933e0f44635ed3fecc151770362dbfe344a42a6984b1002f1b30be4312c", [:mix], [], "hexpm", "134c63dd602cfe47d30555381ff8053c46fa861752cd595651011a39f51aec37"},
   "elixir_uuid": {:hex, :elixir_uuid, "1.2.1", "dce506597acb7e6b0daeaff52ff6a9043f5919a4c3315abb4143f0b00378c097", [:mix], [], "hexpm", "f7eba2ea6c3555cea09706492716b0d87397b88946e6380898c2889d68585752"},
   "erlsom": {:hex, :erlsom, "1.5.1", "c8fe2babd33ff0846403f6522328b8ab676f896b793634cfe7ef181c05316c03", [:rebar3], [], "hexpm", "7965485494c5844dd127656ac40f141aadfa174839ec1be1074e7edf5b4239eb"},

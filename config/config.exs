@@ -1,9 +1,29 @@
 use Mix.Config
 
-config :prometheus_utils,
-       project_name: "battle",
-       metric_conf: []
+config :logger, level: :none
+config :union_config_app,
+       config_db: [
+         host: 'localhost',
+         port: 27017,
+          db: "config",
+          collection: "config"
+       ],
+       product: :TEST,
+       static_config: [
 
-config :ejoy_services, register_before_user_specify: true
+         product_db: %{
+           TEST: %{
+             host: "localhost",
+             port: 27017
+           }
+         },
+         ]
 
-import_config "#{Mix.env()}.exs"
+config :ejoy_utils, db_pool: 10
+config :ejoy_utils, send_vortex_heartbeat: false
+
+config :ejoy_etcd, lib_prefix: "test"
+
+#config :ex_json_schema,
+#       :remote_schema_resolver,
+#       {Ejoy.Plug.SchamaResolver, :remote_schema_resolver}
