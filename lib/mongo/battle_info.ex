@@ -1,4 +1,4 @@
-defmodule BattleInfo do
+defmodule Battle.BattleInfo do
 
   use Ejoy.Db
   require Logger

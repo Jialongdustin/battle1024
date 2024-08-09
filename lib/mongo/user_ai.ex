@@ -1,4 +1,4 @@
-defmodule UserAi do
+defmodule Battle.UserAi do
 
 
     use Ejoy.Db
@@ -17,12 +17,22 @@ defmodule UserAi do
     field :create_time, :datetime, required: true
 
 
+    def get_newest_ai_by_userId(user_id)do
+      case __MODULE__.pquery_sort_limit(%{user_id: user_id}, %{create_time: -1}, 1) do
+        nil->{:error,"Battle.UserAi error"}
+        res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
+      end
+
+
+    end
 
     def get_ai_list_by_userId(user_id) do
-      __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]})
-      |> Enum.map(fn message ->
-        message |> __MODULE__.to_raw()
-      end)
+
+      case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+        nil->{:error,"Battle.UserAi error"}
+        res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
+      end
+
     end
 
     def insert_ai(user_id, ai_name, git_url, tag) do
