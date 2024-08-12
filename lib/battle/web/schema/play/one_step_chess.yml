@@ -1,4 +1,4 @@
-api: "/contest/one_step_chess"
+api: "/play/one_step_chess"
 request: 
   type: object
   properties:

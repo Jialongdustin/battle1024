@@ -194,7 +194,7 @@ defmodule Battle.Web.Router do
     body = Ejoy.Jiffy.encode!(%{message: "ok"})
     conn
     |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(403, body)
+    |> Conn.send_resp(200, body)
     |> Conn.halt()
   end
 
