@@ -8,10 +8,10 @@ defmodule Battle.Web.Router do
   alias Battle.Utils.Token
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomServer
-  alias Battle.BattleInfo
-  alias Battle.BattleStatistics
-  alias Battle.RankList
-  alias Battle.UserAi
+  alias Battle.Mongo.BattleInfo
+  alias Battle.Mongo.BattleStatistics
+  alias Battle.Mongo.RankList
+  alias Battle.Mongo.UserAi
   require Logger
 
   plug(:match)
@@ -190,7 +190,8 @@ defmodule Battle.Web.Router do
   ## battle
   # 加入棋局, 棋局初始化
   json_rpc "/play/init", "schema/play/init" do
-    user_id = params["user_id"]
+    moment_token = params["moment_token"]
+    response = RoomSupervisor.join(token)
     body = Ejoy.Jiffy.encode!(%{message: "ok"})
     conn
     |> Conn.put_resp_content_type("application/json")
@@ -202,10 +203,12 @@ defmodule Battle.Web.Router do
   json_rpc "/play/one_step_chess", "schema/play/one_step_chess" do
     moment_token = params["moment_token"]
     move = params["move"]
+#    resp = RoomSupervisor
     body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok"})
     conn
     |> Conn.put_resp_content_type("application/json")
     |> Conn.send_resp(200, body)
     |> Conn.halt()   #  用于结束连接的处理, 防止后续的Plug继续对该连接进行处理
   end
+
 end

@@ -1,4 +1,5 @@
-defmodule Battle.UserAi do
+defmodule Battle.Mongo.UserAi do
+
   use Ejoy.Db
 
   @db "battle"
@@ -14,7 +15,6 @@ defmodule Battle.UserAi do
   field :tag, :string, required: true
   field :create_time, :datetime, required: true
 
-
   def get_newest_ai_by_userId(user_id)do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [create_time: -1], 1) do
       nil->{:error,"Battle.UserAi error"}
@@ -29,7 +29,10 @@ defmodule Battle.UserAi do
     end
   end
 
+
+
   def get_ai_list_by_userId(user_id) do
+
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       nil->{:error,"Battle.UserAi error"}
       res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
@@ -37,14 +40,25 @@ defmodule Battle.UserAi do
 
   end
 
+  def get_all_gits() do
+    case __MODULE__.pquery(%{}) do
+      nil ->{:error, "no user_info"}
+      res ->{:ok, res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url, tag: message.tag} end)}
+    end
+  end
+
   def insert_ai(user_id, ai_name, git_url, tag) do
+
     info = %{user_id: user_id, ai_name: ai_name, git_url: git_url, tag: tag,create_time: Ejoy.Bson.utc_now()}
     __MODULE__.psave(info)
 #UserAi.insert_ai(1,"Biu","git.com","1.0")
 #UserAi.get_ai_list_by_userId(1)
+
   end
 
   def clean_message(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
   end
+
+
 end

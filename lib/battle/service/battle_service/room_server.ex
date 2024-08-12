@@ -30,7 +30,12 @@ defmodule Battle.Service.BattleService.RoomServer do
       steps: [],
       time_ref: nil
     }
-    GenServer.start_link(__MODULE__, initial_state, name: :"#{contest_id}")
+#    GenServer.start_link(__MODULE__, initial_state, name: :"#{contest_id}")
+    GenServer.start_link(__MODULE__, initial_state, name: via_tuple(opts[:contest_id]))
+  end
+
+  defp via_tuple(contest_id) do
+    {:via, Registry, {Battle.Service.BattleService.RoomRegistry, contest_id}}
   end
 
   def init(state) do
@@ -53,5 +58,22 @@ defmodule Battle.Service.BattleService.RoomServer do
   def handle_info(:execute_task, state) do
     Logger.info("overtime operation")
     {:noreply, state}
+  end
+
+  # 具体战斗逻辑
+  def movement(pid,x0,y0,x1,y1) do
+    GenServer.call(pid,{:movement,x0,y0,x1,y1})
+  end
+
+  def handle_call({:movement,x0,y0,x1,y1},_from,state) do
+
+  end
+  # 玩家加入战斗
+  def add_player(pid,user_id) do
+    GenServer.call(pid,{:add_player, user_id})
+  end
+  def handle_call({:add_player,user_id},_from,state) do
+    new_state = Map.put(state.players,user_id,%{joined: true})
+    {:reply, :ok, new_state}
   end
 end
