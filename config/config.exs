@@ -26,7 +26,19 @@ config :union_config_app,
       TEST: %{
         AliOSS: %{}
       }
-    }]
+    },
+    battle_cfg: %{
+      TEST: %{
+        ansible_products: %{
+        },
+        require_admin_gate_version: "202404181500",
+        kun_key: %{
+          id: "2ca6e222d92a45a2",
+          secret: "0d4d7549ed654f629dabea93c7f8534f"
+        }
+      }
+    }
+  ]
 
 config :ejoy_utils, db_pool: 10
 config :ejoy_utils, send_vortex_heartbeat: false

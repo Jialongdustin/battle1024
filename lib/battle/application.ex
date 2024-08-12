@@ -15,7 +15,7 @@ defmodule Battle.Application do
         start: {Battle.Web.Supervisor, :start_link, []},
         type: :supervisor
       },
-      Battle.RoomSupervisor
+      Battle.Service.BattleService.RoomSupervisor
       # Starts a worker by calling: Battle.Worker.start_link(arg)
       # {Battle.Worker, arg}
     ]
