@@ -191,11 +191,11 @@ defmodule Battle.Web.Router do
   # 加入棋局, 棋局初始化
   json_rpc "/play/init", "schema/play/init" do
     moment_token = params["moment_token"]
-    response = RoomSupervisor.join(token)
-    body = Ejoy.Jiffy.encode!(%{message: "ok"})
+    {:ok,response} = RoomSupervisor.join(moment_token)
+    body = Ejoy.Jiffy.encode!(response)
     conn
     |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(403, body)
+    |> Conn.send_resp(200, body)
     |> Conn.halt()
   end
 
@@ -204,7 +204,8 @@ defmodule Battle.Web.Router do
     moment_token = params["moment_token"]
     move = params["move"]
 #    resp = RoomSupervisor
-    body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok"})
+    {:ok,response} = RoomSupervisor.battle_handler(move,moment_token)
+    body = Ejoy.Jiffy.encode!(response)
     conn
     |> Conn.put_resp_content_type("application/json")
     |> Conn.send_resp(200, body)

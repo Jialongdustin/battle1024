@@ -1,15 +1,33 @@
-api: "/contest/one_step_chess"
+api: "/play/one_step_chess"
 request: 
   type: object
   properties:
+    moment_token:
+      type: string
     move:
       type: string
-  required: [move]
+  required: [moment_token,move]
 
 response:
   type: object
   properties:
     code:
       type: number
-    message:
+    winner:
       type: string
+    white_king:
+      type: string
+    black_king:
+      type: string
+    opponent_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    captured:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer

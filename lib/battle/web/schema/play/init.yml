@@ -2,17 +2,21 @@ api: "/play/init"
 request:
   type: object
   properties:
-    user_id: 
-      type: string
     moment_token:
       type: string
 
 response:
   type: object
   properties:
-    board:
-      type: array
-      items:
-        type: array
-        items: 
-          type: integer
+#    board:
+#      type: array
+#      items:
+#        type: array
+#        items:
+#          type: integer
+    state:
+      type: string
+    black:
+      type: string
+    white:
+      type: string

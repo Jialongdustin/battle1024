@@ -31,20 +31,25 @@ defmodule Battle.Service.BattleService.RoomServer do
       time_ref: nil
     }
 #    GenServer.start_link(__MODULE__, initial_state, name: :"#{contest_id}")
-    GenServer.start_link(__MODULE__, initial_state, name: via_tuple(opts[:contest_id]))
+    GenServer.start_link(__MODULE__, initial_state, name: via_tuple(contest_id))
   end
 
   defp via_tuple(contest_id) do
-    {:via, Registry, {Battle.Service.BattleService.RoomRegistry, contest_id}}
+    {:via, Registry, {Battle.RoomRegistry, contest_id}}
   end
 
   def init(state) do
     {:ok, state}
   end
 
-  def start_countdown(timeout \\ @timeout) do
-    GenServer.call(__MODULE__, {:start_countdown, timeout})
+  def start_countdown(pid,timeout \\ @timeout) do
+    GenServer.call(pid, {:start_countdown, timeout})
   end
+  # 玩家加入战斗
+  def add_player(pid,user_id) do
+    GenServer.call(pid,{:add_player, user_id})
+  end
+
 
   def handle_call({:start_countdown, timeout}, _from, state) do
     if state.time_ref do
@@ -53,6 +58,18 @@ defmodule Battle.Service.BattleService.RoomServer do
     new_ref = Process.send_after(self(), :execute_task, timeout)
     new_state = %{state | time_ref: new_ref}
     {:reply, :ok, new_state}
+  end
+
+  def handle_call({:add_player,user_id},_from,state) do
+    #    new_state = Map.put(state.players,user_id,%{joined: true})
+    #    {:reply, :ok, new_state}
+    detail = %{
+      code: 100,
+      black: "user_id_1",
+      white: "user_id_2"
+    }
+
+    {:reply,{:ok,detail},state}
   end
 
   def handle_info(:execute_task, state) do
@@ -66,14 +83,15 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call({:movement,x0,y0,x1,y1},_from,state) do
-
-  end
-  # 玩家加入战斗
-  def add_player(pid,user_id) do
-    GenServer.call(pid,{:add_player, user_id})
-  end
-  def handle_call({:add_player,user_id},_from,state) do
-    new_state = Map.put(state.players,user_id,%{joined: true})
-    {:reply, :ok, new_state}
+    Logger.info("#{x0}   #{y0}   #{x1}   #{y1}")
+    detail = %{
+      code: "init",
+      winner: "",
+      white_king: "user_id_2",
+      black_king: "user_id_1",
+      opponent_step: [[1,1],[1,3]],
+      captured: [[1,2]]
+    }
+    {:reply,{:ok,detail},state}
   end
 end
