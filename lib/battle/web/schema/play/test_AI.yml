@@ -1,0 +1,15 @@
+api: "/contest/test_AI"
+request:
+  type: object
+  properties:
+    user_id: 
+      type: string
+  required: [user_id]
+
+response:
+  type: object
+  properties:
+    code:
+      type: number
+    message:
+      type: string

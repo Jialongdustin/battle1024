@@ -1,0 +1,13 @@
+api: "/login/one_prepare"
+request:
+  type: object
+
+response:
+  type: object
+  properties:
+    code:
+      type: number
+    state:
+      type: string
+    message:
+      type: string
