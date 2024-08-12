@@ -18,12 +18,17 @@ defmodule Battle.UserAi do
 
 
     def get_newest_ai_by_userId(user_id)do
-      case __MODULE__.pquery_sort_limit(%{user_id: user_id}, %{create_time: -1}, 1) do
+      case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [create_time: -1], 1) do
         nil->{:error,"Battle.UserAi error"}
-        res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
+        res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)|> List.first()}
       end
+    end
 
-
+    def get_all_gits() do
+      case __MODULE__.pquery(%{}) do
+        nil ->{:error,"no user_info"}
+        res ->{:ok,res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url,tag: message.tag} end)}
+      end
     end
 
     def get_ai_list_by_userId(user_id) do
