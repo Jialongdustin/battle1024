@@ -8,10 +8,10 @@ defmodule Battle.Web.Router do
   alias Battle.Utils.Token
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomServer
-  alias Battle.Mongo.BattleInfo
-  alias Battle.Mongo.BattleStatistics
-  alias Battle.Mongo.RankList
-  alias Battle.Mongo.UserAi
+  alias Battle.BattleInfo
+  alias Battle.BattleStatistics
+  alias Battle.RankList
+  alias Battle.UserAi
   require Logger
 
   plug(:match)

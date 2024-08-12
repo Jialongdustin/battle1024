@@ -1,6 +1,7 @@
-defmodule Battle.Mongo.RankList do
+defmodule Battle.RankList do
   use Ejoy.Db
   require Logger
+
   @db "battle"
   @collection "rank_list"
   @indexes [
@@ -12,8 +13,6 @@ defmodule Battle.Mongo.RankList do
   field :ai_name, :string, required: true
   field :rate, :float, required: true
   field :date, :datetime, required: true
-
-
 
   def get_rank_list() do
     date = DateTime.utc_now()
@@ -43,9 +42,9 @@ defmodule Battle.Mongo.RankList do
     Logger.info(time_query)
     case __MODULE__.pquery(time_query) do
       nil -> {:error, "empty rank list" }
-      res ->{:ok, res |> Enum.map(fn message ->
+      res ->res |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
-      end)}
+      end)
     end
   end
 
@@ -61,7 +60,5 @@ defmodule Battle.Mongo.RankList do
     __MODULE__.psave(%{user_id: user_id, ai_name: ai_name, rate: rate, date: current_time})
     #UserAi.insert_ai(1,"Biu","git.com","1.0")
     #UserAi.get_ai_list_by_userId(1)
-
   end
-
 end
