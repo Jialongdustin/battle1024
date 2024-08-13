@@ -9,7 +9,7 @@ defmodule Battle.Service.WebService.Auth do
     10040, # code_not_valid
   ]
 
-
+  @callback verify_code(String.t()) :: {:ok, map()} | {:error, any()}
   def verify_code(code) do
     params =  %{
       client_id: @client_id,

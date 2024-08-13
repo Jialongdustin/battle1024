@@ -1,10 +1,5 @@
 defmodule Battle.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
-  @moduledoc false
-
   use Application
-
 
   @impl true
   def start(_type, _args) do
@@ -15,13 +10,9 @@ defmodule Battle.Application do
         start: {Battle.Web.Supervisor, :start_link, []},
         type: :supervisor
       },
-      Battle.Service.BattleService.RoomSupervisor
-      # Starts a worker by calling: Battle.Worker.start_link(arg)
-      # {Battle.Worker, arg}
+      Battle.Service.BattleService.RoomSupervisor,
+      {Registry, keys: :unique, name: Battle.RoomRegistry},
     ]
-
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Battle.Supervisor]
     Supervisor.start_link(children, opts)
   end

@@ -1,9 +1,10 @@
 defmodule Battle.Service.WebService.Kun do
   @kun_api_url "https://kunapi.ejoy.com"
-  @query_namespace "platform-p11285"
+  @query_namespace "plat1024-platformbattle"
   @userId "453574"
   @status_error 1
   @status_success 4
+  @build_name "platform-battle"
 
   alias ElixirSense.Log
   alias Battle.Mongo.UserAi
@@ -25,7 +26,7 @@ defmodule Battle.Service.WebService.Kun do
   # Kun.get_build_tasks()
   def get_build_tasks() do
     path = "/api/env/#{@query_namespace}/buildTasks"
-    %{"code" => 0, "data" => %{"buildTasks" => buildtasks}} = send_post(path, %{name: "battle-platform", currentPage: 1, pageSize: 5})
+    %{"code" => 0, "data" => %{"buildTasks" => buildtasks}} = send_post(path, %{name: @build_name, currentPage: 1, pageSize: 5})
     # Enum.map(buildtasks, fn task -> {id: task.id, status: task.status}) 1 错误, 2 挂起中, 3 运行中, 4 完成
     buildtasks
   end
@@ -46,10 +47,10 @@ defmodule Battle.Service.WebService.Kun do
     git_url = info.git_url
     tag = info.tag
     path = "/api/env/#{@query_namespace}/buildTask"
-    case send_put(path, %{name: "battle-platform", branch: tag, userId: @userId, method: 0, comment: "test"}) do
+    case send_put(path, %{name: @build_name, branch: tag, userId: @userId, method: 0, comment: "test"}) do
       %{"code" => 0, "data" => %{"task" => task}} ->
         status = 0
-        package_id = task.id
+        package_id = task["id"]
         build_result_check(package_id)
         %{user_id: user_id, package_id: package_id}
       _ ->
@@ -67,11 +68,11 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.get_build_result(10177896)
+  # Kun.get_build_result(10178294)
   def get_build_result(package_id) do
     path = "/api/env/#{@query_namespace}/buildTask?id=#{package_id}"
-    %{"code" => 0, "data" => data} = send_get(path, %{})
-    data.status
+    %{"code" => 0, "data" => %{"task" => task}} = send_get(path, %{})
+    task["status"]
   end
 
   def send_post(path, params) do

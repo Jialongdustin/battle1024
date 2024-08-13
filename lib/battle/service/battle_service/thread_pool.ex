@@ -1,0 +1,49 @@
+defmodule Battle.Service.BattleService.ThreadPool do
+  use GenServer
+
+  alias Battle.Service.BattleService.RoomSupervisor
+
+  def start_link(size) do
+    GenServer.start_link(__MODULE__, size, name: __MODULE__)
+  end
+
+  def init(size) do
+    {:ok, %{workers: [], size: size, queue: :queue.new(), busy: %{}}}
+  end
+
+  def add_task(task) do
+    GenServer.cast(__MODULE__, {:add_task, task})
+  end
+
+  def handle_cast({:add_task, task}, state) do
+    if length(state.workers) < state.size do
+      # 如果有空闲的 worker，直接执行任务
+      worker = Task.async(fn -> execute_task(task) end)
+      {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, worker.ref, worker)}}
+    else
+      # 否则，将任务加入队列
+      {:noreply, %{state | queue: :queue.in(task, state.queue)}}
+    end
+  end
+
+  def handle_info({ref, _result}, state) do
+    # 从 busy 列表中移除已完成的任务
+    {worker, busy} = Map.pop(state.busy, ref)
+    workers = List.delete(state.workers, worker)
+
+    # 如果队列中有任务，将其分配给空闲的 worker
+    case :queue.out(state.queue) do
+      {{:value, next_task}, new_queue} ->
+        new_worker = Task.async(fn -> execute_task(next_task) end)
+        {:noreply, %{state | workers: [new_worker | workers], busy: Map.put(busy, new_worker.ref, new_worker), queue: new_queue}}
+
+      {:empty, _} ->
+        {:noreply, %{state | workers: workers, busy: busy}}
+    end
+  end
+
+  defp execute_task({user_id1, user_id2}) do
+    RoomSupervisor.init_game(user_id1, user_id2)
+    RoomSupervisor.init_game(user_id2, user_id1)
+  end
+end

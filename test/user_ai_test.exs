@@ -10,10 +10,10 @@ defmodule BattleTest.UserAi do
 
     {:ok,user_info_list_before} = Battle.UserAi.get_ai_list_by_userId(user_id)
     initial_length = length(user_info_list_before)
-    Battle.UserAi.insert_ai(user_id,ai_name,git_url,tag)
-    {:ok,user_info_list_after} = Battle.UserAi.get_ai_list_by_userId(user_id)
+    Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
+    {:ok, user_info_list_after} = Battle.UserAi.get_ai_list_by_userId(user_id)
 
-    assert length(user_info_list_after) == initial_length+1
+    assert length(user_info_list_after) == initial_length + 1
 
     assert Enum.any?(user_info_list_after, fn user_info ->
       user_info.ai_name == ai_name && user_info.user_id == user_id
@@ -40,7 +40,7 @@ defmodule BattleTest.UserAi do
     Battle.UserAi.insert_ai(user_id,ai_name,git_url,tag)
     {:ok,user_info_before} = Battle.UserAi.get_ai_list_by_userId(user_id)
     initial_size = length(user_info_before)
-    assert initial_size >0
+    assert initial_size > 0
     assert Enum.any?(user_info_before, fn user_info ->
       user_info.ai_name == ai_name && user_info.user_id == user_id
     end)
@@ -56,7 +56,7 @@ defmodule BattleTest.UserAi do
     ai_name = "Biu biu biu~~!!"
     git_url = "biu.com"
     tag = "4.0"
-    Battle.UserAi.insert_ai(user_id,ai_name,git_url,tag)
+    Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
     {:ok,user_info} = Battle.UserAi.get_newest_ai_by_userId(user_id)
 
     assert user_info.user_id == user_id && user_info.ai_name == ai_name && user_info.git_url == git_url && user_info.tag == tag
@@ -68,9 +68,9 @@ defmodule BattleTest.UserAi do
     git_url = "http://example.com/repo1.git"
     tag = "1.0"
 
-    Battle.UserAi.insert_ai(user_id,ai_name,git_url,tag)
+    Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
 
-    {:ok,user_infos} = Battle.UserAi.get_all_gits()
+    {:ok, user_infos} = Battle.UserAi.get_all_gits()
     assert Enum.any?(user_infos, fn message ->
       message.user_id == user_id && message.git_url == git_url && message.tag == tag
     end)
