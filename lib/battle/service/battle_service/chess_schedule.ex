@@ -1,6 +1,7 @@
 defmodule Battle.Service.BattleService.ChessSchedule do
-
   alias Battle.Service.BattleService.RoomSupervisor
+  alias Battle.Service.WebService.Kun
+
   def generate_pairs(players) do
     players
     |> Enum.combinations(2)

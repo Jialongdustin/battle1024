@@ -33,8 +33,8 @@ config :union_config_app,
         },
         require_admin_gate_version: "202404181500",
         kun_key: %{
-          id: "2ca6e222d92a45a2",
-          secret: "0d4d7549ed654f629dabea93c7f8534f"
+          id: "be92dae571ad41a9",
+          secret: "9f4c599f855c493fae05776801b22aa5"
         }
       }
     }

@@ -1,17 +1,18 @@
-# 这部分是调度的线程池代码
-defmodule Battle.BattleService.ThreadPool do
+defmodule Battle.Service.BattleService.ThreadPool do
   use GenServer
 
+  alias Battle.Service.BattleService.RoomSupervisor
+
   def start_link(size) do
-    GenServer.start_link(__MODULE__, size, name: :thread_pool)
+    GenServer.start_link(__MODULE__, size, name: __MODULE__)
   end
 
   def init(size) do
     {:ok, %{workers: [], size: size, queue: :queue.new(), busy: %{}}}
   end
 
-  def add_task(pid, task) do
-    GenServer.cast(pid, {:add_task, task})
+  def add_task(task) do
+    GenServer.cast(__MODULE__, {:add_task, task})
   end
 
   def handle_cast({:add_task, task}, state) do
@@ -42,8 +43,7 @@ defmodule Battle.BattleService.ThreadPool do
   end
 
   defp execute_task({user_id1, user_id2}) do
-    Battle.start(user_id1, user_id2)
+    RoomSupervisor.init_game(user_id1, user_id2)
+    RoomSupervisor.init_game(user_id2, user_id1)
   end
 end
-
-

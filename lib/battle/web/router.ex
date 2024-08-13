@@ -34,7 +34,7 @@ defmodule Battle.Web.Router do
   get "/login/one_code" do
     uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
     conn
-    |> Conn.put_resp_header("Location",  uri)
+    |> Conn.put_resp_header("location",  uri)
     |> Conn.send_resp(302, "")
     |> Conn.halt()
   end
@@ -45,7 +45,6 @@ defmodule Battle.Web.Router do
 
     case Auth.verify_code(code) do
       {:ok, user} ->
-        Logger.info(user)
         body = Ejoy.Jiffy.encode!(user)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -153,11 +152,23 @@ defmodule Battle.Web.Router do
   json_rpc "/user/update_git", "schema/user/update_git" do
     moment_token = conn.params["moment_token"]
     git_url = conn.params["git"]
-    body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok"})
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()
+    ai_name = conn.params["ai_name"]
+    tag = conn.params["tag"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
+        body = Ejoy.Jiffy.encode!(message)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+      {:error, message} ->
+        body = Ejoy.Jiffy.encode!(%{error: message})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(403, body)
+        |> Conn.halt()
+    end
   end
 
   # 复盘
