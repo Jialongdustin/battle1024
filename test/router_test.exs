@@ -38,7 +38,13 @@ defmodule BattleTest.RouterTest do
 
   test "return 403 with error message on /login/redirect with invalid code" do
     with_mock Battle.Service.WebService.Auth, [:passthrough], [
-      verify_code: fn _ -> {:error, } end
-    ]
+      verify_code: fn _ -> {:error, "one_code_error"} end
+    ] do
+      conn =
+        :get
+        |> conn("/login/redirect", ""
+        |> Router.call(@opts))
+      assert
+    end
   end
 end
