@@ -23,7 +23,6 @@ RUN mix compile
 # 根据需求，设置环境变量
 # ENV MIX_ENV=prod
 
-
 # 设置默认命令
 CMD ["mix", "run", "--no-halt"]
 

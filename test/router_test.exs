@@ -19,7 +19,7 @@ defmodule BattleTest.RouterTest do
     assert get_resp_header(conn, "location") == [expected_url]
   end
 
-  test "return 200 with user info on /login/redirect with valid cade" do
+  test "return 200 with user info on /login/redirect with valid code" do
     with_mock Battle.Service.WebService.Auth, [:passthrough], [
       verify_code: fn
         _ ->
@@ -34,5 +34,11 @@ defmodule BattleTest.RouterTest do
       assert Jason.decode!(conn.resp_body) == %{"user_id" => 1, "name" => "ljl"}
       assert conn.status == 200
     end
+  end
+
+  test "return 403 with error message on /login/redirect with invalid code" do
+    with_mock Battle.Service.WebService.Auth, [:passthrough], [
+      verify_code: fn _ -> {:error, } end
+    ]
   end
 end

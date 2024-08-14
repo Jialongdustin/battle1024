@@ -1,0 +1,7 @@
+notify_job:
+  script: "APP=battle-service APP_TYPE=elixir DOCKER_IMAGE_VERSION=1.12.3-otp24 python3.7 /home/gitlab-runner/ejoyplatform_battlenet_build/main.py"
+  only:
+    - /^rms-\d{12}$/
+    - /^rms-dev$/
+    - /^rms-\d{12}-kun$/
+    - /^rms-dev-kun$/
