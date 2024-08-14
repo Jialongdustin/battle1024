@@ -8,6 +8,8 @@ WORKDIR /app
 COPY mix.exs mix.lock ./
 
 # 安装 Hex 包管理器和依赖
+
+RUN apt-get update && apt-get install -y ssh
 RUN mix local.hex --force && \
     mix local.rebar --force && \
     mix deps.get
