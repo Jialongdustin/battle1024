@@ -4,8 +4,9 @@ FROM elixir:1.12.3
 # 设置工作目录
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl && \
-    curl -I https://repo.hex.pm
+RUN apt-get update && apt-get install && \
+    mix local.hex --force && \
+    mix local.rebar --force
 # 复制 mix 和 mix.lock 文件
 COPY mix.exs mix.lock ./
 
