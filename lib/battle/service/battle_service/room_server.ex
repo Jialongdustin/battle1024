@@ -10,12 +10,10 @@ defmodule Battle.Service.BattleService.RoomServer do
     [1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
+    [3, 3, 3, 3, 3, 3, 3, 3],
+    [3, 3, 3, 3, 3, 3, 3, 3],
     [0, 0, 0, 0, 0, 0, 0, 0]
   ]
-
-  @can_move_init ["3a", "3b", "3c", "3d", "3e", "3f", "3g", "3h"]
 
   def start_link(opts) do
     white = opts[:white]
@@ -27,7 +25,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       black: black,
       board: @board_init,
       early_hand: true,
-      can_move: @can_move_init,
+      can_move: Battle.BattleHandler.move_list(@board_init,true),
       steps: [],
       time_ref: nil
     }
@@ -81,11 +79,13 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   # 具体战斗逻辑
-  def movement(pid, x0, y0, x1, y1) do
-    GenServer.call(pid, {:movement, x0, y0, x1, y1})
+  def movement(pid, moves,capture) do
+    GenServer.call(pid, {:movement, moves, capture})
   end
 
-  def handle_call({:movement, moves, capture, user_id}, _from, state) do
+  def handle_call({:movement, moves, capture}, _from, state) do
+
+    IO.inspect(state)
     white = state.early_hand
     board = state.board
     move_list = state.can_move
@@ -98,56 +98,92 @@ defmodule Battle.Service.BattleService.RoomServer do
     [[x0, y0], [x1, y1]] = moves
     [cx, cy] = capture
 
-    node_value =
+    {node_value,white_king,black_king} =
       case {Enum.at(Enum.at(board, x0), y0), x1} do
-        {2, _} -> 2
-        {4, _} -> 4
-        {1, 0} -> 3
-        {1, x} when x == length(board) - 1 -> 3
-        {1, _} -> 1
-        {3, 0} -> 4
-        {3, x} when x == length(board) - 1 -> 4
-        {3, _} -> 3
+        {2, _} -> {2,nil,nil}
+        {4, _} -> {4,nil,nil}
+        {1, x} when x == length(board) - 1 -> {2,[x,y1],nil}
+        {1, _} -> {1,nil,nil}
+        {3, 0} -> {4,nil,[0,y1]}
+        {3, _} -> {3,nil,nil}
       end
+
+    code_info = %{100 => "good choice", 200 => "illegal movement, please try again"}
     # 如果路径正确需要更新棋盘
-    {new_board,code} =
-      case is_match do
-        true ->
-          update = [
-            {x0, y0, 0},
-            {cx, cy, 0},
-            {x1, y1, node_value}
-          ]
-          {Enum.reduce(update,board, fn {row, col, new_value}, acc ->
-            update_row = List.replace_at(Enum.at(acc, row), col, new_value)
-            List.replace_at(acc, row, update_row)
-          end), 100}
-        false ->
-          {board, 200}
-      end
+    case is_match do
+      true ->
+        update = [
+          {x0, y0, 0},
+          {cx, cy, 0},
+          {x1, y1, node_value}
+        ]
+        new_board = Enum.reduce(update,board, fn {row, col, new_value}, acc ->
+          update_row = List.replace_at(Enum.at(acc, row), col, new_value)
+          List.replace_at(acc, row, update_row)
+        end)
+        can_move = Battle.BattleHandler.move_list(new_board, !white)
+        new_state = %{
+          white: state.white,
+          black: state.black,
+          board: new_board,
+          early_hand: !white,
+          can_move: can_move,
+          steps: [moves | state.steps],
+          time_res: nil
+        }
 
-      new_state = %{
-        white: state.white,
-        black: state.black,
-        board: new_board,
-        early_hand: !white,
-        can_move: Battle.BattleHandler.move_list(new_board, !white),
-        steps: [moves | state.steps],
-        time_res: nil
-      }
+        IO.inspect(new_state)
 
-      IO.inspect(new_state)
+        winner = case{count_piece([1,2],new_board),count_piece([3,4],new_board)} do
+          {0,_} -> state.black
+          {_,0} -> state.white
+          _ -> nil
+        end
+        available_step =
+          Enum.map(can_move, fn list ->
+            Enum.map(list, fn inner_list ->
+              Enum.take(inner_list, 2)
+            end)
+        end)
+        detail = %{
+          code: Map.get(code_info,100),
+          winner: winner,
+          white_king: white_king,
+          black_king: black_king,
+          opponent_step: moves,
+          captured: capture,
+          board: new_board,
+          available_step: available_step
+        }
 
-    detail = %{
-      code: code,
-#      winner: "",
-#      white_king: "user_id_2",
-#      black_king: "user_id_1",
-#      opponent_step: [[1, 1], [1, 3]],
-#      captured: [[1, 2]]
-      board: new_board
-    }
+        {:reply, {:ok, detail}, new_state}
 
-    {:reply, {:ok, detail}, new_state}
+      false ->
+        available_step =
+          Enum.map(state.can_move, fn list ->
+            Enum.map(list, fn inner_list ->
+              Enum.take(inner_list, 2)
+            end)
+          end)
+        detail = %{
+          code: Map.get(code_info,200),
+          winner: nil,
+          white_king: nil,
+          black_king: nil,
+          opponent_step: nil,
+          captured: nil,
+          board: nil,
+          available_step: available_step
+        }
+        {:reply, {:ok, detail}, state}
+    end
+
+
+  end
+  defp count_piece(piece_value,board) do
+    count =
+      board
+      |> Enum.flat_map(& &1)  # 将二维数组扁平化为一维
+      |> Enum.count(fn piece -> piece in piece_value end)
   end
 end
