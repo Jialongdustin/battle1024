@@ -240,4 +240,6 @@ defmodule Battle.BattleHandler do
     Enum.chunk_every(list, 2, 1, :discard)
   end
 
+
+
 end

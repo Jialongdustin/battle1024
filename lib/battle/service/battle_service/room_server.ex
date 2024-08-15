@@ -5,15 +5,15 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   @timeout 3000
   @board_init [
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 1, 1, 1, 1, 1, 1, 1],
-                [1, 1, 1, 1, 1, 1, 1, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [2, 2, 2, 2, 2, 2, 2, 2],
-                [2, 2, 2, 2, 2, 2, 2, 2],
-                [0, 0, 0, 0, 0, 0, 0, 0]
-              ]
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [2, 2, 2, 2, 2, 2, 2, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+  ]
 
   @can_move_init ["3a", "3b", "3c", "3d", "3e", "3f", "3g", "3h"]
 
@@ -21,6 +21,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     white = opts[:white]
     black = opts[:black]
     contest_id = opts[:contest_id]
+
     initial_state = %{
       white: white,
       black: black,
@@ -30,7 +31,8 @@ defmodule Battle.Service.BattleService.RoomServer do
       steps: [],
       time_ref: nil
     }
-#    GenServer.start_link(__MODULE__, initial_state, name: :"#{contest_id}")
+
+    #    GenServer.start_link(__MODULE__, initial_state, name: :"#{contest_id}")
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(contest_id))
   end
 
@@ -42,25 +44,26 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:ok, state}
   end
 
-  def start_countdown(pid,timeout \\ @timeout) do
+  def start_countdown(pid, timeout \\ @timeout) do
     GenServer.call(pid, {:start_countdown, timeout})
   end
-  # 玩家加入战斗
-  def add_player(pid,user_id) do
-    GenServer.call(pid,{:add_player, user_id})
-  end
 
+  # 玩家加入战斗
+  def add_player(pid, user_id) do
+    GenServer.call(pid, {:add_player, user_id})
+  end
 
   def handle_call({:start_countdown, timeout}, _from, state) do
     if state.time_ref do
       Process.cancel_timer(state.time_ref)
     end
+
     new_ref = Process.send_after(self(), :execute_task, timeout)
     new_state = %{state | time_ref: new_ref}
     {:reply, :ok, new_state}
   end
 
-  def handle_call({:add_player,user_id},_from,state) do
+  def handle_call({:add_player, user_id}, _from, state) do
     #    new_state = Map.put(state.players,user_id,%{joined: true})
     #    {:reply, :ok, new_state}
     detail = %{
@@ -69,7 +72,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       white: "user_id_2"
     }
 
-    {:reply,{:ok,detail},state}
+    {:reply, {:ok, detail}, state}
   end
 
   def handle_info(:execute_task, state) do
@@ -78,20 +81,73 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   # 具体战斗逻辑
-  def movement(pid,x0,y0,x1,y1) do
-    GenServer.call(pid,{:movement,x0,y0,x1,y1})
+  def movement(pid, x0, y0, x1, y1) do
+    GenServer.call(pid, {:movement, x0, y0, x1, y1})
   end
 
-  def handle_call({:movement,x0,y0,x1,y1},_from,state) do
-    Logger.info("#{x0}   #{y0}   #{x1}   #{y1}")
+  def handle_call({:movement, moves, capture, user_id}, _from, state) do
+    white = state.early_hand
+    board = state.board
+    move_list = state.can_move
+
+    is_match =
+      Enum.any?(move_list, fn path ->
+        Enum.take(path, 2) == moves
+      end)
+
+    [[x0, y0], [x1, y1]] = moves
+    [cx, cy] = capture
+
+    node_value =
+      case {Enum.at(Enum.at(board, x0), y0), x1} do
+        {2, _} -> 2
+        {4, _} -> 4
+        {1, 0} -> 3
+        {1, x} when x == length(board) - 1 -> 3
+        {1, _} -> 1
+        {3, 0} -> 4
+        {3, x} when x == length(board) - 1 -> 4
+        {3, _} -> 3
+      end
+    # 如果路径正确需要更新棋盘
+    {new_board,code} =
+      case is_match do
+        true ->
+          update = [
+            {x0, y0, 0},
+            {cx, cy, 0},
+            {x1, y1, node_value}
+          ]
+          {Enum.reduce(update,board, fn {row, col, new_value}, acc ->
+            update_row = List.replace_at(Enum.at(acc, row), col, new_value)
+            List.replace_at(acc, row, update_row)
+          end), 100}
+        false ->
+          {board, 200}
+      end
+
+      new_state = %{
+        white: state.white,
+        black: state.black,
+        board: new_board,
+        early_hand: !white,
+        can_move: Battle.BattleHandler.move_list(new_board, !white),
+        steps: [moves | state.steps],
+        time_res: nil
+      }
+
+      IO.inspect(new_state)
+
     detail = %{
-      code: "init",
-      winner: "",
-      white_king: "user_id_2",
-      black_king: "user_id_1",
-      opponent_step: [[1,1],[1,3]],
-      captured: [[1,2]]
+      code: code,
+#      winner: "",
+#      white_king: "user_id_2",
+#      black_king: "user_id_1",
+#      opponent_step: [[1, 1], [1, 3]],
+#      captured: [[1, 2]]
+      board: new_board
     }
-    {:reply,{:ok,detail},state}
+
+    {:reply, {:ok, detail}, new_state}
   end
 end
