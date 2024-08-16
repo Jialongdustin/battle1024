@@ -5,7 +5,16 @@ request:
     moment_token:
       type: string
     move:
-      type: string
+      items:
+        type: array
+        items:
+          type: integer
+    captured:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
   required: [moment_token,move]
 
 response:

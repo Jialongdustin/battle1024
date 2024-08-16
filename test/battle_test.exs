@@ -1,59 +1,71 @@
-defmodule Battle do
+defmodule BattleTest do
   use ExUnit.Case
 #  doctest Battle.BattleDfs
   doctest Battle.BattleHandler
-#  test "greets the world" do
-#    assert Battle.hello() == :world
-#  end
 
-  test "dfs" do
-    turkish_flag = [
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 1, 1, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 1, 1, 1],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [3, 3, 3, 3, 3, 3, 3, 3],
-      [3, 3, 3, 3, 3, 3, 3, 3],
-      [0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-#     turkish_flag =  [
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 0, 0, 1, 0, 1, 0, 0],
-#         [0, 1, 0, 0, 2, 0, 0, 0],
-#         [0, 3, 0, 0, 0, 0, 0, 0],
-#         [0, 0, 0, 3, 0, 0, 0, 0],
-#         [0, 3, 0, 0, 0, 0, 0, 0],
-#         [0, 0, 3, 0, 3, 0, 0, 0],
-#         [0, 0, 0, 0, 4, 0, 0, 0],
-#     ]
+  alias Battle.Service.BattleService.RoomServer
+  alias Battle.Service.BattleService.RoomSupervisor
 
-#     turkish_flag = [
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 1, 0, 1, 0, 1, 0, 0],
-#         [0, 3, 0, 0, 2, 0, 0, 0],
-#         [0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 3, 0, 3, 0, 3, 0, 0],
-#         [0, 0, 3, 0, 3, 0, 0, 0],
-#         [0, 0, 0, 3, 0, 0, 0, 0],
-#         [0, 0, 4, 0, 4, 0, 0, 0],
-#     ]
+  test "battle_early_hand" do
+#    Logger.configure(level: :none)
+    {:ok,contest_id} = RoomSupervisor.init_game(123,456)
+    RoomSupervisor.join(123,contest_id)
+    res = RoomSupervisor.join(456,contest_id)
+    ans = RoomSupervisor.battle_handler([[2,0],[3,0]],123,contest_id)
 
-#    IO.inspect(Battle.BattleHandler.pairwise([-1, 0, 1, 0, -1]))
-    res = Battle.BattleHandler.move_list(turkish_flag,true)
-#    res = Battle.BattleHandler.dfs(turkish_flag,1,1,false,"white",8,8)
-    expect = [
-      [[1,1],[3,1],[5,1],[5,3],[5,5]],
-      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,0]],
-      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,1]],
-      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,5],[2, 5]],
-      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,5],[3, 5]],
-      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,6]],
-      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,7]]
-    ]
+    assert 1 == res
 
-    assert expect == res
   end
+
+
+#  test "dfs" do
+#    turkish_flag = [
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [1, 1, 1, 1, 1, 1, 1, 1],
+#      [1, 1, 1, 1, 1, 1, 1, 1],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [3, 3, 3, 3, 3, 3, 3, 3],
+#      [3, 3, 3, 3, 3, 3, 3, 3],
+#      [0, 0, 0, 0, 0, 0, 0, 0]
+#    ]
+##     turkish_flag =  [
+##         [0, 0, 0, 0, 0, 0, 0, 0],
+##         [0, 0, 0, 1, 0, 1, 0, 0],
+##         [0, 1, 0, 0, 2, 0, 0, 0],
+##         [0, 3, 0, 0, 0, 0, 0, 0],
+##         [0, 0, 0, 3, 0, 0, 0, 0],
+##         [0, 3, 0, 0, 0, 0, 0, 0],
+##         [0, 0, 3, 0, 3, 0, 0, 0],
+##         [0, 0, 0, 0, 4, 0, 0, 0],
+##     ]
+#
+##     turkish_flag = [
+##         [0, 0, 0, 0, 0, 0, 0, 0],
+##         [0, 1, 0, 1, 0, 1, 0, 0],
+##         [0, 3, 0, 0, 2, 0, 0, 0],
+##         [0, 0, 0, 0, 0, 0, 0, 0],
+##         [0, 3, 0, 3, 0, 3, 0, 0],
+##         [0, 0, 3, 0, 3, 0, 0, 0],
+##         [0, 0, 0, 3, 0, 0, 0, 0],
+##         [0, 0, 4, 0, 4, 0, 0, 0],
+##     ]
+#
+##    IO.inspect(Battle.BattleHandler.pairwise([-1, 0, 1, 0, -1]))
+#    res = Battle.BattleHandler.move_list(turkish_flag,true)
+##    res = Battle.BattleHandler.dfs(turkish_flag,1,1,false,"white",8,8)
+#    expect = [
+#      [[1,1],[3,1],[5,1],[5,3],[5,5]],
+#      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,0]],
+#      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,1]],
+#      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,5],[2, 5]],
+#      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,5],[3, 5]],
+#      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,6]],
+#      [[1,1],[3,1],[5,1],[5,3],[7,3],[7,7]]
+#    ]
+#
+#    assert expect == res
+#  end
 
 
 

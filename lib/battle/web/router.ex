@@ -214,13 +214,40 @@ defmodule Battle.Web.Router do
   json_rpc "/play/one_step_chess", "schema/play/one_step_chess" do
     moment_token = params["moment_token"]
     move = params["move"]
-#    resp = RoomSupervisor
-    {:ok,response} = RoomSupervisor.battle_handler(move,moment_token)
-    body = Ejoy.Jiffy.encode!(response)
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()   #  用于结束连接的处理, 防止后续的Plug继续对该连接进行处理
+
+    # 存储当前玩家的连接信息
+    Battle.ConnectionStore.store_connection(moment_token, conn)
+
+    # 处理棋步
+    case RoomSupervisor.battle_handler(move, moment_token) do
+      {:ok, response} ->
+        # 检查对手是否在线
+        opponent_conn = Battle.ConnectionStore.fetch_connection(opponent_moment_token)
+
+        if opponent_conn do
+          body = Ejoy.Jiffy.encode!(response)
+          opponent_conn
+          |> Conn.put_resp_content_type("application/json")
+          |> Conn.send_resp(200, body)
+          |> Conn.halt()
+
+          # 清除对手的连接信息
+          GenServer.cast(Battle.ConnectionStore, {:remove_connection, opponent_moment_token})
+        end
+
+        # 返回成功响应给当前玩家
+        body = Ejoy.Jiffy.encode!(response)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, reason} ->
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(400, %{"error" => reason})
+        |> Conn.halt()
+    end
   end
 
 end

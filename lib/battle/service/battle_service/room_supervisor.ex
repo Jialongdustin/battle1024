@@ -4,6 +4,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   require Logger
 
   alias Battle.Service.BattleService.RoomServer
+  alias Battle.Service.BattleService.ConnectionStore
   alias Battle.Utils.Token
 
 
@@ -18,46 +19,44 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
 
   def init_game(white, black) do
     contest_id = UUID.uuid4()
-    child_spec = {RoomServer, white: white, black: black, contest_id: contest_id}
-    DynamicSupervisor.start_child(__MODULE__, child_spec)
+    child_spec_server = {RoomServer, white: white, black: black, contest_id: contest_id}
+    child_spec_connection = {ConnectionStore}
+    DynamicSupervisor.start_child(__MODULE__, child_spec_server)
+    DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     {:ok, contest_id}
   end
 
-  def join(moment_token) do
+#  def join(moment_token) do
+  def join(user_id,contest_id) do
 
-    Logger.info(moment_token)
-    {:ok,user_info} = Token.verify_token_battle(moment_token)
-    user_id = user_info.user_id
-    contest_id = user_info.ext.account_id
+#    Logger.info(moment_token)
+#    {:ok,user_info} = Token.verify_token_battle(moment_token)
+#    user_id = user_info.user_id
+#    contest_id = user_info.ext.account_id
 
     case Registry.lookup(Battle.RoomRegistry,contest_id) do
       [{pid,_}] ->
-        RoomServer.add_player(pid,user_id)
+        case RoomServer.add_player(pid, user_id) do
+          {:ok, detail} ->
+            {:ok, detail}
+          {:error, reason} ->
+            {:error, reason}
+          end
       [] ->
         {:error, "room not found"}
     end
 
-#    detail = %{
-#      code: 100,
-#      black: "user_id_1",
-#      white: "user_id_2"
-#    }
-#
-#    {:ok,detail}
+
   end
 
-  def battle_handler(handle_detail,moment_token) do
-    [[x0, y0], [x1, y1]] = Jason.decode!(handle_detail)
-#    Logger.info("#{x0}<>   <>#{y0}<>   <>#{x1}<>   <>#{y1}")
-#    Logger.info(moment_token)
-
-    {:ok,user_info} = Token.verify_token_battle(moment_token)
-    user_id = user_info.user_id
-    contest_id = user_info.ext.account_id
+  def battle_handler(moves,capture,user_id,contest_id) do
 
     case Registry.lookup(Battle.RoomRegistry,contest_id) do
       [{pid,_}] ->
-        RoomServer.movement(pid,x0,y0,x1,y1)
+#        case RoomServer.movement(pid,user_id,moves,capture) do
+#          {}
+#        end
+        RoomServer.movement(pid,user_id,moves,capture)
       [] ->
         {:error, "room not found"}
     end
