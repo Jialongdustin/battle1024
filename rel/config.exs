@@ -46,8 +46,8 @@ end
 # when running `mix distillery.release`, the first release in the file
 # will be used by default
 
-release :battle do
-  set version: current_version(:battle)
+release :battle1024 do
+  set version: current_version(:battle1024)
   set applications: [
     :runtime_tools
   ]
