@@ -8,15 +8,35 @@ request:
 response:
   type: object
   properties:
-#    board:
-#      type: array
-#      items:
-#        type: array
-#        items:
-#          type: integer
-    state:
+    code:
       type: string
-    black:
+    winner:
       type: string
-    white:
+    white_king:
       type: string
+    black_king:
+      type: string
+    opponent_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    captured:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    board:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    available_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer

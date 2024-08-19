@@ -1,4 +1,4 @@
-defmodule Battle.BattleResult do
+defmodule Battle.Mongo.BattleResult do
   use Ejoy.Db
   require Logger
 

@@ -202,27 +202,45 @@ defmodule Battle.Web.Router do
   # 加入棋局, 棋局初始化
   json_rpc "/play/init", "schema/play/init" do
     moment_token = params["moment_token"]
-    {:ok,response} = RoomSupervisor.join(moment_token)
-    body = Ejoy.Jiffy.encode!(response)
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()
+
+    {:ok,user_info} = Token.verify_token_battle(moment_token)
+    user_id = user_info.user_id
+    contest_id = user_info.ext.account_id
+
+    conn = Conn.put_private(conn, :polling, true)
+
+    case RoomSupervisor.join(user_id,contest_id,conn) do
+      {:ok, detail, conn} ->
+        body = Ejoy.Jiffy.encode!(detail)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+      {:error,reason} ->
+        IO.puts(reason)
+
+    end
+
   end
 
   # 下棋
   json_rpc "/play/one_step_chess", "schema/play/one_step_chess" do
     moment_token = params["moment_token"]
     move = params["move"]
+    capture = params["capture"]
 
-    # 存储当前玩家的连接信息
-    Battle.ConnectionStore.store_connection(moment_token, conn)
+    {:ok,user_info} = Token.verify_token_battle(moment_token)
+    user_id = user_info.user_id
+    contest_id = user_info.ext.account_id
 
     # 处理棋步
-    case RoomSupervisor.battle_handler(move, moment_token) do
+    case RoomSupervisor.battle_handler(move, capture, user_id, contest_id) do
       {:ok, response} ->
         # 检查对手是否在线
-        opponent_conn = Battle.ConnectionStore.fetch_connection(opponent_moment_token)
+#        Battle.ConnectionStore.fetch_connection("1b2280d8-7142-4103-8e85-11b73b5b1951")
+        opponent_conn = Battle.Service.BattleService.ConnectionStore.fetch_connection(contest_id)
+        # 存储当前玩家的连接信息
+        Battle.Service.BattleService.ConnectionStore.store_connection(contest_id, conn)
 
         if opponent_conn do
           body = Ejoy.Jiffy.encode!(response)
@@ -230,17 +248,7 @@ defmodule Battle.Web.Router do
           |> Conn.put_resp_content_type("application/json")
           |> Conn.send_resp(200, body)
           |> Conn.halt()
-
-          # 清除对手的连接信息
-          GenServer.cast(Battle.ConnectionStore, {:remove_connection, opponent_moment_token})
         end
-
-        # 返回成功响应给当前玩家
-        body = Ejoy.Jiffy.encode!(response)
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, body)
-        |> Conn.halt()
 
       {:error, reason} ->
         conn

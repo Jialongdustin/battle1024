@@ -21,7 +21,7 @@ response:
   type: object
   properties:
     code:
-      type: number
+      type: string
     winner:
       type: string
     white_king:
@@ -35,6 +35,18 @@ response:
         items:
           type: integer
     captured:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    board:
+      type: array
+      items:
+        type: array
+        items:
+          type: integer
+    available_step:
       type: array
       items:
         type: array

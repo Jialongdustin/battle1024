@@ -27,20 +27,18 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   end
 
 #  def join(moment_token) do
-  def join(user_id,contest_id) do
-
-#    Logger.info(moment_token)
-#    {:ok,user_info} = Token.verify_token_battle(moment_token)
-#    user_id = user_info.user_id
-#    contest_id = user_info.ext.account_id
+  def join(user_id,contest_id,conn) do
 
     case Registry.lookup(Battle.RoomRegistry,contest_id) do
       [{pid,_}] ->
         case RoomServer.add_player(pid, user_id) do
           {:ok, detail} ->
-            {:ok, detail}
+            # 白子先手直接写回，白子已经下完到黑子也直接写回
+            {:ok, detail, conn}
           {:error, reason} ->
-            {:error, reason}
+            # 存起来黑子的conn，白子下棋后调用
+            ConnectionStore.store_connection(contest_id,conn)
+            {:error,"not your turn"}
           end
       [] ->
         {:error, "room not found"}
@@ -53,10 +51,12 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
 
     case Registry.lookup(Battle.RoomRegistry,contest_id) do
       [{pid,_}] ->
-#        case RoomServer.movement(pid,user_id,moves,capture) do
-#          {}
-#        end
-        RoomServer.movement(pid,user_id,moves,capture)
+        case RoomServer.movement(pid,user_id,moves,capture) do
+          {:ok,success_detail} ->
+            {:ok,success_detail}
+          {:error,error_detail} ->
+            {:error,error_detail}
+        end
       [] ->
         {:error, "room not found"}
     end

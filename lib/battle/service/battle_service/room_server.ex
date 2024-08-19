@@ -7,6 +7,9 @@ defmodule Battle.Service.BattleService.RoomServer do
     200 => "illegal movement, please try again",
     300 => "invalid player or player already joined"
   }
+
+  alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.BattleInfo
   @timeout 3000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -26,13 +29,16 @@ defmodule Battle.Service.BattleService.RoomServer do
     initial_state = %{
       white: white,
       black: black,
+      contest_id: contest_id,
       board: @board_init,
       early_hand: true,
       can_move: Battle.BattleHandler.move_list(@board_init,true),
       steps: [],
       time_ref: nil,
       white_joined: false,
-      black_joined: false
+      black_joined: false,
+      count_white: 0,
+      count_black: 0
 
     }
 
@@ -106,6 +112,8 @@ defmodule Battle.Service.BattleService.RoomServer do
             {:reply, {:ok, detail}, new_state}
           else
             # 将定时器定时检查
+            IO.puts("not your turn")
+            IO.puts("not your turn")
             {:reply,{:error,"not your turn"},state}
           end
 
@@ -183,19 +191,50 @@ defmodule Battle.Service.BattleService.RoomServer do
           List.replace_at(acc, row, update_row)
         end)
         can_move = Battle.BattleHandler.move_list(new_board, !white)
-        new_state = %{
-          state |
-          board: new_board,
-          early_hand: !white,
-          can_move: can_move,
-          steps: [moves | state.steps],
-          white_joined: true
-        }
+
+        new_state =
+          case state.early_hand do
+            true ->
+              %{
+                state |
+                board: new_board,
+                early_hand: !white,
+                can_move: can_move,
+                steps: [moves | state.steps],
+                white_joined: true,
+                count_white: state.count_white+1
+              }
+            false ->
+              %{
+                state |
+                board: new_board,
+                early_hand: !white,
+                can_move: can_move,
+                steps: [moves | state.steps],
+                white_joined: true,
+                count_black: state.count_black+1
+              }
+          end
+
         # 如果有一方的棋子为零，另外一方获胜
         winner = case{count_piece([1,2],new_board),count_piece([3,4],new_board)} do
           {0,_} -> state.black
           {_,0} -> state.white
           _ -> nil
+        end
+
+        if winner != nil do
+          save_info = %{
+            users: [state.white,state.black],
+            contest_id: state.contest_id,
+            winner: winner,
+            time_cost_2: [0,0],
+            memory_cost_2: [0,0],
+            early_hand: state.white,
+            total_step_2: [state.count_white,state.count_black]
+          }
+          BattleResult.save_battle_result(save_info.users,save_info.contest_id,save_info.winner,save_info.time_cost_2,save_info.memory_cost_2,save_info.early_hand,save_info.total_step_2)
+          BattleInfo.insert_battle(state.contest_id,state.count_white+state.count_black,state.steps)
         end
         # 返回可移动路径给机器人
         available_step =
@@ -237,7 +276,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           board: nil,
           available_step: available_step
         }
-        {:reply, {:ok, detail}, state}
+        {:reply, {:error, detail}, state}
     end
   end
 

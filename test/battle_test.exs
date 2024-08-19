@@ -7,8 +7,13 @@ defmodule BattleTest do
   alias Battle.Service.BattleService.RoomSupervisor
 
   test "battle_early_hand" do
+    Battle.Service.BattleService.ConnectionStore.get_state()
 #    Logger.configure(level: :none)
-    {:ok,contest_id} = RoomSupervisor.init_game(123,456)
+    {:ok,contest_id} = Battle.Service.BattleService.RoomSupervisor.init_game("123","456")
+    # "66c2af6ec7cfff96dc009c8e"
+    {:ok,moment_token_123} = Battle.Utils.Token.generate_token("123",contest_id)
+    # "66c2af73c7cfff96dc009c8f"
+    {:ok,moment_token_456} = Battle.Utils.Token.generate_token("456",contest_id)
     RoomSupervisor.join(123,contest_id)
     res = RoomSupervisor.join(456,contest_id)
     ans = RoomSupervisor.battle_handler([[2,0],[3,0]],123,contest_id)
