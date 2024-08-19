@@ -46,10 +46,9 @@ end
 # when running `mix distillery.release`, the first release in the file
 # will be used by default
 
-release :admin_center do
-  set version: current_version(:admin_center)
+release :battle do
+  set version: current_version(:battle)
   set applications: [
     :runtime_tools
   ]
 end
-

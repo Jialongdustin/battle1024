@@ -2,14 +2,20 @@ api: "/contest/test_AI"
 request:
   type: object
   properties:
-    user_id: 
+    git_url:
       type: string
-  required: [user_id]
+    tag:
+      type: string
+    ai_name:
+      type: string
+  required: [git_url, tag]
 
 response:
   type: object
   properties:
     code:
       type: number
+    state:
+      type: string
     message:
       type: string

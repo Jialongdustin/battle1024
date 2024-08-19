@@ -52,8 +52,7 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        Logger.error("Verification failed: #{inspect(reason)}")
-        body = Ejoy.Jiffy.encode!(%{error: "Permission refused"})
+        body = Ejoy.Jiffy.encode!(%{error: reason})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(403, body)
@@ -71,38 +70,99 @@ defmodule Battle.Web.Router do
 
   # 创建AI
   json_rpc "/user/create_AI", "schema/user/create_AI" do
-    user_id = params["user_id"]
-    ai_name = params["ai_name"]
-    body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create AI done"})
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()
+    ai_name = conn.params["ai_name"]
+    git_url = conn.params["git_url"]
+    tag = conn.params["tag"]
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        UserAi.insert_ai(user_id, ai_name, git_url, tag)
+        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        body = Ejoy.Jiffy.encode!(%{error: reason})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(403, body)
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
   end
 
   # 测试AI
   json_rpc "/contest/test_AI", "schema/play/test_AI" do
-    body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "test successful"})
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()
+    ai_name = conn.params["ai_name"]
+    git_url = conn.params["git_url"]
+    tag = conn.params["tag"]
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        # 测试比赛的逻辑
+        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "test successful"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        body = Ejoy.Jiffy.encode!(%{error: reason})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(403, body)
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
   end
 
   # 获取某个用户所有对局信息
   get "/user/all_contests_info" do
-    body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "test successful"})
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        {:ok, contest} = BattleResult.get_battle_result_by_user_id(user_id)
+        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: contest})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+      {:error, reason} ->
+        body = Ejoy.Jiffy.encode!(%{error: reason})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(403, body)
+        |> Conn.halt()
+      _ ->
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
   end
 
   # 获取战斗力排行榜
   get "/contest/ranking_list" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
-      {:ok, _} ->
+      {:ok, user_id} ->
         message = case RankList.get_rank_list() do
           {:ok, rank_list} ->
             %{rank_list: rank_list}
@@ -197,7 +257,6 @@ defmodule Battle.Web.Router do
     end
   end
 
-
   ## battle
   # 加入棋局, 棋局初始化
   json_rpc "/play/init", "schema/play/init" do
@@ -211,7 +270,6 @@ defmodule Battle.Web.Router do
 
   # 下棋
   json_rpc "/play/one_step_chess", "schema/play/one_step_chess" do
-    moment_token = params["moment_token"]
     move = params["move"]
     body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok"})
     conn

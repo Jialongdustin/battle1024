@@ -16,9 +16,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     DynamicSupervisor.init(opts)
   end
 
-  def init_game(white, black) do
-    contest_id = UUID.uuid4()
-    child_spec = {RoomServer, white: white, black: black, contest_id: contest_id}
+  def init_game(white, black, contest_id, groupName, groupKey, appName) do
+    child_spec = {RoomServer, white: white, black: black, contest_id: contest_id, groupName: groupName, groupKey: groupKey, appName: appName}
     DynamicSupervisor.start_child(__MODULE__, child_spec)
     {:ok, contest_id}
   end
@@ -45,7 +44,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     {:ok, detail}
   end
 
-  def battle_handler(handle_detail,moment_token) do
+  def battle_handler(handle_detail, moment_token) do
     [[x0, y0], [x1, y1]] = Jason.decode!(handle_detail)
     Logger.info("#{x0}<>   <>#{y0}<>   <>#{x1}<>   <>#{y1}")
     Logger.info(moment_token)
@@ -69,7 +68,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       opponent_step: [[1,1],[1,3]],
       captured: [[1,2]]
     }
-    {:ok,detail}
+    {:ok, detail}
   end
 end
 # alias Battle.Service.BattleService.RoomSupervisor

@@ -8,7 +8,7 @@ defmodule BattleTest.UserAi do
     git_url = "ccc.com"
     tag = "3.0"
 
-    {:ok,user_info_list_before} = Battle.UserAi.get_ai_list_by_userId(user_id)
+    {:ok, user_info_list_before} = Battle.UserAi.get_ai_list_by_userId(user_id)
     initial_length = length(user_info_list_before)
     Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
     {:ok, user_info_list_after} = Battle.UserAi.get_ai_list_by_userId(user_id)

@@ -4,7 +4,7 @@ defmodule Battle.UserAi do
   @db "battle"
   @collection "user_ai"
   @indexes [
-    {[user_id: 1], false}
+    {[user_id: 1], true}
   ]
   @cleanable false
 

@@ -48,3 +48,4 @@ config :ejoy_etcd, lib_prefix: "test"
 config :ex_json_schema,
        :remote_schema_resolver,
        {Ejoy.Plug.SchamaResolver, :remote_schema_resolver}
+# config :logger, level: :none

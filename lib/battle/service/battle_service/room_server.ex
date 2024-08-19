@@ -2,33 +2,49 @@ defmodule Battle.Service.BattleService.RoomServer do
   use GenServer
 
   require Logger
+  @code_info %{100 => "your turn to move",
+  200 => "illegal movement, please try again",
+  300 => "not your turn, please try again"
+  }
 
+  alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.BattleInfo
   @timeout 3000
   @board_init [
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 1, 1, 1, 1, 1, 1, 1],
-                [1, 1, 1, 1, 1, 1, 1, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [2, 2, 2, 2, 2, 2, 2, 2],
-                [2, 2, 2, 2, 2, 2, 2, 2],
-                [0, 0, 0, 0, 0, 0, 0, 0]
-              ]
-
-  @can_move_init ["3a", "3b", "3c", "3d", "3e", "3f", "3g", "3h"]
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [3, 3, 3, 3, 3, 3, 3, 3],
+    [3, 3, 3, 3, 3, 3, 3, 3],
+    [0, 0, 0, 0, 0, 0, 0, 0]
+  ]
 
   def start_link(opts) do
     white = opts[:white]
     black = opts[:black]
     contest_id = opts[:contest_id]
+    groupName = opts[:groupName]
+    groupKey = opts[:groupKey]
+    appName = opts[:appName]
     initial_state = %{
       white: white,
       black: black,
+      contest_id: contest_id,
       board: @board_init,
       early_hand: true,
-      can_move: @can_move_init,
+      can_move: [],
       steps: [],
-      time_ref: nil
+      illegal_times: [0, 0],
+      time_ref: nil,
+      white_joined: false,
+      black_joined: false,
+      count_white: 0,
+      count_black: 0,
+      group_name: groupName,
+      group_key: groupKey,
+      app_name: appName
     }
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(contest_id))
   end
@@ -45,6 +61,9 @@ defmodule Battle.Service.BattleService.RoomServer do
     GenServer.call(via_tuple(contest_id), {:add_player, user_id})
   end
 
+  def terminate_game(contest_id) do
+    GenServer.call(via_tuple(contest_id), :terminate_game)
+  end
 
   def handle_call({:start_countdown, timeout}, _from, state) do
     if state.time_ref do
@@ -67,8 +86,26 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:reply, {:ok, detail}, state}
   end
 
-  def handle_info(:execute_task, state) do
+  def handle_call({:terminate_game,}, _from, state) do
+    # 持久化存储对局信息
+    Process.send(Battle.Service.BattleService.ThreadPool, {state.contest_id, state.group_name, state.group_key, state.app_name})
+    {:stop, :game_over, state}
+  end
+
+  def handle_info(:execute_task, %{illegal_times: illegal_times, early_hand: early_hand} = state) do
     Logger.info("overtime operation")
+    case early_hand do
+      true ->
+        illegal_times_white = Enum.at(illegal_times, 0) + 1
+        if(illegal_times_white == 3) do
+          :terminate_game
+        end
+      false ->
+        illegal_times_black = Enum.at(illegal_times, 1) + 1
+        if(illegal_times_black == 3) do
+          :terminate_game
+        end
+    end
     {:noreply, state}
   end
 
@@ -87,7 +124,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       opponent_step: [[1,1],[1,3]],
       captured: [[1,2]]
     }
-    {:reply, {:ok,detail}, state}
+    {:reply, {:ok, detail}, state}
   end
 
   defp via_tuple(contest_id) do
