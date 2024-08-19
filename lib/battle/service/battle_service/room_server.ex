@@ -3,7 +3,9 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   require Logger
 
-  @code_info %{100 => "your turn to move",
+  @code_info %{
+    100 => "your turn to move",
+    101 => "move success, please wait until your opponent move",
     200 => "illegal movement, please try again",
     300 => "not your turn, please try again"
   }
@@ -188,84 +190,6 @@ defmodule Battle.Service.BattleService.RoomServer do
         end)
         {can_move,flag} = Battle.BattleHandler.move_list(new_board, white)
 
-        new_state =
-          case state.early_hand do
-            true -> # white
-              case {capture,flag} do
-                # 当前棋子没有吃子,只是普通移动
-                {nil,_} ->
-                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
-                  %{
-                    state |
-                    board: new_board,
-                    early_hand: !white,
-                    can_move: can_move,
-                    steps: [moves | state.steps],
-                    count_white: state.count_white+1
-                  }
-                {_,false} ->
-                  # 当前棋子吃了子,下一步不能吃了
-                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
-                  %{
-                    state |
-                    board: new_board,
-                    early_hand: !white,
-                    can_move: can_move,
-                    steps: [moves | state.steps],
-                    white_joined: true,
-                    count_white: state.count_white+1
-                  }
-                _ ->
-                  # 吃了子还能继续吃，还是当前棋子的回合
-                  %{
-                    state |
-                    board: new_board,
-                    early_hand: white,
-                    can_move: can_move,
-                    steps: [moves | state.steps],
-                    white_joined: true,
-                    count_white: state.count_white+1
-                  }
-              end
-            false -> # black
-              case {capture,flag} do
-                # 当前棋子没有吃子,只是普通移动
-                {nil,_} ->
-                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
-                  %{
-                    state |
-                    board: new_board,
-                    early_hand: !white,
-                    can_move: can_move,
-                    steps: [moves | state.steps],
-                    count_white: state.count_black+1
-                  }
-                {_,false} ->
-                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
-                  # 当前棋子吃了子,下一步不能吃了
-                  %{
-                    state |
-                    board: new_board,
-                    early_hand: !white,
-                    can_move: can_move,
-                    steps: [moves | state.steps],
-                    white_joined: true,
-                    count_white: state.count_black+1
-                  }
-                _ ->
-                  # 吃了子还能继续吃，还是当前棋子的回合
-                  %{
-                    state |
-                    board: new_board,
-                    early_hand: white,
-                    can_move: can_move,
-                    steps: [moves | state.steps],
-                    white_joined: true,
-                    count_white: state.count_black+1
-                  }
-              end
-          end
-
         # 如果有一方的棋子为零，另外一方获胜
         winner = case{count_piece([1,2],new_board),count_piece([3,4],new_board)} do
           {0,_} -> state.black
@@ -273,25 +197,193 @@ defmodule Battle.Service.BattleService.RoomServer do
           _ -> nil
         end
 
-        # 返回可移动路径给机器人
-        available_step =
-          Enum.map(can_move, fn list ->
-            Enum.map(list, fn inner_list ->
-              Enum.take(inner_list, 2)
-            end)
-        end)
+        {new_state,detail} =
+          case state.early_hand do
+            true -> # white
+              case {capture,flag} do
+                # 当前棋子没有吃子,只是普通移动
+                {nil,_} ->
+                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
+                  move_detail = %{
+                    capture: capture,
+                    moves: moves
+                  }
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      early_hand: !white,
+                      can_move: can_move,
+                      steps: state.steps++[move_detail],
+                      count_white: state.count_white+1
+                    },
+                    %{
+                      code: Map.get(@code_info,101),
+                      winner: winner,
+                      white_king: white_king,
+                      black_king: black_king,
+                      your_step: moves,
+                      captured: [cx, cy],
+                      board: new_board
+                    }
+                  }
+                {_,false} ->
+                  # 当前棋子吃了子,下一步不能吃了
+                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
+                  move_detail = %{
+                    capture: capture,
+                    moves: moves
+                  }
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      early_hand: !white,
+                      can_move: can_move,
+                      steps: state.steps++[move_detail],
+                      count_white: state.count_white+1
+                    },
+                    %{
+                      code: Map.get(@code_info,101),
+                      winner: winner,
+                      white_king: white_king,
+                      black_king: black_king,
+                      your_step: moves,
+                      captured: [cx, cy],
+                      board: new_board
+                    }
+                  }
+                _ ->
+                  # 吃了子还能继续吃，还是当前棋子的回合
 
-        detail = %{
-          code: Map.get(@code_info,100),
-          winner: winner,
-          white_king: white_king,
-          black_king: black_king,
-          opponent_step: moves,
-          captured: [cx, cy],
-          board: new_board,
-          available_step: available_step
-        }
-        IO.inspect(new_state)
+                  # 返回可移动路径给机器人
+                  available_step =
+                    Enum.map(can_move, fn list ->
+                      Enum.map(list, fn inner_list ->
+                        Enum.take(inner_list, 2)
+                      end)
+                    end)
+                  move_detail = %{
+                    capture: capture,
+                    moves: moves
+                  }
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      early_hand: white,
+                      can_move: can_move,
+                      steps: state.steps++[move_detail],
+                      count_white: state.count_white+1
+                    },
+                    %{
+                      code: Map.get(@code_info,100),
+                      winner: winner,
+                      white_king: white_king,
+                      black_king: black_king,
+                      your_step: moves,
+                      captured: [cx, cy],
+                      board: new_board,
+                      available_step: available_step
+                    }
+                  }
+              end
+            false -> # black
+              case {capture,flag} do
+                # 当前棋子没有吃子,只是普通移动
+                {nil,_} ->
+                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
+                  move_detail = %{
+                    capture: capture,
+                    moves: moves
+                  }
+                  {
+
+                    %{
+                      state |
+                      board: new_board,
+                      early_hand: !white,
+                      can_move: can_move,
+                      steps: state.steps++[move_detail],
+                      count_white: state.count_white+1
+                    },
+                    %{
+                      code: Map.get(@code_info,101),
+                      winner: winner,
+                      white_king: white_king,
+                      black_king: black_king,
+                      your_step: moves,
+                      captured: [cx, cy],
+                      board: new_board
+                    }
+                  }
+                {_,false} ->
+                  {can_move,_} = Battle.BattleHandler.move_list(new_board, !white)
+
+                  # 当前棋子吃了子,下一步不能吃了
+                  move_detail = %{
+                    capture: capture,
+                    moves: moves
+                  }
+                  {
+
+                    %{
+                      state |
+                      board: new_board,
+                      early_hand: !white,
+                      can_move: can_move,
+                      steps: state.steps++[move_detail],
+                      count_white: state.count_white+1
+                    },
+                    %{
+                      code: Map.get(@code_info,101),
+                      winner: winner,
+                      white_king: white_king,
+                      black_king: black_king,
+                      your_step: moves,
+                      captured: [cx, cy],
+                      board: new_board
+                    }
+                  }
+                _ ->
+                  # 吃了子还能继续吃，还是当前棋子的回合
+
+                  # 返回可移动路径给机器人
+                  available_step =
+                    Enum.map(can_move, fn list ->
+                      Enum.map(list, fn inner_list ->
+                        Enum.take(inner_list, 2)
+                      end)
+                    end)
+                  move_detail = %{
+                    capture: capture,
+                    moves: moves
+                  }
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      early_hand: white,
+                      can_move: can_move,
+                      steps: state.steps++[move_detail],
+                      count_white: state.count_white+1
+                    },
+                    %{
+                      code: Map.get(@code_info,100),
+                      winner: winner,
+                      white_king: white_king,
+                      black_king: black_king,
+                      your_step: moves,
+                      captured: [cx, cy],
+                      board: new_board,
+                      available_step: available_step
+                    }
+                  }
+              end
+          end
+
+
+        IO.inspect(state)
         {:reply, {:ok, detail}, new_state}
 
       false ->
@@ -306,7 +398,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           winner: nil,
           white_king: nil,
           black_king: nil,
-          opponent_step: nil,
+          your_step: nil,
           captured: nil,
           board: nil,
           available_step: available_step
@@ -315,34 +407,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     end
   end
 
-  def handle_info({:wait_opponent_move,user_id,capture,node_value,white_king,black_king},state) do
-    if (user_id == state.white and state.early_hand == true)
-       or (user_id == state.black and state.early_hand == false) do
-      available_step =
-        Enum.map(state.can_move, fn list ->
-          Enum.map(list, fn inner_list ->
-            Enum.take(inner_list, 2)
-          end)
-        end)
 
-      winner = case{count_piece([1,2],state.board),count_piece([3,4],state.board)} do
-        {0,_} -> state.black
-        {_,0} -> state.white
-        _ -> nil
-      end
-
-      detail = %{
-        code: Map.get(@code_info,100),
-        winner: winner,
-        white_king: white_king,
-        black_king: black_king,
-        opponent_step: List.first(state.steps),
-        captured: capture,
-        board: state.board,
-        available_step: available_step
-      }
-       end
-  end
 
   defp count_piece(piece_value,board) do
     count =
