@@ -200,57 +200,53 @@ defmodule Battle.Web.Router do
 
   ## battle
   # 加入棋局, 棋局初始化
-  json_rpc "/play/init", "schema/play/init" do
+  json_rpc "/play/query", "schema/play/init" do
     moment_token = params["moment_token"]
 
     {:ok,user_info} = Token.verify_token_battle(moment_token)
     user_id = user_info.user_id
     contest_id = user_info.ext.account_id
 
-    conn = Conn.put_private(conn, :polling, true)
 
-    case RoomSupervisor.join(user_id,contest_id,conn) do
-      {:ok, detail, conn} ->
+    case RoomSupervisor.query(user_id,contest_id) do
+      {:ok, detail} ->
         body = Ejoy.Jiffy.encode!(detail)
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
       {:error,reason} ->
-        IO.puts(reason)
+        body = Ejoy.Jiffy.encode!(reason)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
 
     end
 
   end
 
   # 下棋
-  json_rpc "/play/one_step_chess", "schema/play/one_step_chess" do
+  json_rpc "/play/move", "schema/play/one_step_chess" do
     moment_token = params["moment_token"]
     move = params["move"]
-    capture = params["capture"]
 
     {:ok,user_info} = Token.verify_token_battle(moment_token)
     user_id = user_info.user_id
     contest_id = user_info.ext.account_id
 
     # 处理棋步
-    case RoomSupervisor.battle_handler(move, capture, user_id, contest_id) do
+    case RoomSupervisor.movement(move, user_id, contest_id) do
       {:ok, response} ->
-        # 检查对手是否在线
-#        Battle.ConnectionStore.fetch_connection("1b2280d8-7142-4103-8e85-11b73b5b1951")
-        opponent_conn = Battle.Service.BattleService.ConnectionStore.fetch_connection(contest_id)
-        # 存储当前玩家的连接信息
-        Battle.Service.BattleService.ConnectionStore.store_connection(contest_id, conn)
 
-        if opponent_conn do
-          body = Ejoy.Jiffy.encode!(response)
-          opponent_conn
-          |> Conn.put_resp_content_type("application/json")
-          |> Conn.send_resp(200, body)
-          |> Conn.halt()
-        end
+        body = Ejoy.Jiffy.encode!(response)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
 
       {:error, reason} ->
+        body = Ejoy.Jiffy.encode!(reason)
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(400, %{"error" => reason})

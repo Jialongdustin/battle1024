@@ -134,6 +134,7 @@ defmodule Battle.BattleHandler do
   end
 
   def move_list(turkish_flag, white) do
+    flag = false
     n = length(turkish_flag)
     m = length(List.first(turkish_flag))
 
@@ -167,10 +168,9 @@ defmodule Battle.BattleHandler do
           end
       end
 
+
     if best_paths_overall == [] do
-
-
-      for i <- 0..(n - 1), j <- 0..(m - 1), reduce: [] do
+      best_paths_overall = for i <- 0..(n - 1), j <- 0..(m - 1), reduce: [] do
         acc ->
           current_piece = Enum.at(Enum.at(turkish_flag, i), j)
 
@@ -191,8 +191,9 @@ defmodule Battle.BattleHandler do
               acc
           end
       end
+      {best_paths_overall,false}
     else
-      best_paths_overall
+      {best_paths_overall,true}
     end
   end
 

@@ -9,16 +9,21 @@ defmodule BattleTest do
   test "battle_early_hand" do
     Battle.Service.BattleService.ConnectionStore.get_state()
 #    Logger.configure(level: :none)
-    {:ok,contest_id} = Battle.Service.BattleService.RoomSupervisor.init_game("123","456")
-    # "66c2af6ec7cfff96dc009c8e"
+    {:ok,contest_id} = Battle.Service.BattleService.RoomSupervisor.init_game("123","456", "10000")
+    # "66c2eab984da5b380c71d90c"
     {:ok,moment_token_123} = Battle.Utils.Token.generate_token("123",contest_id)
-    # "66c2af73c7cfff96dc009c8f"
+    # "66c2eabe84da5b380c71d90d"
     {:ok,moment_token_456} = Battle.Utils.Token.generate_token("456",contest_id)
-    RoomSupervisor.join(123,contest_id)
-    res = RoomSupervisor.join(456,contest_id)
-    ans = RoomSupervisor.battle_handler([[2,0],[3,0]],123,contest_id)
+    RoomSupervisor.query(123,contest_id)
+    RoomSupervisor.query(456,contest_id)
 
-    assert 1 == res
+    RoomSupervisor.movement([[2,0],[3,0]],123,contest_id)
+    RoomSupervisor.movement([[5,0],[4,0]],456,contest_id)
+    RoomSupervisor.movement([[3,0],[5,0]],123,contest_id)
+    RoomSupervisor.movement([[5,0],[7,0]],123,contest_id)
+    RoomSupervisor.movement([[5,1],[4,1]],456,contest_id)
+
+
 
   end
 

@@ -1,6 +1,6 @@
 use Mix.Config
 
-
+#Logger.configure(level: :none)
 
 config :union_config_app,
   config_db: [

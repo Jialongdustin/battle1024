@@ -17,28 +17,24 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     DynamicSupervisor.init(opts)
   end
 
-  def init_game(white, black) do
-    contest_id = UUID.uuid4()
+  def init_game(white, black,contest_id) do
     child_spec_server = {RoomServer, white: white, black: black, contest_id: contest_id}
-    child_spec_connection = {ConnectionStore}
-    DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     {:ok, contest_id}
   end
 
 #  def join(moment_token) do
-  def join(user_id,contest_id,conn) do
+  def query(user_id,contest_id) do
 
     case Registry.lookup(Battle.RoomRegistry,contest_id) do
       [{pid,_}] ->
-        case RoomServer.add_player(pid, user_id) do
+        case RoomServer.query(pid, user_id) do
           {:ok, detail} ->
-            # 白子先手直接写回，白子已经下完到黑子也直接写回
-            {:ok, detail, conn}
+            # 当前询问回合，写回成功
+            {:ok, detail}
           {:error, reason} ->
-            # 存起来黑子的conn，白子下棋后调用
-            ConnectionStore.store_connection(contest_id,conn)
-            {:error,"not your turn"}
+            # 不是当前询问回合，写回错误
+            {:error,reason}
           end
       [] ->
         {:error, "room not found"}
@@ -47,11 +43,11 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
 
   end
 
-  def battle_handler(moves,capture,user_id,contest_id) do
+  def movement(moves,user_id,contest_id) do
 
     case Registry.lookup(Battle.RoomRegistry,contest_id) do
       [{pid,_}] ->
-        case RoomServer.movement(pid,user_id,moves,capture) do
+        case RoomServer.movement(pid,user_id,moves) do
           {:ok,success_detail} ->
             {:ok,success_detail}
           {:error,error_detail} ->
@@ -61,18 +57,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
         {:error, "room not found"}
     end
 
-#    detail = %{
-#      code: "init",
-#      winner: "",
-#      white_king: "user_id_2",
-#      black_king: "user_id_1",
-#      opponent_step: [[1,1],[1,3]],
-#      captured: [[1,2]]
-#    }
-#    {:ok,detail}
+
   end
 end
 
-# alias Battle.Service.BattleService.RoomSupervisor
-# RoomSupervisor.join_game("A", "B")
-# Logger.configure(level: :none)
+
