@@ -8,21 +8,25 @@ defmodule BattleTest.RoomServerTest do
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Utils.Token
 
-  test "init game" do
-    user_id_1 = "123"
-    user_id_2 = "456"
-    {:ok,contest_id} = RoomSupervisor.init_game(user_id_1,user_id_2)
+  test "battle_early_hand" do
+    Battle.Service.BattleService.ConnectionStore.get_state()
+    #    Logger.configure(level: :none)
+    {:ok,contest_id} = Battle.Service.BattleService.RoomSupervisor.init_game("123","456", "10000")
+    # "66c2eab984da5b380c71d90c"
+    {:ok,moment_token_123} = Battle.Utils.Token.generate_token("123",contest_id)
+    # "66c2eabe84da5b380c71d90d"
+    {:ok,moment_token_456} = Battle.Utils.Token.generate_token("456",contest_id)
+    RoomSupervisor.query(123,contest_id)
+    RoomSupervisor.query(456,contest_id)
 
-    [{pid,_}] = Registry.lookup(Battle.RoomRegistry,contest_id)
+    RoomSupervisor.movement([[2,0],[3,0]],123,contest_id)
+    RoomSupervisor.movement([[5,0],[4,0]],456,contest_id)
+    RoomSupervisor.movement([[3,0],[5,0]],123,contest_id)
+    RoomSupervisor.movement([[5,0],[7,0]],123,contest_id)
+    RoomSupervisor.movement([[5,1],[4,1]],456,contest_id)
+    RoomSupervisor.movement([[2,1],[3,1]],123,contest_id)
 
-    # 验证 contest_id 对应的进程已经存在
-    moves = [[5,0],[4,0]]
-#    moves = [[2,0],[3,0]]
-    capture = [0,0]
-    res = RoomServer.movement(pid,moves,capture)
-    IO.inspect(res)
 
-    assert is_pid(pid)
 
   end
 

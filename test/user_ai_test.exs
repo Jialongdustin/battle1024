@@ -14,10 +14,10 @@ defmodule Mongo.UserAi do
     end
 
     test "insert ai" do
-      user_id = 1
-      ai_name = "B22"
+      user_id = 4
+      ai_name = "4!4"
       git_url = "ccc.com"
-      tag = "3.0"
+      tag = "1.0"
 
       {:ok,user_info_list_before} = Battle.Mongo.UserAi.get_ai_list_by_userId(user_id)
       initial_length = length(user_info_list_before)

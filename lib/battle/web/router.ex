@@ -98,7 +98,7 @@ defmodule Battle.Web.Router do
     |> Conn.halt()
   end
 
-  # 获取战斗力排行榜
+  # 获取胜率排行榜
   get "/contest/ranking_list" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
@@ -206,7 +206,6 @@ defmodule Battle.Web.Router do
     {:ok,user_info} = Token.verify_token_battle(moment_token)
     user_id = user_info.user_id
     contest_id = user_info.ext.account_id
-
 
     case RoomSupervisor.query(user_id,contest_id) do
       {:ok, detail} ->

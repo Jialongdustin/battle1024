@@ -39,8 +39,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [] ->
         {:error, "room not found"}
     end
-
-
   end
 
   def movement(moves,user_id,contest_id) do
@@ -56,8 +54,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [] ->
         {:error, "room not found"}
     end
-
-
   end
 end
 

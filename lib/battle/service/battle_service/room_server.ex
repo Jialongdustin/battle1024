@@ -42,7 +42,6 @@ defmodule Battle.Service.BattleService.RoomServer do
       black_joined: false,
       count_white: 0,
       count_black: 0
-
     }
 
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(contest_id))
@@ -68,6 +67,13 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def get_state(pid) do
     GenServer.call(pid, :get_state)
+  end
+
+  def handle_call({:terminate_game,}, _from, state) do
+    # 持久化存储对局信息
+
+    Process.send(Battle.Service.BattleService.ThreadPool, {state.contest_id, state.group_name, state.group_key, state.app_name})
+    {:stop, :game_over, state}
   end
 
   def handle_call(:get_state, _from, state) do
@@ -108,7 +114,7 @@ defmodule Battle.Service.BattleService.RoomServer do
         board: state.board,
         available_step: nil
       }
-      {:reply, {:ok, detail}, state}
+      {:reply, {:error, detail}, state}
     end
   end
 
@@ -305,7 +311,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       early_hand: !white,
                       can_move: can_move,
                       steps: state.steps++[move_detail],
-                      count_white: state.count_white+1
+                      count_black: state.count_black+1
                     },
                     %{
                       code: Map.get(@code_info,101),
@@ -326,14 +332,13 @@ defmodule Battle.Service.BattleService.RoomServer do
                     moves: moves
                   }
                   {
-
                     %{
                       state |
                       board: new_board,
                       early_hand: !white,
                       can_move: can_move,
                       steps: state.steps++[move_detail],
-                      count_white: state.count_white+1
+                      count_black: state.count_black+1
                     },
                     %{
                       code: Map.get(@code_info,101),
@@ -347,7 +352,6 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
                 _ ->
                   # 吃了子还能继续吃，还是当前棋子的回合
-
                   # 返回可移动路径给机器人
                   available_step =
                     Enum.map(can_move, fn list ->
@@ -366,7 +370,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       early_hand: white,
                       can_move: can_move,
                       steps: state.steps++[move_detail],
-                      count_white: state.count_white+1
+                      count_black: state.count_black+1
                     },
                     %{
                       code: Map.get(@code_info,100),

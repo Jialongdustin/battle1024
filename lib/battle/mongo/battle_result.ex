@@ -16,8 +16,9 @@ defmodule Battle.Mongo.BattleResult do
   field :memory_cost_2, {:list,:string}, required: true
   field :early_hand, :integer, required: true
   field :total_step_2, {:list, :integer}, required: true
+  field :date, :datetime, required: true
 
-#  Battle.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
+#  Battle.Mongo.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
 
 
   def save_battle_result(users,contest_id,winner,time_costs,memory_costs,early_hand,total_steps) do
@@ -28,7 +29,8 @@ defmodule Battle.Mongo.BattleResult do
       time_cost_2: time_costs,
       memory_cost_2: memory_costs,
       early_hand: early_hand,
-      total_step_2: total_steps
+      total_step_2: total_steps,
+      date: Ejoy.Bson.utc_now()
     }
     __MODULE__.psave(info)
   end
@@ -77,4 +79,23 @@ defmodule Battle.Mongo.BattleResult do
              {:ok, self_and_opponent}
     end
   end
+
+  def get_battle_results() do
+    case pquery(%{}) do
+      nil -> {:error,"empty battle"}
+      res ->
+        {:ok,res |> Enum.map(&__MODULE__.to_raw/1)|>Enum.map(fn message ->  [message.user_id_2,message.winner] end)}
+    end
+  end
+
+  def get_battle_results_within_24_hour() do
+    time_query = Battle.Utils.GetTime24.get_time()
+    case __MODULE__.pquery(time_query) do
+      nil -> {:error, "empty rank list" }
+      res ->{:ok, res |> Enum.map(fn message ->
+        message |> __MODULE__.to_raw()
+      end)}
+    end
+  end
+
 end
