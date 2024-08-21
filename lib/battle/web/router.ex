@@ -51,11 +51,11 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        body = Ejoy.Jiffy.encode!(%{error: reason})
+      {:error, :one_code_error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
 
       _ ->
@@ -84,10 +84,10 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        body = Ejoy.Jiffy.encode!(%{error: reason})
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
 
       _ ->
@@ -116,10 +116,10 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        body = Ejoy.Jiffy.encode!(%{error: reason})
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
 
       _ ->
