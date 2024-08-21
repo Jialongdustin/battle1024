@@ -50,7 +50,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
     workers = List.delete(state.workers, worker)
 
     # 创建卸载任务单
-    terminate_service(group_key, app_name)
+    {cpu, mem} = terminate_service(group_key, app_name)
 
     # 如果队列中有任务，将其分配给空闲的 worker
     case :queue.out(state.queue) do
@@ -58,7 +58,6 @@ defmodule Battle.Service.BattleService.ThreadPool do
         next_contest_id = Tuple.to_list(next_task) |> Enum.at(2)
         new_worker = Task.async(fn -> reuse_group_for_task(next_task, {group_name, group_key, app_name}) end)
         {:noreply, %{state | workers: [new_worker | workers], busy: Map.put(busy, next_contest_id, new_worker), queue: new_queue}}
-
       {:empty, _} ->
         {:noreply, %{state | workers: workers, busy: busy}}
     end
@@ -85,8 +84,9 @@ defmodule Battle.Service.BattleService.ThreadPool do
   end
 
   defp terminate_service(groupKey, appName) do
-    create_uninstalls(groupKey, appName)
+    result = create_uninstalls(groupKey, appName)
     :timer.sleep(3000)
+    result
   end
 
   defp create_deploys(groupKey, appName, user_id1, user_id2, players) do

@@ -4,73 +4,67 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   require Logger
 
   alias Battle.Service.BattleService.RoomServer
+  alias Battle.Service.BattleService.ConnectionStore
   alias Battle.Utils.Token
-
 
   def start_link(_) do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   def init(:ok) do
+    :ets.new(:pid_info, [:named_table, :public, read_concurrency: true])
     opts = [strategy: :one_for_one]
     DynamicSupervisor.init(opts)
   end
 
-  def init_game(white, black, contest_id, groupName, groupKey, appName) do
-    child_spec = {RoomServer, white: white, black: black, contest_id: contest_id, groupName: groupName, groupKey: groupKey, appName: appName}
-    DynamicSupervisor.start_child(__MODULE__, child_spec)
+  def init_game(white, black, contest_id) do
+    # child_spec_server = {RoomServer, white: white, black: black, contest_id: contest_id}
+    child_spec_server = %{
+      id: RoomServer,
+      start: {RoomServer, :start_link, [%{white: white, black: black, contest_id: contest_id}]},
+      restart: :transient,
+      type: :worker
+    }
+    DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     {:ok, contest_id}
   end
 
-  def join(moment_token) do
-    Logger.info(moment_token)
-#    {:ok,user_info} = Token.verify_token_battle(moment_token)
-#    user_id = user_info.user_id
-#    contest_id = user_info.ext.account_id
-
-#    case Registry.lookup(Battle.RoomRegistry,contest_id) do
-#      [{pid,_}] ->
-#        RoomServer.add_player(pid,user_id)
-#      [] ->
-#        {:error, "room not found"}
-#    end
-
-    detail = %{
-      code: 100,
-      black: "user_id_1",
-      white: "user_id_2"
-    }
-
-    {:ok, detail}
+  def query(caller, user_id, contest_id) do
+    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+    case RoomServer.query(pid, user_id) do
+        {:ok, detail} ->
+          # 当前询问回合，写回成功
+          {:ok, detail}
+        {:error, detail} ->
+          :ets.insert(:pid_info, {contest_id, caller})
+          # 不是当前询问回合，写回错误
+          {:error, detail}
+    end
   end
 
-  def battle_handler(handle_detail, moment_token) do
-    [[x0, y0], [x1, y1]] = Jason.decode!(handle_detail)
-    Logger.info("#{x0}<>   <>#{y0}<>   <>#{x1}<>   <>#{y1}")
-    Logger.info(moment_token)
-
-#    {:ok,user_info} = Token.verify_token_battle(moment_token)
-##    user_id = user_info.user_id
-#    contest_id = user_info.ext.account_id
-#
-##    case Registry.lookup(Battle.RoomRegistry,contest_id) do
-##      [{pid,_}] ->
-##        RoomServer.movement(pid,x0,y0,x1,y1)
-##      [] ->
-##        {:error, "room not found"}
-##    end
-
-    detail = %{
-      code: "init",
-      winner: "",
-      white_king: "user_id_2",
-      black_king: "user_id_1",
-      opponent_step: [[1,1],[1,3]],
-      captured: [[1,2]]
-    }
-    {:ok, detail}
+  def movement(caller, moves, user_id, contest_id) do
+    case Registry.lookup(Battle.RoomRegistry, contest_id) do
+      [{pid, _}] ->
+        case RoomServer.movement(pid, user_id, moves) do
+          {:ok, success_detail} ->
+            # 将your_step改为opponent_step
+            move_detail = Map.get(success_detail, :your_step)
+            new_detail = success_detail
+            |> Map.put(:opponent_step, move_detail)
+            |> Map.delete(:your_step)
+            if success_detail.winner do
+              RoomServer.terminate_game(pid)
+            else
+              :ets.insert(:pid_info, {contest_id, caller})
+            end
+            [{_, dest}] = :ets.lookup(:pid_info, contest_id)
+            send(dest, {:new_detail, new_detail})
+            {:ok, success_detail}
+          {:error, error_detail} ->
+            {:error, error_detail}
+        end
+      [] ->
+        {:error, "room not found"}
+      end
   end
 end
-# alias Battle.Service.BattleService.RoomSupervisor
-# RoomSupervisor.join_game("A", "B")
-# Logger.configure(level: :none)

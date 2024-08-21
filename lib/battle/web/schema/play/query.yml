@@ -1,10 +1,10 @@
-api: "/play/one_step_chess"
+api: "/play/query"
 request: 
   type: object
   properties:
-    move:
+    moment_tokne:
       type: string
-  required: [move]
+  required: [moment_token]
 
 response:
   type: object

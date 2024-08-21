@@ -8,10 +8,10 @@ defmodule Battle.Web.Router do
   alias Battle.Utils.Token
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomServer
-  alias Battle.BattleInfo
-  alias Battle.BattleStatistics
-  alias Battle.RankList
-  alias Battle.UserAi
+  alias Battle.Mongo.BattleInfo
+  alias Battle.Mongo.BattleStatistics
+  alias Battle.Mongo.RankList
+  alias Battle.Mongo.UserAi
   require Logger
 
   plug(:match)
@@ -100,7 +100,7 @@ defmodule Battle.Web.Router do
     end
   end
 
-  # 测试AI
+  # 创建测试比赛, 供用户自由调试
   json_rpc "/contest/test_AI", "schema/play/test_AI" do
     ai_name = conn.params["ai_name"]
     git_url = conn.params["git_url"]
@@ -257,24 +257,80 @@ defmodule Battle.Web.Router do
     end
   end
 
-  ## battle
-  # 加入棋局, 棋局初始化
+  # kun上发布机器人应用后会发这个请求初始化接口
   json_rpc "/play/init", "schema/play/init" do
-    user_id = params["user_id"]
-    body = Ejoy.Jiffy.encode!(%{message: "ok"})
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()
+    token = params["token"]
+    {:ok, user_info} = Token.verify_token_battle(token)
+    user_id = String.to_integer(user_info.user_id)
+    contest_id = user_info.ext.account_id
+
+    # 检查是否是白棋, 因为对局总是白棋先行
+    case RoomSupervisor.query(self(), user_id, contest_id) do
+      {:ok, detail} ->
+        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+        RoomServer.start_countdown(pid)
+        RoomServer.start_time_step(pid, user_id)
+        body = Ejoy.Jiffy.encode!(detail)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+      {:error, _} ->
+        receive do
+          {:new_detail, detail} ->
+            if detail.winner == nil do
+              [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+              RoomServer.start_countdown(pid)
+              RoomServer.start_time_step(pid, user_id)
+            end
+            body = Ejoy.Jiffy.encode!(detail)
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, body)
+            |> Conn.halt()
+        end
+    end
   end
 
   # 下棋
-  json_rpc "/play/one_step_chess", "schema/play/one_step_chess" do
+  json_rpc "/play/move", "schema/play/move" do
+    token = params["token"]
     move = params["move"]
-    body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok"})
-    conn
-    |> Conn.put_resp_content_type("application/json")
-    |> Conn.send_resp(200, body)
-    |> Conn.halt()   #  用于结束连接的处理, 防止后续的Plug继续对该连接进行处理
+    {:ok, user_info} = Token.verify_token_battle(token)
+    user_id = String.to_integer(user_info.user_id)
+    contest_id = user_info.ext.account_id
+    # 处理棋步
+    case RoomSupervisor.movement(self(), move, user_id, contest_id) do
+      {:ok, response} ->
+        if response.winner do
+          body = Ejoy.Jiffy.encode!(response)
+          conn
+          |> Conn.put_resp_content_type("application/json")
+          |> Conn.send_resp(200, body)
+          |> Conn.halt()
+        else
+          [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+          RoomServer.record_time_step(pid, user_id)
+        end
+        receive do
+          {:new_detail, detail} ->
+            if detail.winner == nil do
+              [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+              RoomServer.start_countdown(pid)
+              RoomServer.start_time_step(pid, user_id)
+            end
+            body = Ejoy.Jiffy.encode!(detail)
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, body)
+            |> Conn.halt()
+        end
+      {:error, reason} ->
+        body = Ejoy.Jiffy.encode!(reason)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(400, %{"error" => reason})
+        |> Conn.halt()
+    end
   end
 end

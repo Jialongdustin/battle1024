@@ -1,7 +1,6 @@
-defmodule Battle.RankList do
+defmodule Battle.Mongo.RankList do
   use Ejoy.Db
   require Logger
-
   @db "battle"
   @collection "rank_list"
   @indexes [
@@ -15,36 +14,13 @@ defmodule Battle.RankList do
   field :date, :datetime, required: true
 
   def get_rank_list() do
-    date = DateTime.utc_now()
-
-    # 根据当前日期生成开始和结束时间的字符串
-    start_time_string = "#{Date.to_string(date)} 00:00:00"
-    end_time_string = "#{Date.to_string(date)} 23:59:59"
-
-    # 将字符串转换为 DateTime 类型
-    {:ok, start_time,_offset} = DateTime.from_iso8601("#{start_time_string}Z")
-    {:ok, end_time,_offset} = DateTime.from_iso8601("#{end_time_string}Z")
-
-#    mill = :erlang.system_time()
-
-    # 将 DateTime 转换为 Unix 时间戳（以毫秒为单位）
-    start = DateTime.to_unix(start_time, :millisecond)
-    last = DateTime.to_unix(end_time, :millisecond)
-
-#    Battle.RankList.get_rank_list()
-
-    time_query = %{
-      date: %{
-        "$gte": %Bson.UTC{ ms: start},
-        "$lte": %Bson.UTC{ ms: last}
-      }
-    }
+    time_query = Battle.Utils.GetTime24.get_time()
     Logger.info(time_query)
     case __MODULE__.pquery(time_query) do
       nil -> {:error, "empty rank list" }
-      res ->res |> Enum.map(fn message ->
+      res ->{:ok, res |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
-      end)
+      end)}
     end
   end
 
@@ -60,5 +36,6 @@ defmodule Battle.RankList do
     __MODULE__.psave(%{user_id: user_id, ai_name: ai_name, rate: rate, date: current_time})
     #UserAi.insert_ai(1,"Biu","git.com","1.0")
     #UserAi.get_ai_list_by_userId(1)
+
   end
 end

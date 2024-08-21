@@ -1,0 +1,243 @@
+defmodule Battle.BattleHandler do
+  require Logger
+
+  def dfs_lady(chess,i,j,color,n,m,pre_i,pre_j) do
+
+    best_paths =
+      Enum.reduce(pairwise([-1, 0, 1, 0, -1]), [], fn [qx, qy], acc ->
+        check_lady_direction(chess, i, j, qx, qy,true, pre_i, pre_j, color, n, m, acc)
+      end)
+    if best_paths == [], do: [[[i, j]]], else: best_paths
+  end
+
+  def dfs(chess, i, j, color, n, m) do
+
+    best_paths =
+        Enum.reduce(pairwise([-1, 0, 1, 0, -1]), [], fn [qx, qy], acc ->
+          check_normal_direction(chess, i, j, qx, qy, color, n, m, acc)
+        end)
+    if best_paths == [], do: [[[i, j]]], else: best_paths
+  end
+
+  defp check_lady_direction(chess, i, j, qx, qy, lady,pre_i, pre_j, color, n, m, best_paths) do
+    if {qx,qy} != {pre_i*(-1),pre_j*(-1)} do
+      {nx, ny} = {i + qx, j + qy}
+      explore_direction(chess, i, j, qx, qy, lady, color, n, m, best_paths, nx, ny)
+    else
+      best_paths
+    end
+  end
+
+  def explore_direction(chess, i, j, qx, qy, lady, color, n, m, best_paths, nx, ny) do
+    if nx >= 0 and nx < n and ny >= 0 and ny < m do
+      opponent_piece = Enum.at(Enum.at(chess, nx), ny)
+
+      if (color == "white" and opponent_piece in [3, 4]) or
+         (color == "black" and opponent_piece in [1, 2]) do
+        explore_capture(chess, i, j, qx, qy, lady, color, n, m, best_paths, nx, ny, nx + qx, ny + qy)
+      else
+        if opponent_piece == 0 do
+          explore_direction(chess, i, j, qx, qy, lady, color, n, m, best_paths, nx + qx, ny + qy)
+        else
+          best_paths
+        end
+      end
+    else
+      best_paths
+    end
+  end
+
+  def explore_capture(chess, i, j, qx, qy, lady, color, n, m, best_paths, nx, ny, rx, ry) do
+    if rx >= 0 and rx < n and ry >= 0 and ry < m and Enum.at(Enum.at(chess, rx), ry) == 0 do
+      temp = Enum.at(Enum.at(chess, nx), ny)
+
+      updates = [
+        # 修改初始位置值为0
+        {i, j, 0},
+        # 修改对手位置的值为0
+        {nx, ny, 0},
+        # 修改落点位置的值为初始位置的值
+        {rx, ry, Enum.at(Enum.at(chess, i), j)}
+      ]
+
+      new_chess =
+        Enum.reduce(updates, chess, fn {row, col, new_value}, acc ->
+          updated_row = List.replace_at(Enum.at(acc, row), col, new_value)
+          List.replace_at(acc, row, updated_row)
+        end)
+
+      new_best_paths =
+        dfs_lady(new_chess, rx, ry, color, n, m, qx, qy)
+        |> Enum.map(fn path -> [[i, j] | path] end)
+        |> Kernel.++(best_paths)
+
+      further_paths =
+        explore_capture(chess, i, j, qx, qy, lady, color, n, m, [], nx, ny, rx + qx, ry + qy)
+
+      Enum.reduce(further_paths, new_best_paths, fn path, acc -> [path | acc] end)
+    else
+      best_paths
+    end
+  end
+
+  defp check_normal_direction(chess, i, j, qx, qy,  color, n, m, best_paths) do
+    if (color == "white" and qx == -1) or (color == "black" and qx == 1) do
+      best_paths
+    else
+      {nx, ny} = {i + qx, j + qy}
+
+      if 0 <= nx and nx < n and 0 <= ny and ny < m and
+         ((Enum.at(Enum.at(chess, nx), ny) in [1, 2] and Enum.at(Enum.at(chess, i), j) == 3) or
+          (Enum.at(Enum.at(chess, nx), ny) in [3, 4] and Enum.at(Enum.at(chess, i), j) == 1)) do
+
+        {rx, ry} = {nx + qx, ny + qy}
+
+        if 0 <= rx and rx < n and 0 <= ry and ry < m and Enum.at(Enum.at(chess, rx), ry) == 0 do
+          updates = [
+            # 修改初始位置值为0
+            {i, j, 0},
+            # 修改对手位置的值为0
+            {nx, ny, 0},
+            # 修改落点位置的值为初始位置的值
+            {rx, ry, Enum.at(Enum.at(chess, i), j)}
+          ]
+
+          new_chess =
+            Enum.reduce(updates, chess, fn {row, col, new_value}, acc ->
+              updated_row = List.replace_at(Enum.at(acc, row), col, new_value)
+              List.replace_at(acc, row, updated_row)
+            end)
+
+          current_paths =
+            # 是否变成王
+            if rx == n-1 or rx == 0 do
+              dfs_lady(chess,rx,ry,color,n,m,qx,qy)
+            else
+              dfs(new_chess, rx, ry, color, n, m)
+            end
+
+          new_best_paths =
+            Enum.map(current_paths, fn path ->
+              [[i, j] | path]
+            end)
+
+          # 累积所有路径
+          best_paths ++ new_best_paths
+
+        else
+          best_paths
+        end
+      else
+        best_paths
+      end
+    end
+  end
+
+  def move_list(turkish_flag, white) do
+    flag = false
+    n = length(turkish_flag)
+    m = length(List.first(turkish_flag))
+
+    best_paths_overall =
+      for i <- 0..(n - 1), j <- 0..(m - 1), reduce: [] do
+        acc ->
+          paths =
+            case {white, Enum.at(Enum.at(turkish_flag, i), j)} do
+              {true, 1} -> dfs(turkish_flag, i, j, "white", n, m)
+              {true, 2} -> dfs_lady(turkish_flag, i, j, "white", n, m, 0, 0)
+              {false, 3} -> dfs(turkish_flag, i, j, "black", n, m)
+              {false, 4} -> dfs_lady(turkish_flag, i, j, "black", n, m, 0, 0)
+              _ -> [[[i, j]]]
+            end
+
+          if paths != [[[i, j]]] do
+            Enum.reduce(paths, acc, fn path, acc_inner ->
+              cond do
+                acc_inner == [] or length(path) > length(hd(acc_inner)) ->
+                  [path]
+
+                length(path) == length(hd(acc_inner)) ->
+                  [path | acc_inner]
+
+                true ->
+                  acc_inner
+              end
+            end)
+          else
+            acc
+          end
+      end
+
+
+    if best_paths_overall == [] do
+      best_paths_overall = for i <- 0..(n - 1), j <- 0..(m - 1), reduce: [] do
+        acc ->
+          current_piece = Enum.at(Enum.at(turkish_flag, i), j)
+
+          cond do
+            current_piece == 1 and white ->
+              acc ++ get_free_list(turkish_flag, i, j, 1)
+
+            current_piece == 2 and white ->
+              acc ++ get_free_list(turkish_flag, i, j, 2)
+
+            current_piece == 3 and not white ->
+              acc ++ get_free_list(turkish_flag, i, j, 3)
+
+            current_piece == 4 and not white ->
+              acc ++ get_free_list(turkish_flag, i, j, 4)
+
+            true ->
+              acc
+          end
+      end
+      {best_paths_overall,false}
+    else
+      {best_paths_overall,true}
+    end
+  end
+
+  def get_free_list(turkish_flag, i, j, chess_type) do
+    n = length(turkish_flag)
+    m = length(List.first(turkish_flag))
+
+    for [dx, dy] <- pairwise([-1, 0, 1, 0, -1]), reduce: [] do
+      acc ->
+        case chess_type do
+          1 -> if dx != -1 and valid_move?(turkish_flag, i + dx, j + dy, n, m), do: [[[i, j], [i + dx, j + dy]] | acc], else: acc
+          3 -> if dx != 1 and valid_move?(turkish_flag, i + dx, j + dy, n, m), do: [[[i, j], [i + dx, j + dy]] | acc], else: acc
+          2 -> explore_free_list(turkish_flag, i, j, dx, dy, i+dx, j+dy, acc, n, m)
+          4 -> explore_free_list(turkish_flag, i, j, dx, dy, i+dx, j+dy, acc, n, m)
+          _ -> acc
+        end
+    end
+  end
+
+  def explore_free_list(turkish_flag, i, j, dx, dy, nx, ny, res, n, m) do
+
+    if valid_move?(turkish_flag, nx, ny, n, m) do
+      explore_free_list(turkish_flag, i, j, dx, dy, nx+dx, ny+dy, [[[i, j], [nx, ny]] | res], n, m)
+    else
+      res
+    end
+  end
+
+  defp valid_move?(turkish_flag, nx, ny, n, m) do
+    res = nx >= 0 and nx < n and ny >= 0 and ny < m and Enum.at(Enum.at(turkish_flag, nx), ny) == 0
+
+    res
+  end
+
+  defp update_best_paths(paths, initial_pos, acc) do
+    cond do
+      paths == [[initial_pos]] -> acc
+      acc == [] or length(hd(paths)) > length(hd(acc)) -> paths
+      length(hd(paths)) == length(hd(acc)) -> paths ++ acc
+      true -> acc
+    end
+  end
+
+  def pairwise(list) do
+    Enum.chunk_every(list, 2, 1, :discard)
+  end
+end

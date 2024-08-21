@@ -2,17 +2,26 @@ api: "/play/init"
 request:
   type: object
   properties:
-    user_id: 
+    token:
       type: string
-    moment_token:
-      type: string
+  required: [token]
 
 response:
   type: object
   properties:
+    code:
+      type: string
+    winner:
+      type: string
     board:
       type: array
       items:
         type: array
-        items: 
-          type: integer
+        items:
+          type: number
+    available_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: number

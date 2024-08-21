@@ -9,7 +9,7 @@ defmodule Battle.Service.WebService.Kun do
   @appNames ["battle-player-python", "battle-player-java"]
 
   alias ElixirSense.Log
-  alias Battle.UserAi
+  alias Battle.Mongo.UserAi
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
 
@@ -175,31 +175,38 @@ defmodule Battle.Service.WebService.Kun do
     case send_post(path, content) do
       %{"code" => 0, "data" => %{"task" => task}} ->
         task
+        {task["env"]["config_cpu"], task["env"]["config_mem"]}
       _ ->
         :error
     end
   end
 
-  #  # Kun.create_uninstall_task_test(%{"service_group" => "plat1024", "service_name" => "battle-service"})
-  #  def create_uninstall_task_test(info) do
-  #   path = "/api/env/#{@query_namespace}/createUninstallTask"
-  #   content = %{
-  #     "services": [
-  #       %{
-  #         "serviceGroup": info["service_group"],
-  #         "service": info["service_name"],
-  #         "deleteExclusivePvc": false
-  #       }
-  #     ],
-  #     "userId": @userId
-  #   }
-  #   case send_post(path, content) do
-  #     %{"code" => 0, "data" => %{"task" => task}} ->
-  #       task
-  #     _ ->
-  #       :error
-  #   end
-  # end
+   # Kun.create_uninstall_task_test()
+   def create_uninstall_task_test() do
+    path = "/api/env/#{@query_namespace}/createUninstallTask"
+    content = %{
+      "services": [
+        %{
+          "serviceGroup": "plat1024-players1",
+          "service": "battle-player-python",
+          "deleteExclusivePvc": true
+        },
+        %{
+          "serviceGroup": "plat1024-players1",
+          "service": "battle-player-lua",
+          "deleteExclusivePvc": true
+        }
+      ],
+      "userId": @userId
+    }
+    case send_post(path, content) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        task
+        # {task["env"]["config_cpu"], task["env"]["config_mem"]}
+      _ ->
+        :error
+    end
+  end
 
   # Kun.get_idle_service()
   def get_idle_service() do

@@ -1,7 +1,7 @@
-defmodule Battle.BattleStatistics do
+defmodule Battle.Mongo.BattleStatistics do
+
   use Ejoy.Db
   require Logger
-
   @db "battle"
   @collection "battle_statistics"
 #  @indexes [
@@ -13,10 +13,11 @@ defmodule Battle.BattleStatistics do
   field :submit_count, :integer, required: true
   field :average_step, :integer, required: true
 
+
   def query_statistics_info() do
     case __MODULE__.pquery(%{}) do
-      nil -> {:error,"no info in battle_statistics"}
-      res -> {:ok, res|> Enum.map( fn message -> message |> __MODULE__.to_raw() end)|>List.first()}
+      nil -> {:error, "no info in battle_statistics"}
+      res -> {:ok, res|> Enum.map( fn message -> message |> __MODULE__.to_raw() end)|> List.first()}
     end
   end
 
@@ -26,9 +27,10 @@ defmodule Battle.BattleStatistics do
   end
 
   def increase_submit() do
-    {:ok,info} = query_statistics_info
+    {:ok, info} = query_statistics_info
     bson_id = info._id
     count = info.submit_count+1
     __MODULE__.pupdate(%{_id: bson_id}, %{info | submit_count: count})
   end
+
 end
