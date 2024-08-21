@@ -1,7 +1,7 @@
 defmodule Battle.Web.Router do
   use Plug.Router
   use Ejoy.Plug.ErrorHandler
-  use Ejoy.Plug.JsonResp2 , return_code_module: Battle.Utils.ReturnCode
+  use Ejoy.Plug.JsonResp2, return_code_module: Battle.Utils.ReturnCode
 
   alias Plug.Conn
   alias Battle.Service.WebService.Auth
@@ -12,6 +12,7 @@ defmodule Battle.Web.Router do
   alias Battle.Mongo.BattleStatistics
   alias Battle.Mongo.RankList
   alias Battle.Mongo.UserAi
+  alias Battle.Mongo.BattleResult
   require Logger
 
   plug(:match)
@@ -51,8 +52,11 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        body = Ejoy.Jiffy.encode!(%{error: reason})
+      # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+      {:error, reason} ->
+        Logger.error("Verification failed: #{inspect(reason)}")
+        body = Ejoy.Jiffy.encode!(%{error: "Permission refused"})
+
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(403, body)
@@ -135,22 +139,28 @@ defmodule Battle.Web.Router do
   # 获取某个用户所有对局信息
   get "/user/all_contests_info" do
     token = conn.params["moment_token"]
+
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        {:ok, contest} = BattleResult.get_battle_result_by_user_id(user_id)
-        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: contest})
+        {:ok, contest} = BattleResult.get_battle_result_by_user_id(String.to_integer(user_id))
+        body = Ejoy.Jiffy.encode!(%{code: 200, state: contest})
+
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, reason} ->
         body = Ejoy.Jiffy.encode!(%{error: reason})
+
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(403, body)
         |> Conn.halt()
+
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(500, body)
@@ -158,17 +168,50 @@ defmodule Battle.Web.Router do
     end
   end
 
-  # 获取战斗力排行榜
-  get "/contest/ranking_list" do
+  get "/user/rank_info" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
-        message = case RankList.get_rank_list() do
-          {:ok, rank_list} ->
-            %{rank_list: rank_list}
-          {:error, message} ->
-            %{error: message}
-        end
+
+        {:ok,rank_info} = RankList.get_rank_by_user_id(String.to_integer(user_id))
+        body = Ejoy.Jiffy.encode!(%{code: 200, state: rank_info})
+
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, reason} ->
+        body = Ejoy.Jiffy.encode!(%{error: reason})
+
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(403, body)
+        |> Conn.halt()
+
+      _ ->
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+  # 获取胜率排行榜
+  get "/contest/ranking_list" do
+    moment_token = conn.params["moment_token"]
+    case Token.verify_token(moment_token) do
+      {:ok, _} ->
+        message =
+          case RankList.get_rank_list() do
+            {:ok, rank_list} ->
+              %{code: 200, rank_list: rank_list}
+            {:error, message} ->
+              %{code: 403, error: message}
+          end
+
         body = Ejoy.Jiffy.encode!(message)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -188,12 +231,21 @@ defmodule Battle.Web.Router do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, _} ->
-        message =  case BattleStatistics.query_statistics_info() do
-          {:ok, battle_statistics} ->
-            %{battle_statistics: battle_statistics}
-          {:error, message} ->
-            %{error: message}
-        end
+        message =
+          case BattleStatistics.query_statistics_info() do
+            {:ok, battle_statistics} ->
+              %{
+                code: 200,
+                average_step: battle_statistics.average_step,
+                average_time_cost: battle_statistics.average_time_cost,
+                submit_count: battle_statistics.submit_count,
+                user_count: battle_statistics.user_count
+              }
+
+            {:error, message} ->
+              %{error: message}
+          end
+
         body = Ejoy.Jiffy.encode!(message)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -333,4 +385,5 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
     end
   end
+
 end

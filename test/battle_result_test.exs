@@ -24,4 +24,10 @@ defmodule BattleTest do
     IO.inspect(res)
     assert Enum.any?(res, fn element -> element == winner end)
   end
+
+  test "get_battle_by user id" do
+    res = BattleResult.get_battle_result_by_user_id(1)
+
+    IO.puts("=======")
+  end
 end

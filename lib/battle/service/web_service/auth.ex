@@ -32,8 +32,7 @@ defmodule Battle.Service.WebService.Auth do
         from_product_code = Map.get(resp, "from_product_code")
         {:ok,
           %{
-            account: account, access_token: access_token,
-            expires_in: expires_in, from_product_code: from_product_code,
+
             moment_token: moment_token
 
           }

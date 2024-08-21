@@ -33,7 +33,10 @@ defmodule BattleTest.RoomServerTest do
     {:ok,after_res} = BattleStatistics.query_statistics_info()
     assert pre_res.submit_count == after_res.submit_count-1
   end
+
   test "calculate average" do
+
+    {:ok,moment_token} = Battle.Utils.Token.generate_token("1")
     {:ok,pre_res} = BattleStatistics.query_statistics_info()
 
     steps = 40

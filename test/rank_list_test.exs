@@ -9,7 +9,8 @@ defmodule BattleTest do
   alias Battle.Service.WebService.RankList
 
   test "calculate rate" do
-    RankList.get_battle_info()
+    res = RankList.get_battle_info()
+    IO.inspect(res)
   end
 
   test "insert into rank list db" do
@@ -24,5 +25,10 @@ defmodule BattleTest do
     end)
     # 检查所有的 sanitized_user_infos 是否都在 sanitized_get_infos 中
     assert Enum.all?(user_infos, fn user_info -> user_info in sanitized_get_infos end)
+  end
+
+  test "query single rank" do
+    {:ok, single_info} = Battle.Mongo.RankList.get_rank_by_user_id(5)
+    IO.inspect(single_info)
   end
 end

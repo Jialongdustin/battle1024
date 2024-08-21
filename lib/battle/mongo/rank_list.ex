@@ -1,6 +1,9 @@
 defmodule Battle.Mongo.RankList do
   use Ejoy.Db
+
   require Logger
+
+  alias Battle.Mongo.UserAi
   @db "battle"
   @collection "rank_list"
   @indexes [
@@ -18,18 +21,53 @@ defmodule Battle.Mongo.RankList do
   def get_rank_list() do
     time_query = Battle.Utils.GetTime24.get_time()
     Logger.info(time_query)
-    case __MODULE__.pquery(time_query) do
+    case __MODULE__.pquery_sort(time_query,[rate: -1]) do
       nil -> {:error, "empty rank list" }
-      res ->{:ok, res |> Enum.map(fn message ->
-        message |> __MODULE__.to_raw()
-      end)}
+      res ->
+        details = res |> Enum.map(fn message ->
+          message = message |> __MODULE__.to_raw()
+          {_, ai_info} = UserAi.get_newest_ai_by_userId(message.user_id)
+
+          %{
+            ai_name: ai_info.ai_name,
+            use_id: ai_info.user_id,
+            rate: message.rate
+          }
+        end)
+
+        {:ok, details}
     end
   end
 
   def get_rank_by_user_id(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       nil ->{:error, "user_id error"}
-      res ->{:ok, res|>__MODULE__.to_raw()}
+      res ->
+        detail =
+          case res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) do
+            [] ->
+              {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+
+              {_,cnt} = UserAi.count_user(user_id)
+              %{
+                user_id: user_id,
+                rate: 0,
+                last_submit_date: user_info.create_time,
+                count: cnt
+              }
+            info ->
+              {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
+
+              {_,cnt} = UserAi.count_submit(user_id)
+              %{
+                user_id: user_id,
+                rate: info.rate,
+                last_submit_date: user_info.create_time,
+                count: cnt
+              }
+          end
+
+        {:ok, detail}
     end
   end
 

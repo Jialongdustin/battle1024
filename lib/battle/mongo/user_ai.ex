@@ -23,6 +23,8 @@ defmodule Battle.Mongo.UserAi do
   end
 
   def get_all_gits() do
+#    {:ok,moment_token} = Battle.Utils.Token.generate_token("5")
+    Battle.Mongo.UserAi.get_newest_ai_by_userId(1)
     case __MODULE__.pquery(%{}) do
       nil ->{:error,"no user_info"}
       res ->{:ok,res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url,tag: message.tag} end)}
@@ -54,17 +56,11 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-  def count_user() do
-    res = __MODULE__.paggregate([
-      %{"$match": %{}},
-      %{
-        "$group": %{
-          _id: "$user_id",
-          num: %{"$sum": 1}
-        }
-      }
-])
-
+  def count_user(user_id) do
+    case __MODULE__.pcount(%{user_id: user_id}) do
+      {:ok, cnt} -> {:ok, cnt}
+      _ -> {:error, 0}
+    end
   end
 
   def insert_ai(user_id, ai_name, git_url, tag) do

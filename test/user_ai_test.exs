@@ -64,8 +64,8 @@ defmodule Mongo.UserAi do
 
     test "get gits and user_infos"do
 
-    user_id = 3
-    ai_name = "AI_One"
+    user_id = 5
+    ai_name = "AI_555"
     git_url = "http://example.com/repo1.git"
     tag = "1.0"
 

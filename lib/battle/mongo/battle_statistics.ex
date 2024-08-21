@@ -12,6 +12,8 @@ defmodule Battle.Mongo.BattleStatistics do
   field :user_count, :integer, required: true
   field :submit_count, :integer, required: true
   field :average_step, :float, required: true
+  field :average_time_cost, :integer, required: true
+  field :last_submit_time, :datetime, required: true
 
   def query_statistics_info() do
     case __MODULE__.pquery(%{}) do
@@ -20,8 +22,15 @@ defmodule Battle.Mongo.BattleStatistics do
     end
   end
 
-  def save_statistics_info(user_count, submit_count, average_step) do
-    info = %{user_count: user_count, submit_count: submit_count, average_step: average_step}
+  def save_statistics_info(user_count, submit_count, average_step,average_time_cost) do
+    update_time = Ejoy.Bson.utc_now()
+    info = %{
+      user_count: user_count,
+      submit_count: submit_count,
+      average_step: average_step,
+      average_time_cost: average_time_cost,
+      last_submit_time: update_time
+    }
     __MODULE__.psave(info)
   end
 
@@ -50,6 +59,20 @@ defmodule Battle.Mongo.BattleStatistics do
     bson_id = info._id
     count = (info.average_step*battle_count+steps)/(battle_count+1)
     __MODULE__.pupdate(%{_id: bson_id}, %{info | average_step: count})
+  end
+
+  def update_average_time_cost(battle_count,times) do
+    {:ok,info} = query_statistics_info
+    bson_id = info._id
+    count = (info.average_time_cost*battle_count+times/1000)/(battle_count+1)
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | average_time_cost: count})
+  end
+
+  def update_last_commit_time() do
+    {:ok,info} = query_statistics_info
+    bson_id = info._id
+    update_time = Ejoy.Bson.utc_now()
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | last_submit_time: update_time})
   end
 
 end
