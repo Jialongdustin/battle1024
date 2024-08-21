@@ -47,6 +47,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [{pid,_}] ->
         case RoomServer.movement(pid,user_id,moves) do
           {:ok,success_detail} ->
+            IO.inspect(success_detail)
             {:ok,success_detail}
           {:error,error_detail} ->
             {:error,error_detail}

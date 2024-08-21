@@ -77,7 +77,9 @@ defmodule Mongo.UserAi do
     end)
     end
 
-
+    test "count_user" do
+      IO.inspect(Battle.Mongo.UserAi.count_user())
+    end
 
 
 end

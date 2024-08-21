@@ -47,6 +47,26 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
+  def count_submit() do
+    case __MODULE__.pcount(%{}) do
+      {:ok, cnt} -> cnt
+      _ -> 0
+    end
+  end
+
+  def count_user() do
+    res = __MODULE__.paggregate([
+      %{"$match": %{}},
+      %{
+        "$group": %{
+          _id: "$user_id",
+          num: %{"$sum": 1}
+        }
+      }
+])
+
+  end
+
   def insert_ai(user_id, ai_name, git_url, tag) do
 
     info = %{user_id: user_id, ai_name: ai_name, git_url: git_url, tag: tag,create_time: Ejoy.Bson.utc_now()}

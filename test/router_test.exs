@@ -35,4 +35,25 @@ defmodule BattleTest.RouterTest do
       assert conn.status == 200
     end
   end
+
+  test "get rank list" do
+
+    {:ok,user_infos} = Battle.Mongo.RankList.get_rank_list()
+    IO.inspect(user_infos)
+    with_mock Battle.Utils.Token, [:passthrough],[
+      verify_token: fn
+        _ -> {:ok,"user join"}
+      end
+    ] do
+
+      conn =
+        :get
+        |>conn("/contest/ranking_list")
+        |>Router.call(@opts)
+        assert conn.state == :sent
+#        assert Enum.all?(user_infos, fn user_info -> user_info in Jason.decode!(conn.resp_body)  end)
+#        assert user_infos == Jason.decode!(conn.resp_body)
+        assert conn.status == 200
+    end
+  end
 end
