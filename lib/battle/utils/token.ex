@@ -9,11 +9,11 @@ defmodule Battle.Utils.Token do
 
   end
 
-  def generate_token(user_id, contest_id) do
-#    user_info = %{user_id: user_id, contest_id: contest_id}
-    moment_token = Holo.Moment.Token.new(contest_id, to_string(user_id), 2) |> to_string()
+  def generate_token(user_id,contest_id) do
+#    user_info = %{user_id: user_id,contest_id: contest_id}
+    moment_token = Holo.Moment.Token.new(contest_id,user_id, 2) |> to_string()
 
-    {:ok, moment_token}
+    {:ok,moment_token}
   end
 
   def verify_token(moment_token) do
@@ -38,4 +38,5 @@ defmodule Battle.Utils.Token do
         {:error, "permission deny"}
     end
   end
+
 end

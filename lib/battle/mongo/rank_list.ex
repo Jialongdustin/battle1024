@@ -13,6 +13,8 @@ defmodule Battle.Mongo.RankList do
   field :rate, :float, required: true
   field :date, :datetime, required: true
 
+
+
   def get_rank_list() do
     time_query = Battle.Utils.GetTime24.get_time()
     Logger.info(time_query)
@@ -38,4 +40,5 @@ defmodule Battle.Mongo.RankList do
     #UserAi.get_ai_list_by_userId(1)
 
   end
+
 end

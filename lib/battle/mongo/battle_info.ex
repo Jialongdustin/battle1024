@@ -1,4 +1,5 @@
 defmodule Battle.Mongo.BattleInfo do
+
   use Ejoy.Db
 
   require Logger
@@ -27,9 +28,5 @@ defmodule Battle.Mongo.BattleInfo do
         message |> __MODULE__.to_raw()
       end)}
     end
-  end
-
-  def remove_battle(contest_id) do
-    __MODULE__.pdelete(%{consest_id: contest_id}, false)
   end
 end

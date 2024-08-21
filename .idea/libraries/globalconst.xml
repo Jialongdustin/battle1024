@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="globalconst" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/globalconst/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/globalconst/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/globalconst/lib" />
+      <root url="file://$PROJECT_DIR$/deps/globalconst/lib" />
+      <root url="file://$PROJECT_DIR$/deps/globalconst/lib" />
+      <root url="file://$PROJECT_DIR$/deps/globalconst/lib" />
+    </SOURCES>
+  </library>
+</component>

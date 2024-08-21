@@ -10,8 +10,10 @@ defmodule Battle.Application do
         start: {Battle.Web.Supervisor, :start_link, []},
         type: :supervisor
       },
-      Battle.Service.BattleService.RoomSupervisor,
-      {Registry, keys: :unique, name: Battle.RoomRegistry},
+        {Registry, keys: :unique, name: Battle.RoomRegistry},
+      Battle.Service.BattleService.RoomSupervisor
+      # Starts a worker by calling: Battle.Worker.start_link(arg)
+      # {Battle.Worker, arg}
     ]
     opts = [strategy: :one_for_one, name: Battle.Supervisor]
     Supervisor.start_link(children, opts)
