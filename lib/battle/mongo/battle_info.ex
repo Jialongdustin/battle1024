@@ -1,5 +1,4 @@
 defmodule Battle.Mongo.BattleInfo do
-
   use Ejoy.Db
 
   require Logger
@@ -11,9 +10,9 @@ defmodule Battle.Mongo.BattleInfo do
   ]
   @cleanable false
 
-  field :contest_id, :integer, required: true
+  field :contest_id, :string, required: true
   field :steps, :integer, required: true
-  field :detail, :string, required: true
+  field :detail, {:list, :map}, required: true
 #  field :date, :datetime, required: true
 
   def insert_battle(contest_id, steps, detail) do
@@ -28,5 +27,9 @@ defmodule Battle.Mongo.BattleInfo do
         message |> __MODULE__.to_raw()
       end)}
     end
+  end
+
+  def remove_battle(contest_id) do
+    __MODULE__.pdelete(%{consest_id: contest_id}, false)
   end
 end

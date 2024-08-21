@@ -2,9 +2,11 @@ defmodule Battle.Service.WebService.Kun do
   @kun_api_url "https://kunapi.ejoy.com"
   @query_namespace "plat1024-platformbattle"
   @userId "453574"
-  @status_error 1
   @status_success 4
-  @build_name "platform-battle"
+  @productKey "plat1024"
+  @build_config_name "AI-player"
+  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4"]
+  @appNames ["battle-player-python", "battle-player-java"]
 
   alias ElixirSense.Log
   alias Battle.Mongo.UserAi
@@ -26,7 +28,7 @@ defmodule Battle.Service.WebService.Kun do
   # Kun.get_build_tasks()
   def get_build_tasks() do
     path = "/api/env/#{@query_namespace}/buildTasks"
-    %{"code" => 0, "data" => %{"buildTasks" => buildtasks}} = send_post(path, %{name: @build_name, currentPage: 1, pageSize: 5})
+    %{"code" => 0, "data" => %{"buildTasks" => buildtasks}} = send_post(path, %{name: @build_config_name, currentPage: 1, pageSize: 5})
     # Enum.map(buildtasks, fn task -> {id: task.id, status: task.status}) 1 错误, 2 挂起中, 3 运行中, 4 完成
     buildtasks
   end
@@ -37,29 +39,41 @@ defmodule Battle.Service.WebService.Kun do
         {:error, "build failed"}
       {:ok, gits} ->
         gits
-        |> Enum.map(fn info -> build_package(info) end)
+        |> Enum.map(fn info -> change_config(info) end)
     end
   end
 
-  # Kun.build_package(%{user_id: "545", git_url: "git@gitlab.alibaba-inc.com:wilson.wb/platform-battle-test.git", tag: "master"})
-  def build_package(info) do
+  # Kun.build_package(%{user_id: "222", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/docker_build.git", tag: "main"})
+  def change_config(info) do
     user_id = info.user_id
     git_url = info.git_url
     tag = info.tag
-    path = "/api/env/#{@query_namespace}/buildTask"
-    case send_put(path, %{name: @build_name, branch: tag, userId: @userId, method: 0, comment: "test"}) do
+    path = "/api/v2/product/#{@productKey}/buildConfig/#{@build_config_name}"
+    case send_put(path, %{autoBuild: false, gitRefsType: 0, gitUrl: git_url, refs: tag}) do
+      %{"code" => 0, "data" => data, "msg" => msg} ->
+        build_package(info)
+      _ ->
+        change_config(info)
+    end
+  end
+
+  def build_package(info) do
+    tag = info.tag
+    user_id = info.user_id
+    build_path = "/api/env/#{@query_namespace}/buildTask"
+    case send_put(build_path, %{name: @build_config_name, branch: tag, userId: @userId, method: 0}) do
       %{"code" => 0, "data" => %{"task" => task}} ->
-        status = 0
         package_id = task["id"]
+        package_name = task["name"]
         build_result_check(package_id)
-        %{user_id: user_id, package_id: package_id}
+        %{user_id: user_id, package_name: package_name}
       _ ->
         build_package(info)
     end
   end
 
   def build_result_check(package_id) do
-    :timer.sleep(10_000)
+    :timer.sleep(300_000)
     case get_build_result(package_id) do
       @status_success ->
         :ok
@@ -68,11 +82,167 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.get_build_result(10178294)
+  # Kun.get_build_result(10179621)
   def get_build_result(package_id) do
     path = "/api/env/#{@query_namespace}/buildTask?id=#{package_id}"
     %{"code" => 0, "data" => %{"task" => task}} = send_get(path, %{})
     task["status"]
+  end
+
+  # Kun.create_service_group()
+  def create_service_group(services) do
+    # package_msgs = start_build()
+    id = UUID.uuid4()
+    services_name = "battle-players#{id}"
+    services_key = "players#{id}"
+    groups = [
+      %{
+        "name": services_name,
+        "key": services_key,
+        "schdule": "",
+        "services": services
+      }
+    ]
+    content = %{groups: groups}
+    path = "/api/env/#{@query_namespace}/service/create"
+    case send_post(path, content) do
+      %{"code" => 0, "data" => data} ->
+        data
+    end
+    {:ok, %{name: services_name, key: services_key}}
+  end
+
+  # Kun.update_service_group()
+  def update_service_group(services, groupName, groupKey) do
+    path = "/api/env/#{@query_namespace}/serviceGroup/sync"
+    groups = [
+      %{
+        "name": groupName,
+        "key": groupKey,
+        "schdule": "",
+        "services": services
+      }
+    ]
+    case send_post(path, %{groups: groups}) do
+      %{"code" => 0, "data" => data} ->
+        data
+      _ ->
+        update_service_group(services, groupName, groupKey)
+    end
+  end
+
+  # Kun.create_deploy_task(%{contest_id: "111", package_name: "plat1024-battle-players:20240815173843"})
+  def create_deploy_task(services) do
+    path = "/api/env/#{@query_namespace}/createDeployTask"
+    content = %{
+      "services": services,
+      "userId": @userId
+    }
+    case send_post(path, content) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        id = task["ID"]
+        :timer.sleep(10_000)
+        get_deploy_result(id)
+      _ ->
+        create_deploy_task(services)
+    end
+  end
+
+  # Kun.get_deploy_result(11464803)
+  def get_deploy_result(id) do
+    path = "/api/env/#{@query_namespace}/task?id=#{id}"
+    case send_get(path, %{}) do
+      %{"code" => 0, "data" => %{"task" => %{"services" => services}}} ->
+        case Enum.all?(services, fn service -> service["status"] == "ready" end) do
+          true ->
+            {:ok, "deploy done"}
+          false ->
+            :timer.sleep(10_000)
+            get_deploy_result(id)
+        end
+      _ ->
+        {:error, "id not exists"}
+    end
+  end
+
+  # Kun.create_uninstall_task(%{"service_group" => "plat1024", "service_name" => "battle-service"})
+  def create_uninstall_task(services) do
+    path = "/api/env/#{@query_namespace}/createUninstallTask"
+    content = %{
+      "services": services,
+      "userId": @userId
+    }
+    case send_post(path, content) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        task
+        {task["env"]["config_cpu"], task["env"]["config_mem"]}
+      _ ->
+        :error
+    end
+  end
+
+   # Kun.create_uninstall_task_test()
+   def create_uninstall_task_test() do
+    path = "/api/env/#{@query_namespace}/createUninstallTask"
+    content = %{
+      "services": [
+        %{
+          "serviceGroup": "plat1024-players1",
+          "service": "battle-player-python",
+          "deleteExclusivePvc": true
+        },
+        %{
+          "serviceGroup": "plat1024-players1",
+          "service": "battle-player-lua",
+          "deleteExclusivePvc": true
+        }
+      ],
+      "userId": @userId
+    }
+    case send_post(path, content) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        task
+        # {task["env"]["config_cpu"], task["env"]["config_mem"]}
+      _ ->
+        :error
+    end
+  end
+
+  # Kun.get_idle_service()
+  def get_idle_service() do
+    Enum.flat_map(@service_groups, fn groupName ->
+      Enum.filter(@appNames, fn appName ->
+        get_service_stage(groupName, appName) == "idle"
+      end)
+      |> Enum.map(fn appName -> {groupName, appName} end)
+    end)
+    |> List.first()
+  end
+
+  # Kun.get_service_stage()
+  def get_service_stage(groupName, appName) do
+    path = "/api/env/#{@query_namespace}/services"
+    content = %{
+      currentPage: 1,
+      pageSize: 1,
+      servicesGroups: [groupName],
+      apps: [appName]
+    }
+    case send_post(path, content) do
+      %{"code" => 0, "data" => %{"services" => services}} ->
+        List.first(services)["stage"]
+      _ ->
+        {:error, "something wrong"}
+    end
+  end
+
+  # Kun.get_app_config_list("battle-player")
+  def get_app_config_list(appName) do
+    path = "/api/env/#{@query_namespace}/appConfig?appName=#{appName}"
+    case send_get(path, %{}) do
+      %{"code" => 0, "data" => %{"appConfigs" => appConfigs}} ->
+        appConfigs
+    end
   end
 
   def send_post(path, params) do
@@ -110,12 +280,20 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   def cal_content_md5(body) do
-    :crypto.hash(:md5, body) |> Base.encode64()  # 进行md5哈希运算，然后转为base64编码格式
+    message = :crypto.hash(:md5, body) |> Base.encode64()  # 进行md5哈希运算，然后转为base64编码格式
+    IO.puts("Date:")
+    IO.inspect DateTime.utc_now() |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    IO.puts("md5:")
+    IO.inspect(message)
+    message
   end
 
   def make_signature(path, headers, secret, method) do
     sign_bytes = get_bytes_to_sign(path, headers, method)
-    :crypto.mac(:hmac, :sha, secret, sign_bytes) |> Base.encode64()
+    message = :crypto.mac(:hmac, :sha, secret, sign_bytes) |> Base.encode64()
+    IO.puts("signature:")
+    IO.inspect(message)
+    message
   end
 
   def get_bytes_to_sign(path, headers, method) do

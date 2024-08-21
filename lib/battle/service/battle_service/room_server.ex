@@ -6,6 +6,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   @code_info %{
     100 => "your turn to move",
     101 => "move success, please wait until your opponent move",
+    102 => "winner occurred!!! no need to move",
     200 => "illegal movement, please try again",
     300 => "not your turn, please try again"
   }
@@ -33,7 +34,6 @@ defmodule Battle.Service.BattleService.RoomServer do
     groupKey = opts[:groupKey]
     appName = opts[:appName]
     {init_move, _} = Battle.BattleHandler.move_list(@board_init, true)
-
     initial_state = %{
       white: white,
       black: black,
@@ -45,21 +45,16 @@ defmodule Battle.Service.BattleService.RoomServer do
       steps: [],
       illegal_times: [0, 0],
       time_ref: nil,
-      white_joined: false,
-      black_joined: false,
       steps_white: 0,
       steps_black: 0,
       group_name: groupName,
       group_key: groupKey,
       app_name: appName,
-      mark_white: false,
-      mark_black: false,
       time_cost_white: 0,
       time_cost_black: 0,
       time_counter_white: 0,
-      time_counter_black: 0
+      time_counter_black: 0,
     }
-
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(contest_id))
   end
 
@@ -72,7 +67,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   # 玩家加入战斗
-
   def query(pid, user_id) do
     GenServer.call(pid, {:query, user_id})
   end
@@ -89,9 +83,8 @@ defmodule Battle.Service.BattleService.RoomServer do
     GenServer.call(pid, {:record_time_step, user_id})
   end
 
-  # 具体战斗逻辑
-
-  def movement(pid, user_id, moves) do
+   # 具体战斗逻辑
+   def movement(pid, user_id, moves) do
     GenServer.call(pid, {:movement, user_id, moves})
   end
 
@@ -107,117 +100,52 @@ defmodule Battle.Service.BattleService.RoomServer do
     case user_id == state.white do
       true ->
         {:reply, :ok, %{state | time_counter_white: DateTime.utc_now()}}
-
       false ->
         {:reply, :ok, %{state | time_counter_black: DateTime.utc_now()}}
     end
   end
 
-  def handle_call({:record_tome_step, user_id}, _from, state) do
+  def handle_call({:record_time_step, user_id}, _from, state) do
     case user_id == state.white do
       true ->
-        step_cost =
-          DateTime.utc_now()
-          |> DataTime.diff(state.time_counter_white, :millisecond)
-
+        step_cost = DateTime.utc_now()
+        |> DateTime.diff(state.time_counter_white, :millisecond)
         new_time_cost = state.time_cost_white + step_cost
-
         {:reply, step_cost, %{state | time_cost_white: new_time_cost}}
-
       false ->
-        step_cost =
-          DateTime.utc_now()
-          |> DataTime.diff(state.time_counter_black, :millisecond)
-
+        step_cost = DateTime.utc_now()
+        |> DateTime.diff(state.time_counter_black, :millisecond)
         new_time_cost = state.time_cost_black + step_cost
-
         {:reply, step_cost, %{state | time_cost_white: new_time_cost}}
     end
   end
 
   def handle_call(:terminate_game, _from, state) do
-
-    # 更新平均步数
-    battle_count = BattleResult.count_battle()
-    BattleResult.update_average_step(battle_count,state.steps_white + state.steps_black)
     # 每一局的信息
-    BattleInfo.insert_battle(state.contest_id, state.count_white + state.count_black, state.steps)
-    BattleResult.save_battle_result(
-      [state.white, state.black],
-      state.contest_id,
-      state.winner,
-      [state.time_cost_white, state.time_cost_black],
-      [],
-      state.white,
-      [state.steps_white, state.steps_black]
-    )
-#    user_count
-
-
-
-    Process.send(
-      Battle.Service.BattleService.ThreadPool,
-      {state.contest_id, state.group_name, state.group_key, state.app_name}
-    )
-
-    {:stop, :game_over, state}
+    BattleInfo.insert_battle(state.contest_id, state.steps_white + state.steps_black, state.steps)
+    BattleResult.save_battle_result([state.white, state.black], state.contest_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
+    # Process.send(Battle.Service.BattleService.ThreadPool, {state.contest_id, state.group_name, state.group_key, state.app_name})
+    {:stop, :normal, :ok, state}
   end
 
   def handle_call({:start_countdown, timeout}, _from, state) do
     if state.time_ref do
       Process.cancel_timer(state.time_ref)
     end
-
     new_ref = Process.send_after(self(), :execute_task, timeout)
-
-    new_state = %{state | time_ref: new_ref}
-
-    {:reply, :ok, new_state}
+    {:reply, :ok, %{state | time_ref: new_ref}}
   end
 
   def handle_call({:query, user_id}, from, state) do
-    winner =
-      case {count_piece([1, 2], state.board), count_piece([3, 4], state.board)} do
-        {0, _} -> state.black
-        {_, 0} -> state.white
-        _ -> nil
-      end
-
-    mark = !(winner == nil)
-
     if (user_id == state.white and state.early_hand == true) or
-         (user_id == state.black and state.early_hand == false) do
+    (user_id == state.black and state.early_hand == false) do
       detail = %{
         code: Map.get(@code_info, 100),
-        winner: winner,
-        board: state.board,
-        available_step: state.can_move,
-        mark_white: state.white,
-        mark_black: state.black
+        winner: nil,
       }
-
-      case state.early_hand do
-        true ->
-          {:reply, {:ok, %{detail | mark_white: mark}}, %{state | mark_white: mark}}
-
-        false ->
-          {:reply, {:ok, %{detail | mark_black: mark}}, %{state | mark_black: mark}}
-      end
+      {:reply, {:ok, detail}, state}
     else
-      detail = %{
-        code: Map.get(@code_info, 300),
-        winner: winner,
-        board: state.board,
-        available_step: nil
-      }
-
-      case state.early_hand do
-        true ->
-          {:reply, {:ok, detail}, %{state | mark_white: mark}}
-
-        false ->
-          {:reply, {:ok, detail}, %{state | mark_black: mark}}
-      end
+      {:reply, {:error, Map.get(@code_info, 300)}, state}
     end
   end
 
@@ -225,23 +153,27 @@ defmodule Battle.Service.BattleService.RoomServer do
     white = state.early_hand
     board = state.board
     move_list = state.can_move
+    winner =
+      case {count_piece([1, 2], board), count_piece([3, 4], board)} do
+        {0, _} -> state.black
+        {_, 0} -> state.white
+        _ -> nil
+      end
     is_match =
       Enum.any?(move_list, fn path ->
         path == moves
       end)
 
     # 如果路径正确需要更新棋盘
-
     case is_match do
       true ->
-        capture = get_captures(moves,state.board)
+        capture = get_captures(moves, state.board)
 
         # 最终被吃掉的所有棋子的位置
-        IO.inspect(capture)
         [[x0, y0] | _] = moves
         [x1, y1] = List.last(moves)
 
-        {node_value, white_king, black_king} = cal_black_white_and_node_value(moves,state.board)
+        {node_value, white_king, black_king} = cal_black_white_and_node_value(moves, state.board)
 
         # 获取所有的捕获位置，并将它们更新为 0
         update =
@@ -251,7 +183,6 @@ defmodule Battle.Service.BattleService.RoomServer do
                 {x0, y0, 0},
                 {x1, y1, node_value}
               ]
-
             _ ->
               # 将 captures 中的每一个捕获位置都更新为 0
               capture_updates =
@@ -273,43 +204,34 @@ defmodule Battle.Service.BattleService.RoomServer do
 
         {can_move, flag} = Battle.BattleHandler.move_list(new_board, !white)
 
-        # 如果有一方的棋子为零，另外一方获胜
-
-        winner =
-          case {count_piece([1, 2], new_board), count_piece([3, 4], new_board)} do
-            {0, _} -> state.black
-            {_, 0} -> state.white
-            _ -> nil
-          end
-
-        user_id =
-          case state.early_hand do
-            true ->
-              state.white
-            false ->
-              state.black
-          end
         move_detail = %{
           user_id: user_id,
           moves: moves,
           captured: capture
         }
+        code = case winner do
+          nil ->
+            Map.get(@code_info, 101)
+          _ ->
+            Map.get(@code_info, 102)
+        end
         {new_state, detail} =
           case state.early_hand do
             # white
             true ->
-                # 当前棋子没有吃子,只是普通移动
+                # 当前棋子没有吃子, 只是普通移动
               {
                 %{
                   state |
                   board: new_board,
+                  winner: winner,
                   early_hand: !white,
                   can_move: can_move,
                   steps: state.steps ++ [move_detail],
                   steps_white: state.steps_white + 1
                 },
                 %{
-                  code: Map.get(@code_info, 101),
+                  code: code,
                   winner: winner,
                   white_king: white_king,
                   black_king: black_king,
@@ -325,13 +247,14 @@ defmodule Battle.Service.BattleService.RoomServer do
                 %{
                   state |
                   board: new_board,
+                  winner: winner,
                   early_hand: !white,
                   can_move: can_move,
                   steps: state.steps ++ [move_detail],
                   steps_black: state.steps_black + 1
                 },
                 %{
-                  code: Map.get(@code_info, 101),
+                  code: code,
                   winner: winner,
                   white_king: white_king,
                   black_king: black_king,
@@ -341,9 +264,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                 }
               }
           end
-
-        IO.inspect(state)
-
+        IO.inspect(new_state)
         {:reply, {:ok, detail}, new_state}
 
       false ->
@@ -362,7 +283,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           your_step: nil,
           captured: nil,
           board: nil,
-          available_step: available_step
+          # available_step: available_step
         }
 
         {illegal_times_white, illegal_times_black} =
@@ -375,42 +296,33 @@ defmodule Battle.Service.BattleService.RoomServer do
                 {white, black + 1}
               end
           end
-
         new_winner =
           case {illegal_times_white, illegal_times_black} do
             {3, _} ->
               state.black
-
             {_, 3} ->
               state.white
-
             _ ->
-              nil
+              state.winner
           end
-
-        {:reply, {:error, %{detail | winner: new_winner}},
-         %{state | illegal_times: [illegal_times_white, illegal_times_black], winner: new_winner}}
+        {:reply, {:error, %{detail | winner: new_winner}}, %{state | illegal_times: [illegal_times_white, illegal_times_black], winner: new_winner}}
     end
   end
 
   def handle_info(:execute_task, %{illegal_times: illegal_times, early_hand: early_hand} = state) do
+    IO.puts "overtime operation"
     case early_hand do
       true ->
         illegal_times_white = Enum.at(illegal_times, 0) + 1
-
         illegal_times_black = Enum.at(illegal_times, 1)
-
         if(illegal_times_white == 3) do
           {:noreply, %{state | winner: state.white}}
         else
           {:noreply, %{state | illegal_times: [illegal_times_white, illegal_times_black]}}
         end
-
       false ->
         illegal_times_white = Enum.at(illegal_times, 0)
-
         illegal_times_black = Enum.at(illegal_times, 1) + 1
-
         if(illegal_times_black == 3) do
           {:noreply, %{state | winner: state.black}}
         else
@@ -423,16 +335,14 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:via, Registry, {Battle.RoomRegistry, contest_id}}
   end
 
-  defp count_piece(piece_value, board) do
+  defp count_piece(piece_value,board) do
     count =
       board
-      # 将二维数组扁平化为一维
-      |> Enum.flat_map(& &1)
-      # 检查每种颜色棋子的个数
-      |> Enum.count(fn piece -> piece in piece_value end)
+      |> Enum.flat_map(& &1)  # 将二维数组扁平化为一维
+      |> Enum.count(fn piece -> piece in piece_value end) # 检查每种颜色棋子的个数
   end
 
-  def get_captures(moves,board) do
+  defp get_captures(moves,board) do
     captures =
       moves
       |> Enum.chunk_every(2, 1, :discard)  # 将路径分段，每段包含两个连续的点
@@ -462,7 +372,6 @@ defmodule Battle.Service.BattleService.RoomServer do
                 acc_inner
               end
           end
-
         # 将捕获的棋子位置加入到最终的捕获列表中
         case capture do
           nil -> acc
@@ -471,7 +380,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       end)
   end
 
-  def cal_black_white_and_node_value(moves,board) do
+  defp cal_black_white_and_node_value(moves,board) do
     [[x0, y0] | _] = moves
     [x1, y1] = List.last(moves)
     case Enum.at(Enum.at(board, x0), y0) do

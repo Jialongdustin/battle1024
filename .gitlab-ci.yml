@@ -1,0 +1,7 @@
+notify_job:
+  script: "APP=battle1024 APP_TYPE=elixir DOCKER_IMAGE_VERSION=1.12.3-otp24 python3.7 /home/gitlab-runner/ejoyplatform_battlenet_build/main.py"
+  only:
+    - /^battle1024-\d{12}$/
+    - /^battle1024-dev$/
+    - /^battle1024-\d{12}-kun$/
+    - /^battle1024-dev-kun$/

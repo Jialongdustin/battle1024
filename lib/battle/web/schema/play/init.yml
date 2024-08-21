@@ -2,8 +2,9 @@ api: "/play/init"
 request:
   type: object
   properties:
-    moment_token:
+    token:
       type: string
+  required: [token]
 
 response:
   type: object
@@ -12,27 +13,15 @@ response:
       type: string
     winner:
       type: string
-#    opponent_step:
-#      type: array
-#      items:
-#        type: array
-#        items:
-#          type: integer
-#    captured:
-#      type: array
-#      items:
-#        type: array
-#        items:
-#          type: integer
     board:
       type: array
       items:
         type: array
         items:
-          type: integer
+          type: number
     available_step:
       type: array
       items:
         type: array
         items:
-          type: integer
+          type: number

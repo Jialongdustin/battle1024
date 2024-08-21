@@ -2,11 +2,15 @@ api: "/user/create_AI"
 request:
   type: object
   properties:
-    user_id:
-      type: string
     ai_name:
       type: string
-  required: [user_id, ai_name]
+    git_url:
+      type: string
+    tag:
+      type: string
+    moment_token:
+      type: string
+  required: [ai_name, git_url, tag, moment_token]
 
 response:
   type: object
@@ -14,4 +18,6 @@ response:
     code:
       type: number
     message:
+      type: string
+    state:
       type: string

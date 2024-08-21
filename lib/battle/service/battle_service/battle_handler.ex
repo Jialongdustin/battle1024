@@ -240,7 +240,4 @@ defmodule Battle.BattleHandler do
   def pairwise(list) do
     Enum.chunk_every(list, 2, 1, :discard)
   end
-
-
-
 end
