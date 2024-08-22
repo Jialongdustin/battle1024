@@ -19,9 +19,3 @@ response:
         type: array
         items:
           type: number
-    available_step:
-      type: array
-      items:
-        type: array
-        items:
-          type: number

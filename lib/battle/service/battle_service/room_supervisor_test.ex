@@ -29,30 +29,38 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     {:ok, %{token_white: token_white, token_black: token_black}}
   end
 
+  def query(caller, user_id, contest_id) do
+    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+    case RoomServer.query(pid, user_id) do
+        {:ok, detail} ->
+          # 当前询问回合，写回成功
+          {:ok, detail}
+        {:error, detail} ->
+          :ets.insert(:pid_info_test, {contest_id, caller})
+          # 不是当前询问回合，写回错误
+          {:error, detail}
+    end
+  end
+
   def movement(caller, moves, user_id, contest_id) do
     case Registry.lookup(Battle.RoomRegistry, contest_id) do
       [{pid, _}] ->
-        case RoomServer.query(pid, user_id) do
-          {:ok, detail} ->
-            case RoomServer.movement(pid, user_id, moves) do
-              {:ok, success_detail} ->
-                move_detail = Map.get(success_detail, :your_step)
-                new_detail = success_detail
-                |> Map.put(:opponent_step, move_detail)
-                |> Map.delete(:your_step)
-                if success_detail.winner do
-                  RoomServer.terminate_game_test(pid)
-                end
-                [{_, dest}] = :ets.lookup(:pid_info_test, contest_id)
-                :ets.insert(:pid_info_test, {contest_id, caller})
-                send(WebSocketHandler, {:update_board, success_detail})
-                send(dest, {:new_detail, new_detail})
-                {:ok, success_detail}
-              {:move_error, error_detail} ->
-                {:move_error, error_detail}
-          {:error, datail} ->
-            {:user_error, detail}
-          end
+        case RoomServer.movement(pid, user_id, moves) do
+          {:ok, success_detail} ->
+            move_detail = Map.get(success_detail, :your_step)
+            new_detail = success_detail
+            |> Map.put(:opponent_step, move_detail)
+            |> Map.delete(:your_step)
+            if success_detail.winner do
+              RoomServer.terminate_game_test(pid)
+            end
+            [{_, dest}] = :ets.lookup(:pid_info_test, contest_id)
+            :ets.insert(:pid_info_test, {contest_id, caller})
+            send(WebSocketHandler, {:update_board, success_detail})
+            send(dest, {:new_detail, new_detail})
+            {:ok, success_detail}
+          {:error, error_detail} ->
+            {:error, error_detail}
         end
 
       [] ->

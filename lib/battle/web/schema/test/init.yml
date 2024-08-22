@@ -2,16 +2,20 @@ api: "/test/init"
 request:
   type: object
   properties:
-    moment_token:
+    token:
       type: string
-  required: [moment_token]
+  required: [token]
 
 response:
   type: object
   properties:
-    token_white:
+    code:
       type: string
-    token_black:
+    winner:
       type: string
-    message:
-      type: string
+    board:
+      type: array
+      items:
+        type: array
+        items:
+          type: number
