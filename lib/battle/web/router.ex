@@ -81,6 +81,8 @@ defmodule Battle.Web.Router do
     case Token.verify_token(token) do
       {:ok, user_id} ->
         UserAi.insert_ai(user_id, ai_name, git_url, tag)
+        BattleStatistics.user_increment()
+        BattleStatistics.submit_increment()
         body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -168,7 +170,8 @@ defmodule Battle.Web.Router do
     end
   end
 
-  get "/user/rank_info" do
+  # 获取某个用户的排名信息
+  get "/user/ranking_list" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
@@ -268,6 +271,7 @@ defmodule Battle.Web.Router do
     tag = conn.params["tag"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
+        BattleStatistics.submit_increment()
         message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
         body = Ejoy.Jiffy.encode!(message)
         conn

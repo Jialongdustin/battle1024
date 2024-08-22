@@ -32,9 +32,7 @@ defmodule Battle.Service.WebService.Auth do
         from_product_code = Map.get(resp, "from_product_code")
         {:ok,
           %{
-
             moment_token: moment_token
-
           }
         }
       %{"code" => code} when code in @verify_token_invalid_codes ->

@@ -29,11 +29,13 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     {:ok, contest_id}
   end
 
+
   def query(caller, user_id, contest_id) do
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
     case RoomServer.query(pid, user_id) do
         {:ok, detail} ->
           # 当前询问回合，写回成功
+          IO.inspect(detail)
           {:ok, detail}
         {:error, detail} ->
           :ets.insert(:pid_info, {contest_id, caller})

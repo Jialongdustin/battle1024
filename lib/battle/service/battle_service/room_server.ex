@@ -5,10 +5,10 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   @code_info %{
     100 => "your turn to move",
-    101 => "move success, please wait until your opponent move",
+    101 => "move success as well as your ",
     102 => "winner occurred!!! no need to move",
     200 => "illegal movement, please try again",
-    300 => "not your turn, please try again"
+    300 => "not your turn, please wait for your opponent move "
   }
 
   alias Battle.Mongo.BattleResult
@@ -124,6 +124,8 @@ defmodule Battle.Service.BattleService.RoomServer do
     # 每一局的信息
     BattleInfo.insert_battle(state.contest_id, state.steps_white + state.steps_black, state.steps)
     BattleResult.save_battle_result([state.white, state.black], state.contest_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
+    Battle.Mongo.BattleStatistics.update_average_step(state.steps_white + state.steps_black)
+    Battle.Mongo.BattleStatistics.update_average_time_cost(state.time_cost_white+state.time_cost_black)
     # Process.send(Battle.Service.BattleService.ThreadPool, {state.contest_id, state.group_name, state.group_key, state.app_name})
     {:stop, :normal, :ok, state}
   end
@@ -140,7 +142,8 @@ defmodule Battle.Service.BattleService.RoomServer do
     if (user_id == state.white and state.early_hand == true) or
     (user_id == state.black and state.early_hand == false) do
       detail = %{
-        code: Map.get(@code_info, 100),
+        code: 10000,
+        board: state.board,
         winner: nil,
       }
       {:reply, {:ok, detail}, state}
@@ -215,6 +218,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           _ ->
             Map.get(@code_info, 102)
         end
+
         {new_state, detail} =
           case state.early_hand do
             # white
@@ -231,7 +235,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   steps_white: state.steps_white + 1
                 },
                 %{
-                  code: code,
+                  code: 10001,
                   winner: winner,
                   white_king: white_king,
                   black_king: black_king,
@@ -254,7 +258,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   steps_black: state.steps_black + 1
                 },
                 %{
-                  code: code,
+                  code: 10001,
                   winner: winner,
                   white_king: white_king,
                   black_king: black_king,
@@ -276,7 +280,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           end)
 
         detail = %{
-          code: Map.get(@code_info, 200),
+          code: 20000,
           winner: nil,
           white_king: nil,
           black_king: nil,

@@ -12,12 +12,12 @@ defmodule BattleTest.RoomServerTest do
 
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", "10000")
+      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10002")
 
-    # "66c2eab984da5b380c71d90c"
-    {:ok, moment_token_123} = Battle.Utils.Token.generate_token("123", contest_id)
-    # "66c2eabe84da5b380c71d90d"
-    {:ok, moment_token_456} = Battle.Utils.Token.generate_token("456", contest_id)
+    # "66c6b5f9127fd9b757df99d5"
+    {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
+    # "66c6b5ff127fd9b757df99d6"
+    {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
     RoomSupervisor.query(123, contest_id)
     RoomSupervisor.query(456, contest_id)
 
