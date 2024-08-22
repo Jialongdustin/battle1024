@@ -4,7 +4,9 @@ test "battle_early_hand" do
   {:ok, contest_id} =
     Battle.Service.BattleService.RoomSupervisor.init_game(111, 222, "10000")
 
-  # "66c58a1d6a8c27278ff18b9d"
+  {:ok, %{token_white: token_white, token_black: token_black}} = Battle.Service.BattleService.RoomSupervisorTest.init_game(111)
+
+  # "66c5979e77853a94a1367a5d"
   # Battle.Utils.Token.verify_token_battle("66c555a9dd7201a8aa7d36fa")
   {:ok, moment_token_123} = Battle.Utils.Token.generate_token(111, contest_id)
   # "66c58a276a8c27278ff18b9e"

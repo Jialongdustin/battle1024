@@ -7,6 +7,7 @@ defmodule Battle.Web.Router do
   alias Battle.Service.WebService.Auth
   alias Battle.Utils.Token
   alias Battle.Service.BattleService.RoomSupervisor
+  alias Battle.Service.BattleService.RoomSupervisorTest
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Mongo.BattleInfo
   alias Battle.Mongo.BattleStatistics
@@ -54,80 +55,11 @@ defmodule Battle.Web.Router do
 
       # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
       {:error, reason} ->
-        Logger.error("Verification failed: #{inspect(reason)}")
-        body = Ejoy.Jiffy.encode!(%{error: "Permission refused"})
-
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
-
-      _ ->
-        Logger.error("Unexpected result from verify_code")
-        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(500, body)
-        |> Conn.halt()
-    end
-  end
-
-  # 创建AI
-  json_rpc "/user/create_AI", "schema/user/create_AI" do
-    ai_name = conn.params["ai_name"]
-    git_url = conn.params["git_url"]
-    tag = conn.params["tag"]
-    token = conn.params["moment_token"]
-    case Token.verify_token(token) do
-      {:ok, user_id} ->
-        UserAi.insert_ai(user_id, ai_name, git_url, tag)
-        BattleStatistics.user_increment()
-        BattleStatistics.submit_increment()
-        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, body)
-        |> Conn.halt()
-
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        body = Ejoy.Jiffy.encode!(%{error: reason})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
-        |> Conn.halt()
-
-      _ ->
-        Logger.error("Unexpected result from verify_code")
-        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(500, body)
-        |> Conn.halt()
-    end
-  end
-
-  # 创建测试比赛, 供用户自由调试
-  json_rpc "/contest/test_AI", "schema/play/test_AI" do
-    ai_name = conn.params["ai_name"]
-    git_url = conn.params["git_url"]
-    tag = conn.params["tag"]
-    token = conn.params["moment_token"]
-    case Token.verify_token(token) do
-      {:ok, user_id} ->
-        # 测试比赛的逻辑
-        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "test successful"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, body)
-        |> Conn.halt()
-
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        body = Ejoy.Jiffy.encode!(%{error: reason})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
-        |> Conn.halt()
-
       _ ->
         Logger.error("Unexpected result from verify_code")
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
@@ -146,23 +78,47 @@ defmodule Battle.Web.Router do
       {:ok, user_id} ->
         {:ok, contest} = BattleResult.get_battle_result_by_user_id(String.to_integer(user_id))
         body = Ejoy.Jiffy.encode!(%{code: 200, state: contest})
-
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
       {:error, reason} ->
-        body = Ejoy.Jiffy.encode!(%{error: reason})
-
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
 
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
 
+  get "/user/rank_info" do
+    moment_token = conn.params["moment_token"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        {:ok,rank_info} = RankList.get_rank_by_user_id(String.to_integer(user_id))
+        body = Ejoy.Jiffy.encode!(%{code: 200, state: rank_info})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, reason} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+
+      _ ->
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(500, body)
@@ -214,23 +170,23 @@ defmodule Battle.Web.Router do
             {:error, message} ->
               %{code: 403, error: message}
           end
-
         body = Ejoy.Jiffy.encode!(message)
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, message} ->
-        body = Ejoy.Jiffy.encode!(%{error: message})
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
     end
   end
 
   # 获取所有用户参赛信息
-  get "/contest/all_user_info" do
+  get "/contest/all_users_info" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, _} ->
@@ -248,41 +204,17 @@ defmodule Battle.Web.Router do
             {:error, message} ->
               %{error: message}
           end
-
         body = Ejoy.Jiffy.encode!(message)
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
-      {:error, message} ->
-        body = Ejoy.Jiffy.encode!(%{error: message})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
-        |> Conn.halt()
-    end
-  end
 
-  # 更新git仓库
-  json_rpc "/user/update_git", "schema/user/update_git" do
-    moment_token = conn.params["moment_token"]
-    git_url = conn.params["git"]
-    ai_name = conn.params["ai_name"]
-    tag = conn.params["tag"]
-    case Token.verify_token(moment_token) do
-      {:ok, user_id} ->
-        BattleStatistics.submit_increment()
-        message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
-        body = Ejoy.Jiffy.encode!(message)
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, body)
-        |> Conn.halt()
       {:error, message} ->
-        body = Ejoy.Jiffy.encode!(%{error: message})
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
         |> Conn.halt()
     end
   end
@@ -304,18 +236,175 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, message} ->
-        body = Ejoy.Jiffy.encode!(%{error: message})
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+    end
+  end
+
+  # 将用户创建测试比赛的http请求升级为websocket
+  get "/test/websocket" do
+    conn
+    |> WebSockAdapter.upgrade(WebSocketHandler, [
+    ], timeout: :infinity)
+    |> halt()
+  end
+
+  # 创建AI
+  json_rpc "/user/create_AI", "schema/user/create_AI" do
+    ai_name = conn.params["ai_name"]
+    git_url = conn.params["git_url"]
+    tag = conn.params["tag"]
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        UserAi.insert_ai(user_id, ai_name, git_url, tag)
+        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
         conn
         |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+  # 更新git仓库
+  json_rpc "/user/update_git", "schema/user/update_git" do
+  moment_token = conn.params["moment_token"]
+  git_url = conn.params["git"]
+  ai_name = conn.params["ai_name"]
+  tag = conn.params["tag"]
+  case Token.verify_token(moment_token) do
+    {:ok, user_id} ->
+      message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
+      body = Ejoy.Jiffy.encode!(message)
+      conn
+      |> Conn.put_resp_content_type("application/json")
+      |> Conn.send_resp(200, body)
+      |> Conn.halt()
+
+    {:error, message} ->
+      uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+      conn
+      |> Conn.put_resp_header("location",  uri)
+      |> Conn.send_resp(302, "")
+      |> Conn.halt()
+  end
+end
+
+  # 创建测试比赛
+  json_rpc "/user/create_test", "schema/user/create_test" do
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        # 初始化测试对局, 返回黑棋和白棋的token
+        {:ok, info} = RoomSupervisorTest.init_game(user_id)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(info))
+        |> Conn.halt()
+
+      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+  # 创建测试比赛后 用户的两个机器人分别初始化拿到棋盘信息
+  json_rpc "/test/init", "schema/test/init" do
+    token = conn.params["token"]
+    {:ok, user_info} = Token.verify_token_battle(token)
+    user_id = String.to_integer(user_info.user_id)
+    contest_id = user_info.ext.account_id
+
+    # 检查是否是白棋, 因为对局总是白棋先行
+    case RoomSupervisorTest.query(self(), user_id, contest_id) do
+      {:ok, detail} ->
+        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+        body = Ejoy.Jiffy.encode!(detail)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+      {:error, _} ->
+        receive do
+          {:new_detail, detail} ->
+            body = Ejoy.Jiffy.encode!(detail)
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, body)
+            |> Conn.halt()
+        end
+    end
+  end
+
+  # 用户测试比赛时的下棋移动接口
+  json_rpc "/test/move", "schema/test/move" do
+    token = conn.params["token"]
+    moves = conn.params["move"]
+    {:ok, user_info} = Token.verify_token_battle(token)
+    user_id = String.to_integer(user_info.user_id)
+    contest_id = user_info.ext.account_id
+
+    case RoomSupervisorTest.movement(self(), moves, user_id, contest_id) do
+      {:ok, response} ->
+        if response.winner do
+          body = Ejoy.Jiffy.encode!(response)
+          conn
+          |> Conn.put_resp_content_type("application/json")
+          |> Conn.send_resp(200, body)
+          |> Conn.halt()
+        else
+          receive do
+            {:new_detail, detail} ->
+              body = Ejoy.Jiffy.encode!(detail)
+              conn
+              |> Conn.put_resp_content_type("application/json")
+              |> Conn.send_resp(200, body)
+              |> Conn.halt()
+          end
+        end
+
+      {:error, reason} ->
+        body = Ejoy.Jiffy.encode!(reason)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(400, %{"error" => reason})
         |> Conn.halt()
     end
   end
 
   # kun上发布机器人应用后会发这个请求初始化接口
   json_rpc "/play/init", "schema/play/init" do
-    token = params["token"]
+    token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
     contest_id = user_info.ext.account_id
@@ -350,8 +439,8 @@ defmodule Battle.Web.Router do
 
   # 下棋
   json_rpc "/play/move", "schema/play/move" do
-    token = params["token"]
-    move = params["move"]
+    token = conn.params["token"]
+    move = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
     contest_id = user_info.ext.account_id
@@ -367,20 +456,21 @@ defmodule Battle.Web.Router do
         else
           [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
           RoomServer.record_time_step(pid, user_id)
+          receive do
+            {:new_detail, detail} ->
+              if detail.winner == nil do
+                [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+                RoomServer.start_countdown(pid)
+                RoomServer.start_time_step(pid, user_id)
+              end
+              body = Ejoy.Jiffy.encode!(detail)
+              conn
+              |> Conn.put_resp_content_type("application/json")
+              |> Conn.send_resp(200, body)
+              |> Conn.halt()
+          end
         end
-        receive do
-          {:new_detail, detail} ->
-            if detail.winner == nil do
-              [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
-              RoomServer.start_countdown(pid)
-              RoomServer.start_time_step(pid, user_id)
-            end
-            body = Ejoy.Jiffy.encode!(detail)
-            conn
-            |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(200, body)
-            |> Conn.halt()
-        end
+
       {:error, reason} ->
         body = Ejoy.Jiffy.encode!(reason)
         conn
@@ -389,5 +479,4 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
     end
   end
-
 end
