@@ -34,7 +34,6 @@ defmodule Battle.Mongo.UserAi do
 
 
   def get_ai_list_by_userId(user_id) do
-
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       nil->{:error,"Battle.UserAi error"}
       res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}

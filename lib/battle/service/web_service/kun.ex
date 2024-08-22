@@ -14,6 +14,13 @@ defmodule Battle.Service.WebService.Kun do
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
 
+  # [
+  # %{package_name: "plat1024-battle-players:20240822175040", user_id: 444},
+  # %{package_name: "plat1024-battle-players:20240822175102", user_id: 111},
+  # %{package_name: "plat1024-battle-players:20240822175124", user_id: 222},
+  # %{package_name: "plat1024-battle-players:20240822175146", user_id: 333}
+  # ]
+
   def list_envs() do
     path = "/api/env/#{@query_namespace}/envs"
     %{"code" => 0, "data" => %{"envs" => envs}} = send_post(path, %{})
