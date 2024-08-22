@@ -1,0 +1,54 @@
+api: "/test/move"
+request: 
+  type: object
+  properties:
+    token:
+      type: string
+    move:
+      items:
+        type: array
+        items:
+          type: number
+  required: [token, move]
+
+response:
+  type: object
+  properties:
+    code:
+      type: string
+    winner:
+      type: string
+    white_king:
+      type: string
+    black_king:
+      type: string
+    your_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: number
+    opponent_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: number
+    captured:
+      type: array
+      items:
+        type: array
+        items:
+          type: number
+    board:
+      type: array
+      items:
+        type: array
+        items:
+          type: number
+    available_step:
+      type: array
+      items:
+        type: array
+        items:
+          type: number

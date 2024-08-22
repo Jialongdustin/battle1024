@@ -54,10 +54,9 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
             |> Map.delete(:your_step)
             if success_detail.winner do
               RoomServer.terminate_game(pid)
-            else
-              :ets.insert(:pid_info, {contest_id, caller})
             end
             [{_, dest}] = :ets.lookup(:pid_info, contest_id)
+            :ets.insert(:pid_info, {contest_id, caller})
             send(dest, {:new_detail, new_detail})
             {:ok, success_detail}
           {:error, error_detail} ->

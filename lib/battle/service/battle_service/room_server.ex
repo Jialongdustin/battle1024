@@ -8,7 +8,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     101 => "move success, please wait until your opponent move",
     102 => "winner occurred!!! no need to move",
     200 => "illegal movement, please try again",
-    300 => "not your turn, please try again"
+    300 => "not your turn, please wait for your opponent move"
   }
 
   alias Battle.Mongo.BattleResult
@@ -92,6 +92,10 @@ defmodule Battle.Service.BattleService.RoomServer do
     GenServer.call(pid, :terminate_game)
   end
 
+  def terminate_game_test(pid) do
+    GenServer.stop(pid)
+  end
+
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
   end
@@ -122,6 +126,8 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_call(:terminate_game, _from, state) do
     # 每一局的信息
+    Battle.Mongo.BattleStatistics.update_average_step(state.steps_white + state.steps_black)
+    Battle.Mongo.BattleStatistics.update_average_time_cost(state.time_cost_white+state.time_cost_black)
     BattleInfo.insert_battle(state.contest_id, state.steps_white + state.steps_black, state.steps)
     BattleResult.save_battle_result([state.white, state.black], state.contest_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
     # Process.send(Battle.Service.BattleService.ThreadPool, {state.contest_id, state.group_name, state.group_key, state.app_name})
@@ -142,6 +148,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       detail = %{
         code: Map.get(@code_info, 100),
         winner: nil,
+        board: board
       }
       {:reply, {:ok, detail}, state}
     else
