@@ -57,11 +57,18 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end
-            [{_, dest}] = :ets.lookup(:pid_info, contest_id)
-            :ets.insert(:pid_info, {contest_id, caller})
-            send(dest, {:new_detail, new_detail})
-            {:ok, success_detail}
+            case :ets.lookup(:pid_info, contest_id) do
+              [] -> # 对方还没就绪
+                :ets.insert(:pid_info, {contest_id, caller})
+                {:ok, success_detail}
+              [{_, dest}] -> #对方已经就绪
+                :ets.insert(:pid_info, {contest_id, caller})
+                send(dest, {:new_detail, new_detail})
+                {:ok, success_detail}
+            end
+#            :ets.lookup(:pid_info, "10002")
           {:error, error_detail} ->
+            IO.inspect(error_detail)
             {:error, error_detail}
         end
       [] ->

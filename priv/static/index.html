@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+<script >
+    const socket = new WebSocket('ws://localhost:4000/test/websocket');
+
+    socket.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+
+        switch(data.type) {
+            case 'init':
+                console.log(data.token_white,data.token_black);
+                break;
+            case 'move':
+                console.log(data.captured,data.moves);
+                break;
+            default:
+                console.error('Unknown message type:', data.type);
+        }
+    });
+</script>
+</html>

@@ -14,6 +14,7 @@ defmodule Battle.Web.Router do
   alias Battle.Mongo.RankList
   alias Battle.Mongo.UserAi
   alias Battle.Mongo.BattleResult
+  alias Battle.Service.WebService.WebSocketHandler
   require Logger
 
   plug(:match)
@@ -30,6 +31,12 @@ defmodule Battle.Web.Router do
 
   @client_id 10052
   @redirect_uri "http://localhost:4000/login/redirect"
+
+  get "/" do
+    conn
+    |> put_resp_content_type("text/html")
+    |> send_resp(200, File.read!("priv/static/index.html"))
+  end
 
   ## web
   # 登录验证, 重定向授权网址
@@ -249,8 +256,7 @@ defmodule Battle.Web.Router do
   # 将用户创建测试比赛的http请求升级为websocket
   get "/test/websocket" do
     conn
-    |> WebSockAdapter.upgrade(WebSocketHandler, [
-    ], timeout: :infinity)
+    |> WebSockAdapter.upgrade(WebSocketHandler, [], timeout: :infinity)
     |> halt()
   end
 
@@ -262,6 +268,7 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
+        BattleStatistics.submit_increment()
         UserAi.insert_ai(user_id, ai_name, git_url, tag)
         body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
         conn
@@ -475,8 +482,16 @@ end
         body = Ejoy.Jiffy.encode!(reason)
         conn
         |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(400, %{"error" => reason})
+        |> Conn.send_resp(400, body)
         |> Conn.halt()
     end
   end
+
+  get "/test/websocket" do
+    IO.puts("================")
+    conn
+    |> WebSockAdapter.upgrade(WebSocketHandler, [self()], timeout: :infinity)
+    |> halt()
+  end
+
 end

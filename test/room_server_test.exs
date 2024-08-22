@@ -14,9 +14,9 @@ defmodule BattleTest.RoomServerTest do
     {:ok, contest_id} =
       Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10002")
 
-    # "66c6b5f9127fd9b757df99d5"
+    # "66c6dc25cfd7ed704356debb"
     {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
-    # "66c6b5ff127fd9b757df99d6"
+    # "66c6dc2acfd7ed704356debc"
     {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
     RoomSupervisor.query(123, contest_id)
     RoomSupervisor.query(456, contest_id)
