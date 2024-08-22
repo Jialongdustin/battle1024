@@ -17,11 +17,11 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     DynamicSupervisor.init(opts)
   end
 
-  def init_game(white, black, contest_id) do
+  def init_game(white, black, contest_id, groupName, groupKey, appName) do
     # child_spec_server = {RoomServer, white: white, black: black, contest_id: contest_id}
     child_spec_server = %{
       id: RoomServer,
-      start: {RoomServer, :start_link, [%{white: white, black: black, contest_id: contest_id}]},
+      start: {RoomServer, :start_link, [%{white: white, black: black, contest_id: contest_id, groupName: groupName, groupKey: groupKey, appName: appName}]},
       restart: :transient,
       type: :worker
     }

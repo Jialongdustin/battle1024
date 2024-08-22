@@ -22,17 +22,6 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-  def get_all_gits() do
-#    {:ok,moment_token} = Battle.Utils.Token.generate_token("5")
-    Battle.Mongo.UserAi.get_newest_ai_by_userId(1)
-    case __MODULE__.pquery(%{}) do
-      nil ->{:error,"no user_info"}
-      res ->{:ok,res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url,tag: message.tag} end)}
-    end
-  end
-
-
-
   def get_ai_list_by_userId(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       nil->{:error,"Battle.UserAi error"}

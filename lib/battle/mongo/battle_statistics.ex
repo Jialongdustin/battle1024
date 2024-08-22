@@ -41,14 +41,14 @@ defmodule Battle.Mongo.BattleStatistics do
   end
 
   def user_increment() do
-    {:ok,info} = query_statistics_info
+    {:ok, info} = query_statistics_info()
     bson_id = info._id
     count = info.submit_count+1
     __MODULE__.pupdate(%{_id: bson_id}, %{info | user_count: count})
   end
 
   def submit_increment() do
-    {:ok,info} = query_statistics_info
+    {:ok, info} = query_statistics_info()
     bson_id = info._id
     count = info.submit_count+1
     __MODULE__.pupdate(%{_id: bson_id}, %{info | submit_count: count})
@@ -56,14 +56,14 @@ defmodule Battle.Mongo.BattleStatistics do
 
   def update_average_step(steps) do
     battle_count = Battle.Mongo.BattleResult.count_battle()
-    {:ok,info} = query_statistics_info
+    {:ok, info} = query_statistics_info()
     bson_id = info._id
     count = (info.average_step*battle_count+steps)/(battle_count+1)
     __MODULE__.pupdate(%{_id: bson_id}, %{info | average_step: count})
   end
 
   def update_average_time_cost(times) do
-    {:ok,info} = query_statistics_info
+    {:ok, info} = query_statistics_info()
     battle_count = Battle.Mongo.BattleResult.count_battle()
     bson_id = info._id
     count = (info.average_time_cost*battle_count+times/1000)/(battle_count+1)
@@ -71,7 +71,7 @@ defmodule Battle.Mongo.BattleStatistics do
   end
 
   def update_last_commit_time() do
-    {:ok,info} = query_statistics_info
+    {:ok, info} = query_statistics_info()
     bson_id = info._id
     update_time = Ejoy.Bson.utc_now()
     __MODULE__.pupdate(%{_id: bson_id}, %{info | last_submit_time: update_time})

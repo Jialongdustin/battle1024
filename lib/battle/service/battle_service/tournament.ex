@@ -14,7 +14,7 @@ defmodule Battle.Service.BattleService.Tournament do
     Enum.each(user_ids, fn user_id1 ->
       Enum.each(user_ids -- [user_id1], fn user_id2 ->
         contest_id = UUID.uuid4()
-        ThreadPool.add_task(pool, {user_id1, user_id2, contest_id, players})
+        ThreadPool.add_task({user_id1, user_id2, contest_id, players})
       end)
     end)
 
