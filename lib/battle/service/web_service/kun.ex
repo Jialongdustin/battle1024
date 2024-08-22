@@ -1,5 +1,6 @@
 defmodule Battle.Service.WebService.Kun do
-  @kun_api_url "https://kunapi.ejoy.com"
+  # @kun_api_url "https://kunapi.ejoy.com"
+  @kun_api_url "https://kundevapi.ejoy.com"
   @query_namespace "plat1024-platformbattle"
   @userId "453574"
   @status_success 4
@@ -43,15 +44,19 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.build_package(%{user_id: "222", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/docker_build.git", tag: "main"})
+  # Kun.change_config(%{user_id: "222", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_jdk8.git", tag: "dustin"})
   def change_config(info) do
     user_id = info.user_id
     git_url = info.git_url
     tag = info.tag
     path = "/api/v2/product/#{@productKey}/buildConfig/#{@build_config_name}"
-    case send_put(path, %{autoBuild: false, gitRefsType: 0, gitUrl: git_url, refs: tag}) do
-      %{"code" => 0, "data" => data, "msg" => msg} ->
-        build_package(info)
+    case send_put(path, %{autoBuild: true, gitRefsType: 0, gitUrl: git_url, refs: tag}) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        # build_package(info)
+        package_id = task["id"]
+        package_name = task["name"]
+        build_result_check(package_id)
+        %{user_id: user_id, package_name: package_name}
       _ ->
         change_config(info)
     end
@@ -72,8 +77,9 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
+  # Kun.build_result_check(12024311)
   def build_result_check(package_id) do
-    :timer.sleep(300_000)
+    :timer.sleep(20_000)
     case get_build_result(package_id) do
       @status_success ->
         :ok

@@ -148,7 +148,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       detail = %{
         code: Map.get(@code_info, 100),
         winner: nil,
-        board: board
+        board: state.board
       }
       {:reply, {:ok, detail}, state}
     else
@@ -342,7 +342,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:via, Registry, {Battle.RoomRegistry, contest_id}}
   end
 
-  defp count_piece(piece_value,board) do
+  defp count_piece(piece_value, board) do
     count =
       board
       |> Enum.flat_map(& &1)  # 将二维数组扁平化为一维

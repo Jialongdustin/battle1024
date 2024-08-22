@@ -262,6 +262,7 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
+        BattleStatistics.submit_increment()
         UserAi.insert_ai(user_id, ai_name, git_url, tag)
         body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
         conn
@@ -475,7 +476,7 @@ end
         body = Ejoy.Jiffy.encode!(reason)
         conn
         |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(400, %{"error" => reason})
+        |> Conn.send_resp(400, body)
         |> Conn.halt()
     end
   end
