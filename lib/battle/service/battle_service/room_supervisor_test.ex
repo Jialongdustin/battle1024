@@ -2,7 +2,6 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   use DynamicSupervisor
 
   alias Battle.Service.BattleService.RoomServer
-  alias Battle.Service.WebService.WebSocketHandler
   alias Battle.Utils.Token
 
   def start_link(_) do
@@ -26,7 +25,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
       type: :worker
     }
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
-    detail = %{
+    %{
       token_white: token_white,
       token_black: token_black
     }

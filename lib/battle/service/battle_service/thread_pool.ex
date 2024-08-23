@@ -63,6 +63,31 @@ defmodule Battle.Service.BattleService.ThreadPool do
     end
   end
 
+
+  def start_test_game(git, tag) do
+    package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
+    {groupName, appName} = Kun.get_idle_service(true)
+    groupKey =
+      Regex.run(~r/test\d+/, groupName)
+      |> List.first()
+      |> (fn name -> "plat1024-#{name}" end).()
+    contest_id = UUID.uuid4()
+    update_services(groupName, groupKey, appName, 10, 24, contest_id)
+    [
+      %{
+        "serviceGroup": groupKey,
+        "service": appName,
+        "appConfBuildName": package_name
+      },
+      %{
+        "serviceGroup": groupKey,
+        "service": Map.get(@appNames, appName),
+        "appConfBuildName": package_name
+      },
+    ] |> Kun.create_deploy_task()
+    RoomSupervisor.init_game(10, 24, contest_id, groupName, groupKey, appName)
+  end
+
   # 对局结束后, 直接把当前服务组信息复用给下一个worker, 省去了调kun的接口去查询空闲的服务组
   defp reuse_group_for_task({user_id1, user_id2, contest_id, players}, {groupName, groupKey, appName}) do
     update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id)
@@ -74,8 +99,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
   defp execute_task({user_id1, user_id2, contest_id, players}) do
     {groupName, appName} = Kun.get_idle_service()
     groupKey =
-      groupName
-      |> Regex.run(~r/players\d+/)
+      Regex.run(~r/players\d+/, groupName)
       |> List.first()
       |> (fn name -> "plat1024-#{name}" end).()
     update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id)
@@ -121,13 +145,13 @@ defmodule Battle.Service.BattleService.ThreadPool do
     ]
   end
 
-  defp update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id) do
+  def update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id) do
     update_service(appName, user_id1, contest_id) ++
     update_service(appName, user_id2, contest_id)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
-  defp update_service(appName, user_id, contest_id) do
+  def update_service(appName, user_id, contest_id) do
     token = Token.generate_token(user_id, contest_id)
     [%{
           "name" => appName,

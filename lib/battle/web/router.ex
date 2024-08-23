@@ -8,6 +8,7 @@ defmodule Battle.Web.Router do
   alias Battle.Utils.Token
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomSupervisorTest
+  alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Mongo.BattleInfo
   alias Battle.Mongo.BattleStatistics
@@ -15,6 +16,7 @@ defmodule Battle.Web.Router do
   alias Battle.Mongo.UserAi
   alias Battle.Mongo.BattleResult
   alias Battle.Service.WebService.WebSocketHandler
+  alias Battle.Service.BattleService.ThreadPool
   require Logger
 
   plug(:match)
@@ -61,7 +63,7 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-      {:error, reason} ->
+      {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
@@ -90,7 +92,7 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, reason} ->
+      {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
@@ -123,7 +125,7 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-        {:error, message} ->
+        {:error, _} ->
           uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
           conn
           |> Conn.put_resp_header("location",  uri)
@@ -157,7 +159,7 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, message} ->
+      {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
@@ -191,7 +193,7 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, message} ->
+      {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
@@ -218,20 +220,13 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, message} ->
+      {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
     end
-  end
-
-  # 将用户创建测试比赛的http请求升级为websocket
-  get "/test/websocket" do
-    conn
-    |> WebSockAdapter.upgrade(WebSocketHandler, [], timeout: :infinity)
-    |> halt()
   end
 
   # 创建AI
@@ -242,15 +237,16 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        BattleStatistics.submit_increment()
-        UserAi.insert_ai(user_id, ai_name, git_url, tag)
+        Task.start(fn -> ThreadPool.start_test_game(git_url, tag) end)
+        # BattleStatistics.submit_increment()
+        # UserAi.insert_ai(user_id, ai_name, git_url, tag)
         body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+      {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
@@ -268,41 +264,41 @@ defmodule Battle.Web.Router do
 
   # 更新git仓库
   json_rpc "/user/update_git", "schema/user/update_git" do
-  moment_token = conn.params["moment_token"]
-  git_url = conn.params["git"]
-  ai_name = conn.params["ai_name"]
-  tag = conn.params["tag"]
-  case Token.verify_token(moment_token) do
-    {:ok, user_id} ->
-      message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
-      body = Ejoy.Jiffy.encode!(message)
-      conn
-      |> Conn.put_resp_content_type("application/json")
-      |> Conn.send_resp(200, body)
-      |> Conn.halt()
+    moment_token = conn.params["moment_token"]
+    git_url = conn.params["git"]
+    ai_name = conn.params["ai_name"]
+    tag = conn.params["tag"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
+        body = Ejoy.Jiffy.encode!(message)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
 
-    {:error, message} ->
-      uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-      conn
-      |> Conn.put_resp_header("location",  uri)
-      |> Conn.send_resp(302, "")
-      |> Conn.halt()
-  end
+      {:error, _} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+    end
 end
 
   # 创建测试比赛
   json_rpc "/user/create_test", "schema/user/create_test" do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
-      {:ok, user_id} ->
+      {:ok, _} ->
         # 初始化测试对局, 返回黑棋和白棋的token
-        {:ok, info} = RoomSupervisorTest.init_game(user_id)
+        {:ok, info} = RoomSupervisorTest.init_game()
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, Ejoy.Jiffy.encode!(info))
         |> Conn.halt()
 
-      {:error, reason} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+      {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
@@ -329,7 +325,6 @@ end
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisorTest.query(self(), user_id, game_id) do
       {:ok, detail} ->
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
         body = Ejoy.Jiffy.encode!(detail)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -432,8 +427,8 @@ end
     end
   end
 
+  # 将用户创建测试比赛的http请求升级为websocket
   get "/test/websocket" do
-    IO.puts("================")
     conn
     |> WebSockAdapter.upgrade(WebSocketHandler, [self()], timeout: :infinity)
     |> halt()
