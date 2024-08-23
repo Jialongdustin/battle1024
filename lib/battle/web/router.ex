@@ -30,7 +30,7 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "http://localhost:4000/login/redirect"
+  @redirect_uri "http://battle1024.ejoy.com/login/redirect"
 
   get "/" do
     conn
