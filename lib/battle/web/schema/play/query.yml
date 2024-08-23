@@ -1,15 +1,10 @@
-api: "/play/one_step_chess"
-request: 
+api: "/play/query"
+request:
   type: object
   properties:
-    moment_token:
+    token:
       type: string
-    move:
-      items:
-        type: array
-        items:
-          type: integer
-  required: [moment_token,move]
+  required: [token]
 
 response:
   type: object
@@ -18,31 +13,9 @@ response:
       type: string
     winner:
       type: string
-    white_king:
-      type: string
-    black_king:
-      type: string
-    opponent_step:
-      type: array
-      items:
-        type: array
-        items:
-          type: integer
-    captured:
-      type: array
-      items:
-        type: array
-        items:
-          type: integer
     board:
       type: array
       items:
         type: array
         items:
-          type: integer
-    available_step:
-      type: array
-      items:
-        type: array
-        items:
-          type: integer
+          type: number

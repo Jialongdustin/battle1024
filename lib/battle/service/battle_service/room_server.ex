@@ -5,7 +5,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   @code_info %{
     100 => "your turn to move",
-    101 => "move success, please wait until your opponent move",
+    101 => "move success as well as your ",
     102 => "winner occurred!!! no need to move",
     200 => "illegal movement, please try again",
     300 => "not your turn, please wait for your opponent move"
@@ -146,9 +146,9 @@ defmodule Battle.Service.BattleService.RoomServer do
     if (user_id == state.white and state.early_hand == true) or
     (user_id == state.black and state.early_hand == false) do
       detail = %{
-        code: Map.get(@code_info, 100),
+        code: 10002,
+        board: state.board,
         winner: nil,
-        board: state.board
       }
       {:reply, {:ok, detail}, state}
     else
@@ -174,7 +174,13 @@ defmodule Battle.Service.BattleService.RoomServer do
     # 如果路径正确需要更新棋盘
     case is_match do
       true ->
-        capture = get_captures(moves, state.board)
+        capture = case get_captures(moves, state.board) do
+          [] ->
+            [
+              %{captured: nil, moves: moves}
+            ]
+          res -> res
+        end
 
         # 最终被吃掉的所有棋子的位置
         [[x0, y0] | _] = moves
@@ -183,29 +189,11 @@ defmodule Battle.Service.BattleService.RoomServer do
         {node_value, white_king, black_king} = cal_black_white_and_node_value(moves, state.board)
 
         # 获取所有的捕获位置，并将它们更新为 0
-        update =
-          case capture do
-            [] ->
-              [
-                {x0, y0, 0},
-                {x1, y1, node_value}
-              ]
-            _ ->
-              # 将 captures 中的每一个捕获位置都更新为 0
-              capture_updates =
-                Enum.map(capture, fn [cx, cy] ->
-                  {cx, cy, 0}
-                end)
-              [
-                {x0, y0, 0}
-                | capture_updates
-              ] ++ [{x1, y1, node_value}]
-          end
+        update = get_update(capture, node_value, x0, y0, x1, y1)
 
         new_board =
           Enum.reduce(update, board, fn {row, col, new_value}, acc ->
             update_row = List.replace_at(Enum.at(acc, row), col, new_value)
-
             List.replace_at(acc, row, update_row)
           end)
 
@@ -213,7 +201,6 @@ defmodule Battle.Service.BattleService.RoomServer do
 
         move_detail = %{
           user_id: user_id,
-          moves: moves,
           captured: capture
         }
         code = case winner do
@@ -238,12 +225,10 @@ defmodule Battle.Service.BattleService.RoomServer do
                   steps_white: state.steps_white + 1
                 },
                 %{
-                  code: code,
+                  code: 10000,
                   winner: winner,
-                  white_king: white_king,
-                  black_king: black_king,
-                  your_step: moves,
-                  captured: capture,
+                  king: white_king,
+                  move_detail: move_detail,
                   board: new_board
                 }
               }
@@ -261,17 +246,15 @@ defmodule Battle.Service.BattleService.RoomServer do
                   steps_black: state.steps_black + 1
                 },
                 %{
-                  code: code,
+                  code: 10000,
                   winner: winner,
-                  white_king: white_king,
-                  black_king: black_king,
-                  your_step: moves,
-                  captured: capture,
+                  king: white_king,
+                  move_detail: move_detail,
                   board: new_board
                 }
               }
           end
-        IO.inspect(new_state)
+        IO.inspect(detail)
         {:reply, {:ok, detail}, new_state}
 
       false ->
@@ -281,18 +264,14 @@ defmodule Battle.Service.BattleService.RoomServer do
               Enum.take(inner_list, 2)
             end)
           end)
-
         detail = %{
-          code: Map.get(@code_info, 200),
+          code: 20000,
           winner: nil,
-          white_king: nil,
-          black_king: nil,
-          your_step: nil,
-          captured: nil,
-          board: nil,
+          king: nil,
+          move_detail: nil,
+          board: state.board,
           # available_step: available_step
         }
-
         {illegal_times_white, illegal_times_black} =
           state.illegal_times
           |> case do
@@ -342,14 +321,14 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:via, Registry, {Battle.RoomRegistry, contest_id}}
   end
 
-  defp count_piece(piece_value, board) do
+  defp count_piece(piece_value,board) do
     count =
       board
       |> Enum.flat_map(& &1)  # 将二维数组扁平化为一维
       |> Enum.count(fn piece -> piece in piece_value end) # 检查每种颜色棋子的个数
   end
 
-  defp get_captures(moves,board) do
+  def get_captures(moves,board) do
     captures =
       moves
       |> Enum.chunk_every(2, 1, :discard)  # 将路径分段，每段包含两个连续的点
@@ -370,7 +349,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   # 如果是 0，保持现有的 acc_inner，不改变
                   0 -> acc_inner
                   # 如果是第一个非零值，记录该坐标
-                  value when acc_inner == nil -> [x, y]
+                  value when acc_inner == nil -> %{moves: [[x0,y0],[x1,y1]],captured: [x,y]}
                   # 如果已经有非零值，保持原样
                   _ -> acc_inner
                 end
@@ -392,19 +371,36 @@ defmodule Battle.Service.BattleService.RoomServer do
     [x1, y1] = List.last(moves)
     case Enum.at(Enum.at(board, x0), y0) do
       1 ->
-        if Enum.any?(moves, fn [x, _] -> x == length(board)-1 end) do
-          {2, [length(board)-1, y1], nil}  # 白子变成白子王
-        else
-          {1, nil, nil}  # 保持为普通白子
+        # 查找符合条件的 [x, y]
+        case Enum.find(moves, fn [x, _y] -> x == length(board) - 1 end) do
+          nil -> {1, nil, nil}  # 没有符合条件的，保持为普通白子
+          [_x, y] -> {2, [length(board) - 1, y], nil}  # 找到符合条件的，白子变成白子王
         end
+
       2 -> {2, nil, nil}  # 已经是白子王，保持不变
+
       3 ->
-        if Enum.any?(moves, fn [x, _] -> x == 0 end) do
-          {4, nil, [0, y1]}  # 黑子变成黑子王
-        else
-          {3, nil, nil}  # 保持为普通黑子
+        # 查找符合条件的 [x, y]
+        case Enum.find(moves, fn [x, _y] -> x == 0 end) do
+          nil -> {3, nil, nil}  # 没有符合条件的，保持为普通黑子
+          [_x, y] -> {4, nil, [0, y]}  # 找到符合条件的，黑子变成黑子王
         end
+
       4 -> {4, nil, nil}  # 已经是黑子王，保持不变
     end
   end
+
+  def get_update(capture, node_value,x0,y0,x1,y1) do
+    res = Enum.reduce(capture, [{x0, y0, 0}], fn
+      %{captured: nil, moves: [[x0, y0], [x1, y1]]}, acc ->
+        acc ++ [{x1, y1, node_value}]
+
+      %{captured: captures, moves: [[x0, y0], [x1, y1]]}, acc ->
+        [cx,cy] = captures
+        capture_updates =  [{cx, cy, 0}]
+        acc ++ capture_updates
+    end)
+    res ++ [{x1, y1, node_value}]
+  end
+
 end

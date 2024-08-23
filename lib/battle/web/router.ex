@@ -320,7 +320,7 @@ end
   end
 
   # 创建测试比赛后 用户的两个机器人分别初始化拿到棋盘信息
-  json_rpc "/test/init", "schema/test/init" do
+  json_rpc "/test/query", "schema/test/query" do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
@@ -337,7 +337,7 @@ end
         |> Conn.halt()
       {:error, _} ->
         receive do
-          {:new_detail, detail} ->
+          {:query, detail} ->
             body = Ejoy.Jiffy.encode!(detail)
             conn
             |> Conn.put_resp_content_type("application/json")
@@ -355,36 +355,25 @@ end
     user_id = String.to_integer(user_info.user_id)
     game_id = user_info.ext.account_id
 
-    case RoomSupervisorTest.movement(self(), moves, user_id, game_id) do
+    case RoomSupervisorTest.movement(moves, user_id, game_id) do
       {:ok, response} ->
-        if response.winner do
-          body = Ejoy.Jiffy.encode!(response)
-          conn
-          |> Conn.put_resp_content_type("application/json")
-          |> Conn.send_resp(200, body)
-          |> Conn.halt()
-        else
-          receive do
-            {:new_detail, detail} ->
-              body = Ejoy.Jiffy.encode!(detail)
-              conn
-              |> Conn.put_resp_content_type("application/json")
-              |> Conn.send_resp(200, body)
-              |> Conn.halt()
-          end
-        end
+        body = Ejoy.Jiffy.encode!(response)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
 
       {:error, reason} ->
         body = Ejoy.Jiffy.encode!(reason)
         conn
         |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(400, %{"error" => reason})
+        |> Conn.send_resp(400, body)
         |> Conn.halt()
     end
   end
 
   # kun上发布机器人应用后会发这个请求初始化接口
-  json_rpc "/play/init", "schema/play/init" do
+  json_rpc "/play/query", "schema/play/query" do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
@@ -403,7 +392,7 @@ end
         |> Conn.halt()
       {:error, _} ->
         receive do
-          {:new_detail, detail} ->
+          {:query, detail} ->
             if detail.winner == nil do
               [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
               RoomServer.start_countdown(pid)
@@ -426,31 +415,13 @@ end
     user_id = String.to_integer(user_info.user_id)
     game_id = user_info.ext.account_id
     # 处理棋步
-    case RoomSupervisor.movement(self(), move, user_id, game_id) do
+    case RoomSupervisor.movement(move, user_id, game_id) do
       {:ok, response} ->
-        if response.winner do
-          body = Ejoy.Jiffy.encode!(response)
-          conn
-          |> Conn.put_resp_content_type("application/json")
-          |> Conn.send_resp(200, body)
-          |> Conn.halt()
-        else
-          [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-          RoomServer.record_time_step(pid, user_id)
-          receive do
-            {:new_detail, detail} ->
-              if detail.winner == nil do
-                [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-                RoomServer.start_countdown(pid)
-                RoomServer.start_time_step(pid, user_id)
-              end
-              body = Ejoy.Jiffy.encode!(detail)
-              conn
-              |> Conn.put_resp_content_type("application/json")
-              |> Conn.send_resp(200, body)
-              |> Conn.halt()
-          end
-        end
+        body = Ejoy.Jiffy.encode!(response)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
 
       {:error, reason} ->
         body = Ejoy.Jiffy.encode!(reason)

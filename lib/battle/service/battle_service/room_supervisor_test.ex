@@ -17,8 +17,8 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
 
   def init_game() do
     contest_id = UUID.uuid4()
-    token_white = Token.generate_token(10, contest_id)
-    token_black = Token.generate_token(24, contest_id)
+    {:ok,token_white} = Token.generate_token(10, contest_id)
+    {:ok,token_black} = Token.generate_token(24, contest_id)
     child_spec_server = %{
       id: RoomServer,
       start: {RoomServer, :start_link, [%{white: 10, black: 24, contest_id: contest_id}]},
@@ -26,45 +26,54 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
       type: :worker
     }
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
-    {:ok, %{token_white: token_white, token_black: token_black}}
+    detail = %{
+      token_white: token_white,
+      token_black: token_black
+    }
   end
 
   def query(caller, user_id, contest_id) do
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
     case RoomServer.query(pid, user_id) do
-        {:ok, detail} ->
-          # 当前询问回合，写回成功
-          {:ok, detail}
-        {:error, detail} ->
-          :ets.insert(:pid_info_test, {contest_id, caller})
-          # 不是当前询问回合，写回错误
-          {:error, detail}
+      {:ok, detail} ->
+        # 当前询问回合，写回成功
+        IO.inspect(detail)
+        {:ok, detail}
+      {:error, detail} ->
+        :ets.insert(:pid_info_test, {contest_id, caller})
+        # 不是当前询问回合，写回错误
+        {:error, detail}
     end
   end
 
-  def movement(caller, moves, user_id, contest_id) do
+  def movement(moves, user_id, contest_id) do
     case Registry.lookup(Battle.RoomRegistry, contest_id) do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
-            move_detail = Map.get(success_detail, :your_step)
-            new_detail = success_detail
-            |> Map.put(:opponent_step, move_detail)
-            |> Map.delete(:your_step)
+            # 将your_step改为opponent_step
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
-            [{_, dest}] = :ets.lookup(:pid_info_test, contest_id)
-            :ets.insert(:pid_info_test, {contest_id, caller})
-            send(WebSocketHandler, {:update_board, success_detail})
-            send(dest, {:new_detail, new_detail})
-            {:ok, success_detail}
+            case :ets.lookup(:pid_info_test, contest_id) do
+              [] -> # 对方没有查询
+                {:ok, success_detail}
+              [{_, dest}] -> #对方查询棋盘状态
+                new_detail = %{
+                  code: 10003,
+                  move_detail: success_detail.move_detail,
+                  board: success_detail.board,
+                  winner: success_detail.winner
+                }
+                send(dest, {:query, new_detail})
+                {:ok, success_detail}
+            end
+
           {:error, error_detail} ->
             {:error, error_detail}
         end
-
       [] ->
         {:error, "room not found"}
-      end
+    end
   end
 end

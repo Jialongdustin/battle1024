@@ -25,7 +25,7 @@ defmodule Battle.Mongo.BattleInfo do
       nil -> {:error, "game not exist"}
       res -> {:ok, res |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
-      end)}
+      end)|>List.first()}
     end
   end
 
