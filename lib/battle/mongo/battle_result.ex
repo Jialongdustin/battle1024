@@ -10,7 +10,7 @@ defmodule Battle.Mongo.BattleResult do
   @cleanable false
 
   field :user_id_2, {:list, :integer}, require: true
-  field :contest_id, :integer, required: true
+  field :game_id, :integer, required: true
   field :winner, :integer, required: true
   field :time_cost_2, {:list, :integer}, required: true
   field :memory_cost_2, {:list,:string}, required: true
@@ -21,10 +21,10 @@ defmodule Battle.Mongo.BattleResult do
 #  Battle.Mongo.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
 
 
-  def save_battle_result(users,contest_id,winner,time_costs,memory_costs,early_hand,total_steps) do
+  def save_battle_result(users, game_id, winner, time_costs, memory_costs, early_hand, total_steps) do
     info = %{
       user_id_2: users,
-      contest_id: contest_id,
+      game_id: game_id,
       winner: winner,
       time_cost_2: time_costs,
       memory_cost_2: memory_costs,
@@ -55,7 +55,7 @@ defmodule Battle.Mongo.BattleResult do
                      time_cost_self: Enum.at(battle.time_cost_2, self_index),
                      total_step_self: Enum.at(battle.total_step_2, self_index),
                      memory_cost_self: Enum.at(battle.memory_cost_2, self_index),
-                     contest_id: battle.contest_id,
+                     game_id: battle.game_id,
                      early_hand: battle.early_hand,
                      winner: battle.winner
                    }
@@ -67,7 +67,7 @@ defmodule Battle.Mongo.BattleResult do
                      time_cost_opponent: Enum.at(battle.time_cost_2, opponent_index),
                      total_step_opponent: Enum.at(battle.total_step_2, opponent_index),
                      memory_cost_opponent: Enum.at(battle.memory_cost_2, opponent_index),
-                     contest_id: battle.contest_id,
+                     game_id: battle.game_id,
                      early_hand: battle.early_hand,
                      winner: battle.winner
                    }

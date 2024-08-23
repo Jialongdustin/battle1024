@@ -5,7 +5,7 @@ defmodule Battle.Mongo.BattleStatistics do
   @db "battle"
   @collection "battle_statistics"
 #  @indexes [
-#    {[contest_id: 1], false}
+#    {[game_id: 1], false}
 #  ]
   @cleanable false
 
@@ -17,7 +17,7 @@ defmodule Battle.Mongo.BattleStatistics do
 
   def query_statistics_info() do
     case __MODULE__.pquery(%{}) do
-      nil -> {:error, "no info in battle_statistics"}
+      [] -> {:error, "no info in battle_statistics"}
       res -> {:ok, res|> Enum.map( fn message -> message |> __MODULE__.to_raw() end)|> List.first()}
     end
   end

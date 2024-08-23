@@ -41,12 +41,12 @@ defmodule Battle.Mongo.RankList do
 
   def get_rank_by_user_id(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-      nil ->{:error, "user_id error"}
+      [] -> {:error, "user_id error"}
       res ->
         detail =
           case res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) do
             [] ->
-              {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+              {:ok, user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
 
               {_,cnt} = UserAi.count_user(user_id)
               %{
