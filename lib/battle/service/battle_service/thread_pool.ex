@@ -67,7 +67,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
   defp reuse_group_for_task({user_id1, user_id2, contest_id, players}, {groupName, groupKey, appName}) do
     update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id)
     create_deploys(groupKey, appName, user_id1, user_id2, players)
-    RoomSupervisor.init_game(user_id1, user_id2, contest_id, groupKey, appName)
+    RoomSupervisor.init_game(user_id1, user_id2, contest_id, groupName, groupKey, appName)
   end
 
   # players建立user_id和每个用户的构建包的映射

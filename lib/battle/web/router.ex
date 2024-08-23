@@ -78,40 +78,13 @@ defmodule Battle.Web.Router do
   end
 
   # 获取某个用户所有对局信息
-  get "/user/all_contests_info" do
+  get "/user/all_games_info" do
     token = conn.params["moment_token"]
 
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        {:ok, contest} = BattleResult.get_battle_result_by_user_id(String.to_integer(user_id))
-        body = Ejoy.Jiffy.encode!(%{code: 200, state: contest})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, body)
-        |> Conn.halt()
-
-      {:error, reason} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-        conn
-        |> Conn.put_resp_header("location",  uri)
-        |> Conn.send_resp(302, "")
-        |> Conn.halt()
-
-      _ ->
-        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(500, body)
-        |> Conn.halt()
-    end
-  end
-
-  get "/user/rank_info" do
-    moment_token = conn.params["moment_token"]
-    case Token.verify_token(moment_token) do
-      {:ok, user_id} ->
-        {:ok,rank_info} = RankList.get_rank_by_user_id(String.to_integer(user_id))
-        body = Ejoy.Jiffy.encode!(%{code: 200, state: rank_info})
+        {:ok, game} = BattleResult.get_battle_result_by_user_id(String.to_integer(user_id))
+        body = Ejoy.Jiffy.encode!(%{code: 200, state: game})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
@@ -139,25 +112,26 @@ defmodule Battle.Web.Router do
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
 
-        {:ok,rank_info} = RankList.get_rank_by_user_id(String.to_integer(user_id))
-        body = Ejoy.Jiffy.encode!(%{code: 200, state: rank_info})
-
+        body = case RankList.get_rank_by_user_id(String.to_integer(user_id)) do
+          {:ok, info} ->
+            Ejoy.Jiffy.encode!(%{code: 200, state: info})
+          {:error, message} ->
+            Ejoy.Jiffy.encode!(%{error: message})
+        end
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, reason} ->
-        body = Ejoy.Jiffy.encode!(%{error: reason})
-
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(403, body)
-        |> Conn.halt()
+        {:error, message} ->
+          uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+          conn
+          |> Conn.put_resp_header("location",  uri)
+          |> Conn.send_resp(302, "")
+          |> Conn.halt()
 
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
-
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(500, body)
@@ -166,7 +140,7 @@ defmodule Battle.Web.Router do
   end
 
   # 获取胜率排行榜
-  get "/contest/ranking_list" do
+  get "/game/ranking_list" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, _} ->
@@ -193,7 +167,7 @@ defmodule Battle.Web.Router do
   end
 
   # 获取所有用户参赛信息
-  get "/contest/all_users_info" do
+  get "/game/all_users_info" do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, _} ->
@@ -227,12 +201,12 @@ defmodule Battle.Web.Router do
   end
 
   # 复盘
-  get "/contest/one_contest_details" do
+  get "/game/detail" do
     moment_token = conn.params["moment_token"]
-    contest_id = conn.params["contest_id"]
+    game_id = conn.params["game_id"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
-        message = case BattleInfo.get_battle_by_contest_id(contest_id) do
+        message = case BattleInfo.get_battle_by_game_id(game_id) do
             {:ok, battle_info} ->
               %{battle_info: battle_info}
             {:error, _} ->
@@ -350,12 +324,12 @@ end
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
-    contest_id = user_info.ext.account_id
+    game_id = user_info.ext.account_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
-    case RoomSupervisorTest.query(self(), user_id, contest_id) do
+    case RoomSupervisorTest.query(self(), user_id, game_id) do
       {:ok, detail} ->
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
         body = Ejoy.Jiffy.encode!(detail)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -379,9 +353,9 @@ end
     moves = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
-    contest_id = user_info.ext.account_id
+    game_id = user_info.ext.account_id
 
-    case RoomSupervisorTest.movement(self(), moves, user_id, contest_id) do
+    case RoomSupervisorTest.movement(self(), moves, user_id, game_id) do
       {:ok, response} ->
         if response.winner do
           body = Ejoy.Jiffy.encode!(response)
@@ -414,12 +388,12 @@ end
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
-    contest_id = user_info.ext.account_id
+    game_id = user_info.ext.account_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
-    case RoomSupervisor.query(self(), user_id, contest_id) do
+    case RoomSupervisor.query(self(), user_id, game_id) do
       {:ok, detail} ->
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
         RoomServer.start_countdown(pid)
         RoomServer.start_time_step(pid, user_id)
         body = Ejoy.Jiffy.encode!(detail)
@@ -431,7 +405,7 @@ end
         receive do
           {:new_detail, detail} ->
             if detail.winner == nil do
-              [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+              [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
               RoomServer.start_countdown(pid)
               RoomServer.start_time_step(pid, user_id)
             end
@@ -450,9 +424,9 @@ end
     move = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = String.to_integer(user_info.user_id)
-    contest_id = user_info.ext.account_id
+    game_id = user_info.ext.account_id
     # 处理棋步
-    case RoomSupervisor.movement(self(), move, user_id, contest_id) do
+    case RoomSupervisor.movement(self(), move, user_id, game_id) do
       {:ok, response} ->
         if response.winner do
           body = Ejoy.Jiffy.encode!(response)
@@ -461,12 +435,12 @@ end
           |> Conn.send_resp(200, body)
           |> Conn.halt()
         else
-          [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+          [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
           RoomServer.record_time_step(pid, user_id)
           receive do
             {:new_detail, detail} ->
               if detail.winner == nil do
-                [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+                [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
                 RoomServer.start_countdown(pid)
                 RoomServer.start_time_step(pid, user_id)
               end

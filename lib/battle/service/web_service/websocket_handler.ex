@@ -15,6 +15,4 @@ defmodule Battle.Service.WebService.WebSocketHandler do
 
     {:reply,:ok, {:text, Ejoy.Jiffy.encode!(%{type: "move", moves: moves, captured: captured})}, state}
   end
-
-
 end

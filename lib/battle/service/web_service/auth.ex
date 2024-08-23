@@ -40,7 +40,7 @@ defmodule Battle.Service.WebService.Auth do
           code: code,
           message: Map.get(resp, "message")
         }
-        {:error, :one_code_error, %{one_resp: one_resp}}
+        {:error, %{one_resp: one_resp}}
     end
 
   end
