@@ -44,31 +44,30 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     end
   end
 
-  def movement(caller, moves, user_id, contest_id) do
+  def movement(moves, user_id, contest_id) do
     case Registry.lookup(Battle.RoomRegistry, contest_id) do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
             # 将your_step改为opponent_step
-            move_detail = Map.get(success_detail, :your_step)
-            new_detail = success_detail
-            |> Map.put(:opponent_step, move_detail)
-            |> Map.delete(:your_step)
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end
             case :ets.lookup(:pid_info, contest_id) do
-              [] -> # 对方还没就绪
-                :ets.insert(:pid_info, {contest_id, caller})
+              [] -> # 对方没有查询
                 {:ok, success_detail}
-              [{_, dest}] -> #对方已经就绪
-                :ets.insert(:pid_info, {contest_id, caller})
-                send(dest, {:new_detail, new_detail})
+              [{_, dest}] -> #对方查询棋盘状态
+                new_detail = %{
+                  code: 10003,
+                  move_detail: success_detail.move_detail,
+                  board: success_detail.board,
+                  winner: success_detail.winner
+                }
+                send(dest, {:query, new_detail})
                 {:ok, success_detail}
             end
-#            :ets.lookup(:pid_info, "10002")
+
           {:error, error_detail} ->
-            IO.inspect(error_detail)
             {:error, error_detail}
         end
       [] ->

@@ -12,14 +12,14 @@ defmodule BattleTest.RoomServerTest do
 
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10002")
+      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10002","11","22","33")
 
-    # "66c6dc25cfd7ed704356debb"
+    # "66c8028b65cfd1d344393780"
     {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
-    # "66c6dc2acfd7ed704356debc"
+    # "66c8029065cfd1d344393781"
     {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
-    RoomSupervisor.query(123, contest_id)
-    RoomSupervisor.query(456, contest_id)
+#    RoomSupervisor.query(123, contest_id)
+#    RoomSupervisor.query(456, contest_id)
 
     RoomSupervisor.movement([[2, 0], [3, 0]], 123, contest_id)
     RoomSupervisor.movement([[5, 0], [4, 0]], 456, contest_id)
@@ -39,7 +39,8 @@ defmodule BattleTest.RoomServerTest do
       [3, 3, 3, 3, 3, 3, 3, 3],
       [0, 0, 0, 0, 0, 0, 0, 0]
     ]
-    moves = [[3, 0], [5, 0], [7, 0]]
+#    moves = [[3, 0], [5, 0], [7, 0]]
+    moves = [[2,1],[3,1]]
     res = RoomServer.get_captures(moves,board)
     IO.inspect(res)
   end
@@ -60,4 +61,39 @@ defmodule BattleTest.RoomServerTest do
     IO.inspect(res)
   end
 
+  test "update capture" do
+    board = [
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [0, 1, 1, 1, 1, 1, 1, 1],
+      [1, 0, 0, 0, 0, 0, 0, 0],
+      [3, 0, 0, 0, 0, 0, 0, 0],
+      [0, 3, 3, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+    capture =[
+      %{captured: [4, 0], moves: [[3, 0], [5, 0]]},
+      %{captured: [6, 0], moves: [[5, 0], [7, 0]]}
+    ]
+    update = RoomServer.get_update(capture,1,3,0,7,0)
+
+    new_board =
+      Enum.reduce(update, board, fn {row, col, new_value}, acc ->
+        update_row = List.replace_at(Enum.at(acc, row), col, new_value)
+        List.replace_at(acc, row, update_row)
+      end)
+
+    assert new_board == [
+             [0, 0, 0, 0, 0, 0, 0, 0],
+             [1, 1, 1, 1, 1, 1, 1, 1],
+             [0, 1, 1, 1, 1, 1, 1, 1],
+             [0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 0],
+             [0, 3, 3, 3, 3, 3, 3, 3],
+             [0, 3, 3, 3, 3, 3, 3, 3],
+             [1, 0, 0, 0, 0, 0, 0, 0]
+           ]
+
+  end
 end
