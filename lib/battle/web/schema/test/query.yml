@@ -1,4 +1,4 @@
-api: "/play/init"
+api: "/test/query"
 request:
   type: object
   properties:

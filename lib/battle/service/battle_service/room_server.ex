@@ -144,7 +144,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:reply, :ok, %{state | time_ref: new_ref}}
   end
 
-  def handle_call({:query, user_id}, from, state) do
+  def handle_call({:query, user_id}, _from, state) do
     if (user_id == state.white and state.early_hand == true) or
     (user_id == state.black and state.early_hand == false) do
       detail = %{

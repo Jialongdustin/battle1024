@@ -6,7 +6,8 @@ defmodule Battle.Service.WebService.Kun do
   @status_success 4
   @productKey "plat1024"
   @build_config_name "AI-player"
-  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4"]
+  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5"]
+  @service_groups_test ["battle-test1", "battle-test2", "battle-test3", "battle-test4", "battle-test5"]
   @appNames ["battle-player-python", "battle-player-java"]
 
   alias ElixirSense.Log
@@ -222,8 +223,9 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   # Kun.get_idle_service()
-  def get_idle_service() do
-    Enum.flat_map(@service_groups, fn groupName ->
+  def get_idle_service(flag \\ false) do
+    groups = if flag, do: @service_groups_test, else: @service_groups
+    Enum.flat_map(groups, fn groupName ->
       Enum.filter(@appNames, fn appName ->
         get_service_stage(groupName, appName) == "idle"
       end)

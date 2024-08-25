@@ -35,7 +35,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     case RoomServer.query(pid, user_id) do
         {:ok, detail} ->
           # 当前询问回合，写回成功
-          IO.inspect(detail)
           {:ok, detail}
         {:error, detail} ->
           :ets.insert(:pid_info, {contest_id, caller})
