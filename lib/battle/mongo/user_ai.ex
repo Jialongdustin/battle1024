@@ -52,8 +52,13 @@ defmodule Battle.Mongo.UserAi do
   end
 
   def insert_ai(user_id, ai_name, git_url, tag) do
-
-    info = %{user_id: user_id, ai_name: ai_name, git_url: git_url, tag: tag,create_time: Ejoy.Bson.utc_now()}
+    info = %{
+      user_id: user_id,
+      ai_name: ai_name,
+      git_url: git_url,
+      tag: tag,
+      create_time: Ejoy.Bson.utc_now()
+    }
     __MODULE__.psave(info)
 
 

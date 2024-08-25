@@ -200,6 +200,12 @@ defmodule Battle.Web.Router do
     end
   end
 
+  json_rpc "/user/update_avatar", "schema/user/create_AI" do
+    token = conn.params["moment_token"]
+
+
+  end
+
   # 复盘
   get "/game/detail" do
     moment_token = conn.params["moment_token"]

@@ -14,9 +14,9 @@ defmodule BattleTest.RoomServerTest do
     {:ok, contest_id} =
       Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10002","11","22","33")
 
-    # "66c8028b65cfd1d344393780"
+    # "66cb44b4454a4a97acdabb75"
     {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
-    # "66c8029065cfd1d344393781"
+    # "66cb44b8454a4a97acdabb76"
     {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
 #    RoomSupervisor.query(123, contest_id)
 #    RoomSupervisor.query(456, contest_id)
@@ -95,5 +95,30 @@ defmodule BattleTest.RoomServerTest do
              [1, 0, 0, 0, 0, 0, 0, 0]
            ]
 
+  end
+  test "check repeat remove" do
+    state = %{
+      white: 11,
+      black: 22,
+      contest_id: 33,
+      winner: nil,
+      board: @board_init,
+      early_hand: true,
+      steps: [],
+      illegal_times: [0, 0],
+      time_ref: nil,
+      steps_white: 0,
+      steps_black: 0,
+
+      pre_step_white: %{move: [],cnt: 0},
+      pre_step_black: %{move: [],cnt: 0},
+      time_cost_white: 0,
+      time_cost_black: 0,
+      time_counter_white: 0,
+      time_counter_black: 0,
+    }
+    {_,state} = RoomServer.check_repeat_move(state,[[2,0],[3,0]],[])
+    {_,state} = RoomServer.check_repeat_move(state,[[3,0],[2,0]],[])
+    RoomServer.check_repeat_move(state,[[2,0],[3,0]],[])
   end
 end

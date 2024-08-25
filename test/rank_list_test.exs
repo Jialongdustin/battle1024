@@ -27,8 +27,14 @@ defmodule BattleTest do
     assert Enum.all?(user_infos, fn user_info -> user_info in sanitized_get_infos end)
   end
 
-  test "query single rank" do
-    {:ok, single_info} = Battle.Mongo.RankList.get_rank_by_user_id(5)
+  test "get rank list" do
+    res = Battle.Mongo.RankList.get_rank_list(1,2)
+    IO.inspect(res)
+  end
+
+  test "rank self" do
+    {:ok, single_info} = Battle.Mongo.RankList.get_rank_by_user_id(2)
     IO.inspect(single_info)
   end
+
 end

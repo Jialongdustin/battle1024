@@ -17,10 +17,9 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   end
 
   def init_game() do
-
     contest_id = UUID.uuid4()
-    {:ok,token_white} = Token.generate_token(10, contest_id)
     {:ok,token_black} = Token.generate_token(24, contest_id)
+    {:ok,token_white} = Token.generate_token(10, contest_id)
     child_spec_server = %{
       id: RoomServer,
       start: {RoomServer, :start_link, [%{white: 10, black: 24, contest_id: contest_id}]},
