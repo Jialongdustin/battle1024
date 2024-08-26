@@ -66,6 +66,134 @@ defmodule BattleTest.RouterTest do
     end
   end
 
+  test " /user/all, return 200" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "123"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/all", "")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+    end
+  end
+
+  test " /user/ranking_list, return 200" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/ranking_list", "")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+    end
+  end
+
+  test "GET /game/ranking_list with pagination, return 200" do
+    page = 0
+    limit = 2
+
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
+      end
+    ] do
+      # 创建带有查询参数的连接
+      conn =
+        :get
+        |> conn("/game/ranking_list", %{"page" => Integer.to_string(page), "limit" => Integer.to_string(limit), "moment_token" => "dummy_token"})
+        |> Router.call(@opts)
+
+      assert conn.state == :sent
+      assert conn.status == 200
+
+      response = Ejoy.Jiffy.decode!(conn.resp_body)
+      IO.inspect(response)
+    end
+  end
+
+  test " /game/statistic_info, return 200" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, ""}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/game/statistic_info", "")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+    end
+  end
+
+  test "/user/update_avatar, return 200" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
+      end
+    ] do
+      # JSON 数据
+      json_data = %{"avatar" => "aaccbb",
+                  "moment_token" => "dummy token"} |> Ejoy.Jiffy.encode!()
+
+      # 创建带有 JSON body 的连接
+      conn =
+        :post
+        |> conn("/user/update_avatar", json_data)
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+
+      assert conn.state == :sent
+      assert conn.status == 200
+
+      response = Ejoy.Jiffy.decode!(conn.resp_body)
+      IO.inspect(response)
+    end
+  end
+
+  test " /user/avatar, return 200" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/avatar", "")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+    end
+  end
+
+  test " /game/detail, return 200" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/game/detail", %{"game_id" => Integer.to_string(10002)})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+    end
+  end
+
   test "return 200 with insert AI info on /user/create_AI" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
@@ -205,19 +333,6 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "get all info of one user on /user/all_contests_info" do
-    with_mock Battle.Utils.Token, [:passthrough], [
-      verify_token: fn _ ->
-        {:ok, 1}
-      end
-    ] do
-      conn =
-        :get
-        |> conn("/user/all_contests_info", "")
-        |> Router.call(@opts)
-      assert conn.state == :sent
-      assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 0, "message" => "ok", "state" => []}
-    end
-  end
+
+
 end

@@ -47,7 +47,7 @@ defmodule Battle.Mongo.RankList do
               %{
                 user_id: user_id,
                 rate: 0,
-                last_submit_date: user_info.create_time,
+                last_submit_date: user_info.create_time.ms,
                 count: cnt
               }
             info ->
@@ -64,7 +64,7 @@ defmodule Battle.Mongo.RankList do
               %{
                 user_id: user_id,
                 rate: info.rate,
-                last_submit_date: user_info.create_time,
+                last_submit_date: user_info.create_time.ms,
                 count: cnt,
                 rank: rank
               }
