@@ -48,7 +48,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
-            # 将your_step改为opponent_step
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end
