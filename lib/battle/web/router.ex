@@ -59,7 +59,7 @@ defmodule Battle.Web.Router do
     case Auth.verify_code(code) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
-        redirect_url = front_end_url <> "?code=200&moment_token=" <> URI.encode(moment_token)
+        redirect_url = front_end_url <> "?code=200&moment_token=" <> moment_token
 
         conn
         |> Conn.put_resp_header("location", redirect_url)
