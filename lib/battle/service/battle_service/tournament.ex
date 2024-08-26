@@ -17,8 +17,12 @@ defmodule Battle.Service.BattleService.Tournament do
         ThreadPool.add_task({user_id1, user_id2, contest_id, players})
       end)
     end)
-
-    # 等待所有对战完成
-    Process.sleep(:infinity)
   end
+
+  players = %{
+    111 => "plat1024-battle-players:20240826151215",
+    222 => "plat1024-battle-players:20240826151237",
+    333 => "plat1024-battle-players:20240826151257",
+    444 => "plat1024-battle-players:20240826151155"
+  }
 end

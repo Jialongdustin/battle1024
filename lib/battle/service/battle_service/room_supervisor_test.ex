@@ -15,12 +15,12 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   end
 
   def init_game() do
-    contest_id = UUID.uuid4()
-    {:ok,token_black} = Token.generate_token(24, contest_id)
-    {:ok,token_white} = Token.generate_token(10, contest_id)
+    game_id = UUID.uuid4()
+    {:ok, token_black} = Token.generate_token(24, game_id)
+    {:ok, token_white} = Token.generate_token(10, game_id)
     child_spec_server = %{
       id: RoomServer,
-      start: {RoomServer, :start_link, [%{white: 10, black: 24, contest_id: contest_id}]},
+      start: {RoomServer, :start_link, [%{white: 10, black: 24, game_id: game_id}]},
       restart: :transient,
       type: :worker
     }
@@ -31,22 +31,21 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     }
   end
 
-  def query(caller, user_id, contest_id) do
-    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+  def query(caller, user_id, game_id) do
+    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
     case RoomServer.query(pid, user_id) do
       {:ok, detail} ->
         # 当前询问回合，写回成功
-        IO.inspect(detail)
         {:ok, detail}
       {:error, detail} ->
-        :ets.insert(:pid_info_test, {contest_id, caller})
+        :ets.insert(:pid_info_test, {game_id, caller})
         # 不是当前询问回合，写回错误
         {:error, detail}
     end
   end
 
-  def movement(moves, user_id, contest_id) do
-    case Registry.lookup(Battle.RoomRegistry, contest_id) do
+  def movement(moves, user_id, game_id) do
+    case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
@@ -54,7 +53,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
-            case :ets.lookup(:pid_info_test, contest_id) do
+            case :ets.lookup(:pid_info_test, game_id) do
               [] -> # 对方没有查询
                 {:ok, success_detail}
               [{_, dest}] -> #对方查询棋盘状态

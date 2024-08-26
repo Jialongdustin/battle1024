@@ -4,7 +4,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   require Logger
 
   alias Battle.Service.BattleService.RoomServer
-  alias Battle.Service.BattleService.ConnectionStore
   alias Battle.Utils.Token
 
   def start_link(_) do
@@ -18,10 +17,10 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   end
 
   def init_game(white, black, game_id, groupName, groupKey, appName) do
-    # child_spec_server = {RoomServer, white: white, black: black, contest_id: contest_id}
+    # child_spec_server = {RoomServer, white: white, black: black, game_id: game_id}
     child_spec_server = %{
       id: RoomServer,
-      start: {RoomServer, :start_link, [%{white: white, black: black, contest_id: game_id, groupName: groupName, groupKey: groupKey, appName: appName}]},
+      start: {RoomServer, :start_link, [%{white: white, black: black, game_id: game_id, groupName: groupName, groupKey: groupKey, appName: appName}]},
       restart: :transient,
       type: :worker
     }
@@ -29,30 +28,28 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     {:ok, game_id}
   end
 
-
-  def query(caller, user_id, contest_id) do
-    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, contest_id)
+  def query(caller, user_id, game_id) do
+    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
     case RoomServer.query(pid, user_id) do
         {:ok, detail} ->
           # 当前询问回合，写回成功
           {:ok, detail}
         {:error, detail} ->
-          :ets.insert(:pid_info, {contest_id, caller})
+          :ets.insert(:pid_info, {game_id, caller})
           # 不是当前询问回合，写回错误
           {:error, detail}
     end
   end
 
-  def movement(moves, user_id, contest_id) do
-    case Registry.lookup(Battle.RoomRegistry, contest_id) do
+  def movement(moves, user_id, game_id) do
+    case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
-            # 将your_step改为opponent_step
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end
-            case :ets.lookup(:pid_info, contest_id) do
+            case :ets.lookup(:pid_info, game_id) do
               [] -> # 对方没有查询
                 {:ok, success_detail}
               [{_, dest}] -> #对方查询棋盘状态
@@ -65,8 +62,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
                 send(dest, {:query, new_detail})
                 {:ok, success_detail}
             end
-
           {:error, error_detail} ->
+            RoomServer.terminate_game(pid)
             {:error, error_detail}
         end
       [] ->

@@ -50,7 +50,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
     workers = List.delete(state.workers, worker)
 
     # 创建卸载任务单
-    {cpu, mem} = terminate_service(group_key, app_name)
+    terminate_service(group_key, app_name)
 
     # 如果队列中有任务，将其分配给空闲的 worker
     case :queue.out(state.queue) do
@@ -61,31 +61,6 @@ defmodule Battle.Service.BattleService.ThreadPool do
       {:empty, _} ->
         {:noreply, %{state | workers: workers, busy: busy}}
     end
-  end
-
-
-  def start_test_game(git, tag) do
-    package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
-    {groupName, appName} = Kun.get_idle_service(true)
-    groupKey =
-      Regex.run(~r/test\d+/, groupName)
-      |> List.first()
-      |> (fn name -> "plat1024-#{name}" end).()
-    contest_id = UUID.uuid4()
-    update_services(groupName, groupKey, appName, 10, 24, contest_id)
-    [
-      %{
-        "serviceGroup": groupKey,
-        "service": appName,
-        "appConfBuildName": package_name
-      },
-      %{
-        "serviceGroup": groupKey,
-        "service": Map.get(@appNames, appName),
-        "appConfBuildName": package_name
-      },
-    ] |> Kun.create_deploy_task()
-    RoomSupervisor.init_game(10, 24, contest_id, groupName, groupKey, appName)
   end
 
   # 对局结束后, 直接把当前服务组信息复用给下一个worker, 省去了调kun的接口去查询空闲的服务组
@@ -145,14 +120,14 @@ defmodule Battle.Service.BattleService.ThreadPool do
     ]
   end
 
-  def update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id) do
+  defp update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id) do
     update_service(appName, user_id1, contest_id) ++
     update_service(appName, user_id2, contest_id)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
-  def update_service(appName, user_id, contest_id) do
-    token = Token.generate_token(user_id, contest_id)
+  defp update_service(appName, user_id, contest_id) do
+    {:ok, token} = Token.generate_token(user_id, contest_id)
     [%{
           "name" => appName,
           "version" => appName,
@@ -161,8 +136,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
           "mem" => 96,
           "capacity" => 20,
           "svcCapacity" => 0,
-          "nodepoolId" => "np0f3c8a13074143ff90da1f198a756367",
-          "nodepoolName" => "nodepool_name",
+          "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
           "params" => %{
             "token" => token
           },
@@ -180,40 +154,4 @@ defmodule Battle.Service.BattleService.ThreadPool do
           }
         }]
   end
-
-  # defp create_services(user_id1, user_id2, contest_id) do
-  #   create_service(List.at(@appNames, 0), user_id1, contest_id) ++
-  #   create_service(List.at(@appNames, 1), user_id2, contest_id)
-  #   |> Kun.create_service_group()
-  # end
-
-  # defp create_service(appName, user_id, contest_id) do
-  #   token = Token.generate_token(user_id, contest_id)
-  #   [%{
-  #     "name" => appName,
-  #     "version" => appName,
-  #     "replicas" => 1,
-  #     "cpu" => 12,
-  #     "mem" => 96,
-  #     "capacity" => 20,
-  #     "svcCapacity" => 0,
-  #     "nodepoolId" => "np0f3c8a13074143ff90da1f198a756367",
-  #     "nodepoolName" => "nodepool_name",
-  #     "params" => %{
-  #       "token" => token
-  #     },
-  #     "resources" => %{
-  #       "kun-run" => %{
-  #         "requests" => %{
-  #           "cpu" => 2.0,
-  #           "mem" => 4.0
-  #         },
-  #         "limits" => %{
-  #           "cpu" => 0.5,
-  #           "mem" => 2.0
-  #         }
-  #       }
-  #     }
-  #   }]
-  # end
 end

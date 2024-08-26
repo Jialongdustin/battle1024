@@ -15,12 +15,6 @@ defmodule Battle.Service.WebService.Kun do
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
 
-  # [
-  # %{package_name: "plat1024-battle-players:20240822175040", user_id: 444},
-  # %{package_name: "plat1024-battle-players:20240822175102", user_id: 111},
-  # %{package_name: "plat1024-battle-players:20240822175124", user_id: 222},
-  # %{package_name: "plat1024-battle-players:20240822175146", user_id: 333}
-  # ]
 
   def list_envs() do
     path = "/api/env/#{@query_namespace}/envs"
@@ -52,7 +46,7 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.change_config(%{user_id: "222", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_jdk8.git", tag: "dustin"})
+  # Kun.change_config(%{user_id: "444", git_url: "git@gitlab.alibaba-inc.com:battle-players-test/player-c_cpp.git", tag: "master"})
   def change_config(info) do
     user_id = info.user_id
     git_url = info.git_url
@@ -248,15 +242,6 @@ defmodule Battle.Service.WebService.Kun do
         List.first(services)["stage"]
       _ ->
         {:error, "something wrong"}
-    end
-  end
-
-  # Kun.get_app_config_list("battle-player")
-  def get_app_config_list(appName) do
-    path = "/api/env/#{@query_namespace}/appConfig?appName=#{appName}"
-    case send_get(path, %{}) do
-      %{"code" => 0, "data" => %{"appConfigs" => appConfigs}} ->
-        appConfigs
     end
   end
 
