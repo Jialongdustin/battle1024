@@ -22,6 +22,14 @@ defmodule Battle.Service.BattleService.ThreadPool do
     GenServer.cast(__MODULE__, {:add_task, task})
   end
 
+  def get_state() do
+    GenServer.call(__MODULE__, :get_state)
+  end
+
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
+  end
+
   def handle_call({:get_users, info}, _from, state) do
     case length(state.users) do
       0 ->
@@ -73,6 +81,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
   # players建立user_id和每个用户的构建包的映射
   defp execute_task({user_id1, user_id2, contest_id, players}) do
     {groupName, appName} = Kun.get_idle_service()
+    IO.inspect({groupName, appName})
     groupKey =
       Regex.run(~r/players\d+/, groupName)
       |> List.first()

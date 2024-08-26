@@ -19,10 +19,10 @@ defmodule Battle.Service.BattleService.Tournament do
     end)
   end
 
-  players = %{
-    111 => "plat1024-battle-players:20240826151215",
-    222 => "plat1024-battle-players:20240826151237",
-    333 => "plat1024-battle-players:20240826151257",
-    444 => "plat1024-battle-players:20240826151155"
-  }
+  # players = %{
+  #   111 => "plat1024-battle-players:20240826154603",
+  #   222 => "plat1024-battle-players:20240826154542",
+  #   333 => "plat1024-battle-players:20240826154521",
+  #   444 => "plat1024-battle-players:20240826154500"
+  # }
 end

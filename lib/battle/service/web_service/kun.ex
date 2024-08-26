@@ -281,18 +281,12 @@ defmodule Battle.Service.WebService.Kun do
 
   def cal_content_md5(body) do
     message = :crypto.hash(:md5, body) |> Base.encode64()  # 进行md5哈希运算，然后转为base64编码格式
-    IO.puts("Date:")
-    IO.inspect DateTime.utc_now() |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
-    IO.puts("md5:")
-    IO.inspect(message)
     message
   end
 
   def make_signature(path, headers, secret, method) do
     sign_bytes = get_bytes_to_sign(path, headers, method)
     message = :crypto.mac(:hmac, :sha, secret, sign_bytes) |> Base.encode64()
-    IO.puts("signature:")
-    IO.inspect(message)
     message
   end
 
