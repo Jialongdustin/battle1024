@@ -11,7 +11,7 @@ defmodule BattleTest.RoomServerTest do
   test "battle_early_hand" do
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10002", "11", "22", "33")
+      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10008", "11", "22", "33")
 
     # "66cbf00f45826e234382f9b9"
     {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)

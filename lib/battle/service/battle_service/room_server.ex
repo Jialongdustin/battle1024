@@ -379,7 +379,6 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:via, Registry, {Battle.RoomRegistry, game_id}}
   end
 
-  defp count_piece(piece_value, board) do
   defp count_total_piece(new_state) do
     # 获取各类棋子的数量
     count_diff_pieces = {
