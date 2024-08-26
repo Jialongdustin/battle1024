@@ -52,7 +52,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
     end
   end
 
-  def handle_info({contest_id, group_name, group_key, app_name}, state) do
+  def handle_info({:terminate, contest_id, group_name, group_key, app_name}, state) do
     # 从 busy 列表中移除已完成的任务
     {worker, busy} = Map.pop(state.busy, contest_id)
     workers = List.delete(state.workers, worker)

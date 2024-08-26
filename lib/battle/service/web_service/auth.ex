@@ -29,9 +29,8 @@ defmodule Battle.Service.WebService.Auth do
         "expires_in" => expires_in
       } ->
         user_id = UUID.uuid1()
-       {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)
-       User.save_user(user_id,account)
-        from_product_code = Map.get(resp, "from_product_code")
+        {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)
+        User.save_user(user_id, account)
         {:ok,
           %{
             moment_token: moment_token

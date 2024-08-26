@@ -36,7 +36,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
     end
   end
 
-  def handle_info({game_id, group_name, group_key, app_name}, state) do
+  def handle_info({:terminate, game_id, group_name, group_key, app_name}, state) do
     # 从 busy 列表中移除已完成的任务
     {worker, busy} = Map.pop(state.busy, game_id)
     workers = List.delete(state.workers, worker)
@@ -73,8 +73,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
     RoomSupervisor.init_game(10, 24, game_id, groupName, groupKey, appName)
   end
 
-   # players建立user_id和每个用户的构建包的映射
-   defp execute_task({git, tag, game_id}) do
+  # players建立user_id和每个用户的构建包的映射
+  defp execute_task({git, tag, game_id}) do
     package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
     {groupName, appName} = Kun.get_idle_service(true)
     groupKey =

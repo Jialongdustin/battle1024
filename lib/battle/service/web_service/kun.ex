@@ -190,7 +190,7 @@ defmodule Battle.Service.WebService.Kun do
   end
 
    # Kun.create_uninstall_task_test()
-   def create_uninstall_task_test() do
+  def create_uninstall_task_test() do
     path = "/api/env/#{@query_namespace}/createUninstallTask"
     content = %{
       "services": [
@@ -214,7 +214,7 @@ defmodule Battle.Service.WebService.Kun do
       _ ->
         :error
     end
-  end
+ end
 
   # Kun.get_idle_service()
   def get_idle_service(flag \\ false) do
@@ -228,7 +228,7 @@ defmodule Battle.Service.WebService.Kun do
     |> List.first()
   end
 
-  # Kun.get_service_stage()
+  # Kun.get_service_stage(["battle-players1", "battle-players2"], "battle-player-python")
   def get_service_stage(groupName, appName) do
     path = "/api/env/#{@query_namespace}/services"
     content = %{
@@ -239,7 +239,8 @@ defmodule Battle.Service.WebService.Kun do
     }
     case send_post(path, content) do
       %{"code" => 0, "data" => %{"services" => services}} ->
-        List.first(services)["stage"]
+        # List.first(services)["stage"]
+        services
       _ ->
         {:error, "something wrong"}
     end
