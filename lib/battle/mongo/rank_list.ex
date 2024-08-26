@@ -1,13 +1,13 @@
 defmodule Battle.Mongo.RankList do
   use Ejoy.Db
 
-  require Logger
 
   alias Battle.Mongo.UserAi
   @db "battle"
   @collection "rank_list"
   @indexes [
-    {[user_id: 1], false}
+    {[rate: 1], false},
+    {[user_id: 1],false}
   ]
   @cleanable false
 
@@ -16,25 +16,20 @@ defmodule Battle.Mongo.RankList do
   field :rate, :float, required: true
   field :date, :datetime, required: true
 
-
-
-  def get_rank_list() do
+  def get_rank_list(page,limit) do
     time_query = Battle.Utils.GetTime24.get_time()
-    Logger.info(time_query)
-    case __MODULE__.pquery_sort(time_query,[rate: -1]) do
+    case __MODULE__.pquery_sort_limit(time_query,[rate: -1],limit, page*limit) do
       nil -> {:error, "empty rank list" }
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()
-          {_, ai_info} = UserAi.get_newest_ai_by_userId(message.user_id)
 
           %{
-            ai_name: ai_info.ai_name,
-            use_id: ai_info.user_id,
+            ai_name: message.ai_name,
+            use_id: message.user_id,
             rate: message.rate
           }
         end)
-
         {:ok, details}
     end
   end
@@ -44,8 +39,8 @@ defmodule Battle.Mongo.RankList do
       [] -> {:error, "user_id error"}
       res ->
         detail =
-          case res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) do
-            [] ->
+          case res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end)|>List.first() do
+            nil ->
               {:ok, user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
 
               {_,cnt} = UserAi.count_user(user_id)
@@ -57,13 +52,21 @@ defmodule Battle.Mongo.RankList do
               }
             info ->
               {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
+              {_,cnt} = UserAi.count_user(user_id)
 
-              {_,cnt} = UserAi.count_submit(user_id)
+              query = %{
+                rate: %{
+                  "$gte": info.rate
+                }
+              }
+              {:ok,rank} = __MODULE__.pcount(query)
+
               %{
                 user_id: user_id,
                 rate: info.rate,
                 last_submit_date: user_info.create_time,
-                count: cnt
+                count: cnt,
+                rank: rank
               }
           end
 

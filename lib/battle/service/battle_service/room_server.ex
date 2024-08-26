@@ -50,6 +50,8 @@ defmodule Battle.Service.BattleService.RoomServer do
       group_name: groupName,
       group_key: groupKey,
       app_name: appName,
+      pre_step_white: %{move: [],cnt: 0},
+      pre_step_black: %{move: [],cnt: 0},
       time_cost_white: 0,
       time_cost_black: 0,
       time_counter_white: 0,
@@ -174,15 +176,21 @@ defmodule Battle.Service.BattleService.RoomServer do
     # 如果路径正确需要更新棋盘
     case is_match do
       true ->
-        capture = case get_captures(moves, state.board) do
-          [] ->
-            [
-              %{captured: nil, moves: moves}
-            ]
-          res -> res
-        end
 
-        # 最终被吃掉的所有棋子的位置
+        # 确定 capture 的值
+        capture =
+          case get_captures(moves, state.board) do
+            [] ->
+              # 如果没有捕获的棋子
+              [
+                %{captured: nil, moves: moves}
+              ]
+            res ->
+              # 如果有捕获的棋子，直接使用返回值
+              res
+          end
+
+        # 提取初始位置和最终位置
         [[x0, y0] | _] = moves
         [x1, y1] = List.last(moves)
 
@@ -203,58 +211,108 @@ defmodule Battle.Service.BattleService.RoomServer do
           user_id: user_id,
           captured: capture
         }
-        code = case winner do
-          nil ->
-            Map.get(@code_info, 101)
-          _ ->
-            Map.get(@code_info, 102)
-        end
+
         {new_state, detail} =
           case state.early_hand do
             # white
             true ->
-                # 当前棋子没有吃子, 只是普通移动
-              {
-                %{
-                  state |
-                  board: new_board,
-                  winner: winner,
-                  early_hand: !white,
-                  can_move: can_move,
-                  steps: state.steps ++ [move_detail],
-                  steps_white: state.steps_white + 1
-                },
-                %{
-                  code: 10000,
-                  winner: winner,
-                  king: white_king,
-                  move_detail: move_detail,
-                  board: new_board
-                }
-              }
+              case check_repeat_move(state,moves,capture) do
+                {:continue,new_detail} ->
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      winner: winner,
+                      early_hand: !white,
+                      pre_step_white: new_detail.pre_step_white,
+                      pre_step_black: new_detail.pre_step_black,
+                      can_move: can_move,
+                      steps: state.steps ++ [move_detail],
+                      steps_white: state.steps_white + 1
+                    },
+                    %{
+                      code: 10000,
+                      winner: winner,
+                      king: white_king,
+                      move_detail: move_detail,
+                      board: new_board
+                    }
+                  }
+                {:game_over,winner} ->
+                    {
+                      %{
+                        state |
+                        board: new_board,
+                        winner: winner,
+                        early_hand: !white,
+                        can_move: can_move,
+                        steps: state.steps ++ [move_detail],
+                        steps_white: state.steps_white + 1
+                      },
+                      %{
+                        code: 30001,
+                        winner: winner,
+                        king: nil,
+                        move_detail: nil,
+                        board: nil
+                      }
+                    }
+              end
 
             # black
             false ->
-              {
-                %{
-                  state |
-                  board: new_board,
-                  winner: winner,
-                  early_hand: !white,
-                  can_move: can_move,
-                  steps: state.steps ++ [move_detail],
-                  steps_black: state.steps_black + 1
-                },
-                %{
-                  code: 10000,
-                  winner: winner,
-                  king: white_king,
-                  move_detail: move_detail,
-                  board: new_board
-                }
-              }
+              case check_repeat_move(state,moves,capture) do
+                {:continue,new_detail} ->
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      winner: winner,
+                      early_hand: !white,
+                      pre_step_white: new_detail.pre_step_white,
+                      pre_step_black: new_detail.pre_step_black,
+                      can_move: can_move,
+                      steps: state.steps ++ [move_detail],
+                      steps_white: state.steps_white + 1
+                    },
+                    %{
+                      code: 10000,
+                      winner: winner,
+                      king: white_king,
+                      move_detail: move_detail,
+                      board: new_board
+                    }
+                  }
+                {:game_over,winner} ->
+                  {
+                    %{
+                      state |
+                      board: new_board,
+                      winner: winner,
+                      early_hand: !white,
+                      can_move: can_move,
+                      steps: state.steps ++ [move_detail],
+                      steps_white: state.steps_white + 1
+                    },
+                    %{
+                      code: 30001,
+                      winner: winner,
+                      king: nil,
+                      move_detail: nil,
+                      board: nil
+                    }
+                  }
+              end
           end
-        IO.inspect(detail)
+        IO.inspect(new_state)
+        count_diff_pieces = {
+          count_piece(1,new_state.board),
+          count_piece(2,new_state.board),
+          count_piece(3,new_state.board),
+          count_piece(4,new_state.board)}
+        case count_diff_pieces do
+
+        end
         {:reply, {:ok, detail}, new_state}
 
       false ->
@@ -403,4 +461,55 @@ defmodule Battle.Service.BattleService.RoomServer do
     res ++ [{x1, y1, node_value}]
   end
 
+  def check_repeat_move(state, moves, capture) do
+    # 提取初始位置和最终位置
+    [[x0, y0] | _] = moves
+    [x1, y1] = List.last(moves)
+    IO.inspect(state)
+    IO.inspect(moves)
+    new_state =
+      case List.first(capture) do
+        %{captured: nil, moves: _} ->
+        if state.early_hand do
+          if [[x0, y0], [x1, y1]] == state.pre_step_white.move do
+            if state.pre_step_white.cnt == 2 do
+              # 重复下子超过3次
+              new_state = %{state | winner: state.black}
+            else
+              new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
+            end
+          else
+            new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: 1}}
+          end
+        else
+          if [[x0, y0], [x1, y1]] == state.pre_step_black.move do
+            if state.pre_step_black.cnt == 2 do
+              # 重复下子超过3次
+              new_state = %{state | winner: state.white}
+            else
+              new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
+            end
+          else
+            new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: 1}}
+          end
+        end
+      _res ->
+        if state.white do
+          %{state | pre_step_white: %{move: nil, cnt: 0}}
+        else
+          %{state | pre_step_black: %{move: nil, cnt: 0}}
+        end
+    end
+    new_detail = %{
+      winner: new_state.winner,
+      pre_step_white: new_state.pre_step_white,
+      pre_step_black: new_state.pre_step_black,
+    }
+    case new_state.winner do
+      nil ->
+        {:continue,new_detail}
+      res ->
+        {:game_over,new_state.winner}
+    end
+  end
 end
