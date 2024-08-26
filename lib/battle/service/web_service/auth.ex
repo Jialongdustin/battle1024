@@ -26,9 +26,7 @@ defmodule Battle.Service.WebService.Auth do
       %{
         "code" => 0, "access_token" => access_token, "account" => account,
         "expires_in" => expires_in
-
       } ->
-
         user_id = UUID.uuid1()
        {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)
         from_product_code = Map.get(resp, "from_product_code")

@@ -22,7 +22,7 @@ defmodule Battle.Mongo.BattleStatistics do
     end
   end
 
-  def save_statistics_info(user_count, submit_count, average_step,average_time_cost) do
+  def save_statistics_info(user_count, submit_count, average_step, average_time_cost) do
     update_time = Ejoy.Bson.utc_now()
     info = %{
       user_count: user_count,

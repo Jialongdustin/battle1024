@@ -14,7 +14,7 @@ defmodule User do
   field :date, :datetime, required: true
   field :avatar, :string, required: false
 
-  def save_user(user_id,account) do
+  def save_user(user_id, account) do
     info = %{
     user_id: user_id,
     account: account,
@@ -32,6 +32,6 @@ defmodule User do
 
   def update_avatar(user_id,avatar) do
     {:ok, info} = query_user(user_id)
-    __MODULE__.pupdate(%{user_id: user_id},%{info | avatar: avatar})
+    __MODULE__.pupdate(%{user_id: user_id}, %{info | avatar: avatar})
   end
 end

@@ -2,7 +2,7 @@ test "battle_early_hand" do
 
   #    Logger.configure(level: :none)
   {:ok, contest_id} =
-    Battle.Service.BattleService.RoomSupervisor.init_game(111, 222, "10000")
+    Battle.Service.BattleService.RoomSupervisor.init_game(111, 222, "10000", "battle-players1", "plat1024-playes1", "battle-player-c")
 
   {:ok, %{token_white: token_white, token_black: token_black}} = Battle.Service.BattleService.RoomSupervisorTest.init_game(111)
 

@@ -13,6 +13,9 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   alias Battle.Mongo.BattleResult
   alias Battle.Mongo.BattleInfo
+  alias Battle.Mongo.BattleStatistics
+  alias Battle.Mongo.BattleResultTest
+  alias Battle.Mongo.UserAi
 
   @timeout 3000
   @board_init [
@@ -29,7 +32,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   def start_link(opts) do
     white = opts[:white]
     black = opts[:black]
-    contest_id = opts[:contest_id]
+    game_id = opts[:game_id]
     groupName = opts[:groupName]
     groupKey = opts[:groupKey]
     appName = opts[:appName]
@@ -37,7 +40,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     initial_state = %{
       white: white,
       black: black,
-      contest_id: contest_id,
+      game_id: game_id,
       winner: nil,
       board: @board_init,
       early_hand: true,
@@ -57,7 +60,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       time_counter_white: 0,
       time_counter_black: 0,
     }
-    GenServer.start_link(__MODULE__, initial_state, name: via_tuple(contest_id))
+    GenServer.start_link(__MODULE__, initial_state, name: via_tuple(game_id))
   end
 
   def init(state) do
@@ -127,12 +130,17 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call(:terminate_game, _from, state) do
-    # 每一局的信息
-    Battle.Mongo.BattleStatistics.update_average_step(state.steps_white + state.steps_black)
-    Battle.Mongo.BattleStatistics.update_average_time_cost(state.time_cost_white+state.time_cost_black)
-    BattleInfo.insert_battle(state.contest_id, state.steps_white + state.steps_black, state.steps)
-    BattleResult.save_battle_result([state.white, state.black], state.contest_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
-    # Process.send(Battle.Service.BattleService.ThreadPool, {state.contest_id, state.group_name, state.group_key, state.app_name})
+    if state.white == 10 && state.black == 24 do
+      BattleResultTest.update_battle_result(state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
+      send(Battle.Service.BattleService.ThreadPoolTest, {state.game_id, state.group_name, state.group_key, state.app_name})
+    else
+      # 每一局的信息
+      BattleStatistics.update_average_step(state.steps_white + state.steps_black)
+      BattleStatistics.update_average_time_cost(state.time_cost_white + state.time_cost_black)
+      BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
+      BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
+      send(Battle.Service.BattleService.ThreadPool, {state.game_id, state.group_name, state.group_key, state.app_name})
+    end
     {:stop, :normal, :ok, state}
   end
 
@@ -262,7 +270,7 @@ defmodule Battle.Service.BattleService.RoomServer do
             # black
             false ->
               case check_repeat_move(state,moves,capture) do
-                {:continue,new_detail} ->
+                {:continue, new_detail} ->
                   {
                     %{
                       state |
@@ -306,14 +314,19 @@ defmodule Battle.Service.BattleService.RoomServer do
           end
         IO.inspect(new_state)
         count_diff_pieces = {
-          count_piece(1,new_state.board),
-          count_piece(2,new_state.board),
-          count_piece(3,new_state.board),
-          count_piece(4,new_state.board)}
-        case count_diff_pieces do
-
-        end
-        {:reply, {:ok, detail}, new_state}
+          count_piece(1, new_state.board),
+          count_piece(2, new_state.board),
+          count_piece(3, new_state.board),
+          count_piece(4, new_state.board)}
+        winner =
+          case count_diff_pieces do
+            {_, 1, 1, 0} -> state.white
+            {1, 0, _, 1} -> state.black
+            {1, 0, 1, 0} -> 0
+            {0, 1, 0, 1} -> 0
+            _ -> state.winner
+          end
+        {:reply, {:ok, %{detail | winner: winner}, %{state | winner: winner}}}
 
       false ->
         available_step =
@@ -341,45 +354,31 @@ defmodule Battle.Service.BattleService.RoomServer do
               end
           end
         new_winner =
-          case {illegal_times_white, illegal_times_black} do
-            {3, _} ->
-              state.black
-            {_, 3} ->
-              state.white
-            _ ->
-              state.winner
+          cond do
+            state.white == 10 && state.black == 24 && state.appName == nil -> state.winner
+            state.ealry_hand == true -> state.black
+            true -> state.white
           end
+
         {:reply, {:error, %{detail | winner: new_winner}}, %{state | illegal_times: [illegal_times_white, illegal_times_black], winner: new_winner}}
     end
   end
 
-  def handle_info(:execute_task, %{illegal_times: illegal_times, early_hand: early_hand} = state) do
+  def handle_info(:execute_task, state) do
     IO.puts "overtime operation"
-    case early_hand do
+    case state.early_hand do
       true ->
-        illegal_times_white = Enum.at(illegal_times, 0) + 1
-        illegal_times_black = Enum.at(illegal_times, 1)
-        if(illegal_times_white == 3) do
-          {:noreply, %{state | winner: state.white}}
-        else
-          {:noreply, %{state | illegal_times: [illegal_times_white, illegal_times_black]}}
-        end
+        {:noreply, %{state | winner: state.black}}
       false ->
-        illegal_times_white = Enum.at(illegal_times, 0)
-        illegal_times_black = Enum.at(illegal_times, 1) + 1
-        if(illegal_times_black == 3) do
-          {:noreply, %{state | winner: state.black}}
-        else
-          {:noreply, %{state | illegal_times: [illegal_times_white, illegal_times_black]}}
-        end
+        {:noreply, %{state | winner: state.white}}
     end
   end
 
-  defp via_tuple(contest_id) do
-    {:via, Registry, {Battle.RoomRegistry, contest_id}}
+  defp via_tuple(game_id) do
+    {:via, Registry, {Battle.RoomRegistry, game_id}}
   end
 
-  defp count_piece(piece_value,board) do
+  defp count_piece(piece_value, board) do
     count =
       board
       |> Enum.flat_map(& &1)  # 将二维数组扁平化为一维

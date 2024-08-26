@@ -15,8 +15,9 @@ defmodule Battle.Web.Router do
   alias Battle.Mongo.RankList
   alias Battle.Mongo.UserAi
   alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.BattleResultTest
   alias Battle.Service.WebService.WebSocketHandler
-  alias Battle.Service.BattleService.ThreadPool
+  alias Battle.Service.BattleService.ThreadPoolTest
   require Logger
 
   plug(:match)
@@ -243,10 +244,12 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        Task.start(fn -> ThreadPool.start_test_game(git_url, tag) end)
+        game_id = UUID.uuid4()
+        BattleResultTest.save_battle_result(user_id, game_id, ai_name, git_url, tag)
+        Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
         # BattleStatistics.submit_increment()
         # UserAi.insert_ai(user_id, ai_name, git_url, tag)
-        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "create successful"})
+        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "testing now"})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
@@ -276,8 +279,10 @@ defmodule Battle.Web.Router do
     tag = conn.params["tag"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
-        message = UserAi.insert_ai(user_id, ai_name, git_url, tag)
-        body = Ejoy.Jiffy.encode!(message)
+        game_id = UUID.uuid4()
+        BattleResultTest.save_battle_result(user_id, game_id, ai_name, git_url, tag)
+        Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
+        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "testing now"})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
@@ -418,6 +423,8 @@ end
     # 处理棋步
     case RoomSupervisor.movement(move, user_id, game_id) do
       {:ok, response} ->
+        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+        RoomServer.record_time_step(pid, user_id)
         body = Ejoy.Jiffy.encode!(response)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -439,5 +446,4 @@ end
     |> WebSockAdapter.upgrade(WebSocketHandler, [self()], timeout: :infinity)
     |> halt()
   end
-
 end
