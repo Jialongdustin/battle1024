@@ -10,7 +10,7 @@ defmodule Battle.Mongo.BattleResult do
   @cleanable false
 
   field :user_id_2, {:list, :integer}, require: true
-  field :game_id, :integer, required: true
+  field :game_id, :string, required: true
   field :winner, :integer, required: true
   field :time_cost_2, {:list, :integer}, required: true
   field :memory_cost_2, {:list,:string}, required: true
@@ -75,7 +75,6 @@ defmodule Battle.Mongo.BattleResult do
                    %{self: self, opponent: opponent}
                end
              end)
-              IO.inspect(self_and_opponent)
              {:ok, self_and_opponent}
     end
   end

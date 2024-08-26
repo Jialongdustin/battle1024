@@ -1,6 +1,7 @@
 defmodule Battle.Service.WebService.Auth do
 
   require Logger
+  alias Battle.Mongo.User
 
   @client_id "10052"
   @client_secret "l3PUsNyV1WBfUwwFrSTLGw=="
@@ -26,11 +27,10 @@ defmodule Battle.Service.WebService.Auth do
       %{
         "code" => 0, "access_token" => access_token, "account" => account,
         "expires_in" => expires_in
-
       } ->
-
         user_id = UUID.uuid1()
        {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)
+       User.save_user(user_id,account)
         from_product_code = Map.get(resp, "from_product_code")
         {:ok,
           %{

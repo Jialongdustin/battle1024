@@ -12,7 +12,7 @@ defmodule Battle.Mongo.BattleStatistics do
   field :user_count, :integer, required: true
   field :submit_count, :integer, required: true
   field :average_step, :float, required: true
-  field :average_time_cost, :integer, required: true
+  field :average_time_cost, :float, required: true
   field :last_submit_time, :datetime, required: true
 
   def query_statistics_info() do
@@ -22,21 +22,28 @@ defmodule Battle.Mongo.BattleStatistics do
     end
   end
 
-  def save_statistics_info(user_count, submit_count, average_step,average_time_cost) do
-    update_time = Ejoy.Bson.utc_now()
-    info = %{
+  def update_statistics_info(user_count, submit_count, average_step,average_time_cost) do
+
+    {:ok,info} = query_statistics_info()
+    update_time = Battle.Mongo.UserAi.get_newest_submit_time()
+    info = %{ info|
       user_count: user_count,
       submit_count: submit_count,
       average_step: average_step,
       average_time_cost: average_time_cost,
       last_submit_time: update_time
     }
-    __MODULE__.psave(info)
+    __MODULE__.pupdate(%{_id: info._id}, info)
   end
 
   # 这里初始化就往db插一条数据，方便后续拿数据计算，项目启动后只需要调用一次
   def save_init() do
-    info = %{user_count: 0, submit_count: 0, average_step: 0}
+    info = %{user_count: 0,
+      submit_count: 0,
+      average_step: 0,
+      average_time_cost: 0,
+      last_submit_time: Ejoy.Bson.utc_now()
+    }
     __MODULE__.psave(info)
   end
 

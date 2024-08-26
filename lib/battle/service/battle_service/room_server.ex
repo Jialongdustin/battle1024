@@ -211,7 +211,6 @@ defmodule Battle.Service.BattleService.RoomServer do
           user_id: user_id,
           captured: capture
         }
-
         {new_state, detail} =
           case state.early_hand do
             # white
@@ -273,12 +272,12 @@ defmodule Battle.Service.BattleService.RoomServer do
                       pre_step_black: new_detail.pre_step_black,
                       can_move: can_move,
                       steps: state.steps ++ [move_detail],
-                      steps_white: state.steps_white + 1
+                      steps_black: state.steps_black + 1
                     },
                     %{
                       code: 10000,
                       winner: winner,
-                      king: white_king,
+                      king: black_king,
                       move_detail: move_detail,
                       board: new_board
                     }
@@ -292,7 +291,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       early_hand: !white,
                       can_move: can_move,
                       steps: state.steps ++ [move_detail],
-                      steps_white: state.steps_white + 1
+                      steps_black: state.steps_black + 1
                     },
                     %{
                       code: 30001,
@@ -304,15 +303,21 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
               end
           end
-        IO.inspect(new_state)
-        count_diff_pieces = {
-          count_piece(1,new_state.board),
-          count_piece(2,new_state.board),
-          count_piece(3,new_state.board),
-          count_piece(4,new_state.board)}
-        case count_diff_pieces do
-
+        winner = count_total_piece(new_state)
+        {new_state, detail} =
+          case winner do
+          0 -> # 平局
+            %{new_state | winner: 0}
+            %{detail| winner: 0}
+            {new_state,detail}
+          _ -> # 还没赢家，继续
+            {new_state,detail}
+          winner -> # # 已经有赢家
+            %{new_state | winner: winner}
+            %{detail| winner: winner}
+            {new_state,detail}
         end
+        IO.inspect(new_state)
         {:reply, {:ok, detail}, new_state}
 
       false ->
@@ -377,6 +382,34 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   defp via_tuple(contest_id) do
     {:via, Registry, {Battle.RoomRegistry, contest_id}}
+  end
+
+  defp count_total_piece(new_state) do
+    # 获取各类棋子的数量
+    count_diff_pieces = {
+      count_piece([1], new_state.board),
+      count_piece([2], new_state.board),
+      count_piece([3], new_state.board),
+      count_piece([4], new_state.board)
+    }
+
+    # 根据棋子数量判断胜者
+    winner = case count_diff_pieces do
+      # 一方有一个普通棋子和一个王棋，另一方有一个普通棋子
+      {_, 1, 1, 0} ->
+        new_state.white  # 白方胜
+      {1, 0, _, 1} ->
+        new_state.black  # 黑方胜
+      # 双方各有一个普通棋子
+      {1, 0, 1, 0} ->
+        0  # 平局
+      # 双方各有一个王棋
+      {0, 1, 0, 1} ->
+        0  # 平局
+      # 如果有其他情况，暂时设置为没有赢家
+      _ ->
+        nil
+    end
   end
 
   defp count_piece(piece_value,board) do

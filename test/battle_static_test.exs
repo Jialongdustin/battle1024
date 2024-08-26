@@ -16,6 +16,16 @@ defmodule BattleTest.RoomServerTest do
     BattleStatistics.save_init()
   end
 
+  test "save static info" do
+    update_info = %{
+      user_count: 1,
+      submit_count: 1,
+      average_step: 20,
+      average_time_cost: 30
+    }
+    BattleStatistics.update_statistics_info(update_info.user_count,update_info.submit_count,update_info.average_step,update_info.average_time_cost)
+  end
+
   test "add_user" do
     {:ok,pre_res} = BattleStatistics.query_statistics_info()
 

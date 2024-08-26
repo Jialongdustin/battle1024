@@ -51,6 +51,15 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
+  def get_newest_submit_time() do
+    case __MODULE__.pquery_sort_limit(%{},[create_time: -1],1) do
+      nil->{:error,"Battle.UserAi error"}
+      res ->
+        newest_info = res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)|> List.first()
+        newest_info.create_time
+    end
+  end
+
   def insert_ai(user_id, ai_name, git_url, tag) do
     info = %{
       user_id: user_id,

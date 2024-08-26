@@ -1,4 +1,4 @@
-defmodule User do
+defmodule Battle.Mongo.User do
   use Ejoy.Db
 
   alias Battle.Mongo.UserAi
