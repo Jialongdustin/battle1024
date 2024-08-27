@@ -27,8 +27,8 @@ defmodule BattleTest do
       time_counter_black: 0,
       time_counter_white: 0,
       time_ref: nil,
-      white: 123,
-      winner: 123}
+      white: 2,
+      winner: 456}
     Battle.Mongo.BattleResult.save_battle_result(
       [state.white, state.black],
       state.contest_id,
@@ -41,6 +41,10 @@ defmodule BattleTest do
 
   end
 
+  test "get battle in 24 hours" do
+    res = BattleResult.get_battle_results_within_24_hour()
+    IO.inspect(res)
+  end
 
   test "get_all_battle" do
     winner = 1
