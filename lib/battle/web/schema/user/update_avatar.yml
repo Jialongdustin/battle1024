@@ -6,7 +6,7 @@ request:
       type: string
     moment_token:
       type: string
-  required: [avatar,moment_token]
+  required: [avatar, moment_token]
 
 response:
   type: object

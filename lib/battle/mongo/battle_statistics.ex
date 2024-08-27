@@ -18,13 +18,12 @@ defmodule Battle.Mongo.BattleStatistics do
   def query_statistics_info() do
     case __MODULE__.pquery(%{}) do
       [] -> {:error, "no info in battle_statistics"}
-      res -> {:ok, res|> Enum.map( fn message -> message |> __MODULE__.to_raw() end)|> List.first()}
+      res -> {:ok, res|> Enum.map( fn message -> message |> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
   def update_statistics_info(user_count, submit_count, average_step,average_time_cost) do
-
-    {:ok,info} = query_statistics_info()
+    {:ok, info} = query_statistics_info()
     update_time = Battle.Mongo.UserAi.get_newest_submit_time()
     info = %{ info|
       user_count: user_count,

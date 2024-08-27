@@ -25,13 +25,17 @@ defmodule Battle.Mongo.User do
 
   def query_user(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-      [] -> {:error, "user id error"}
+      [] -> {:error, "user_id error"}
       res -> {:ok,res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
-  def update_avatar(user_id,avatar) do
+  def update_avatar(user_id, avatar) do
     {:ok, info} = query_user(user_id)
     __MODULE__.pupdate(%{user_id: user_id}, %{info | avatar: avatar})
+  end
+
+  def remove_user(user_id) do
+    __MODULE__.pdelete(%{user_id: user_id}, false)
   end
 end

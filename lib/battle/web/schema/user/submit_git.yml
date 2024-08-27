@@ -1,16 +1,14 @@
-api: "/user/create_AI"
+api: "/user/submit_git"
 request:
   type: object
   properties:
-    ai_name:
-      type: string
     git_url:
       type: string
     tag:
       type: string
     moment_token:
       type: string
-  required: [ai_name, git_url, tag, moment_token]
+  required: [git_url, tag, moment_token]
 
 response:
   type: object

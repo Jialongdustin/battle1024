@@ -9,7 +9,7 @@ defmodule Battle.Mongo.UserAi do
   ]
   @cleanable false
 
-  field :user_id, :integer, required: true
+  field :user_id, :string, required: true
   field :ai_name, :string, required: true
   field :git_url, :string, required: false
   field :tag, :string, required: false
@@ -17,15 +17,15 @@ defmodule Battle.Mongo.UserAi do
 
   def get_newest_ai_by_userId(user_id)do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [create_time: -1], 1) do
-      nil->{:error,"Battle.UserAi error"}
-      res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)|> List.first()}
+      nil -> {:error, "Battle.UserAi error"}
+      res -> {:ok, res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
   def get_ai_list_by_userId(user_id) do
-    case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-      nil->{:error,"Battle.UserAi error"}
-      res ->{:ok,res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
+    case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+      nil -> {:error, "Battle.UserAi error"}
+      res -> {:ok, res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
     end
 
   end
@@ -69,20 +69,22 @@ defmodule Battle.Mongo.UserAi do
     __MODULE__.psave(info)
   end
 
-  def update_git(user_id,tag,url) do
-      {:ok,user_info} =get_newest_ai_by_userId(user_id)
+  def get_ai_name(user_id) do
+    case __MODULE__.pquery(%{user_id: user_id}) do
+      nil -> {:error, "no user_info"}
+      res ->
+        info = res |> Enum.map(fn message ->message |> __MODULE__.to_raw() end)|> List.first()
+        {:ok, info.ai_name}
+    end
+  end
+
+  def update_git(user_id, tag, url) do
+      {:ok, user_info} = get_newest_ai_by_userId(user_id)
       bson_id = user_info._id
       __MODULE__.pupdate(%{_id: bson_id},%{user_info | git_url: url, tag: tag})
   end
 
-
-#UserAi.insert_ai(1,"Biu","git.com","1.0")
-#UserAi.get_ai_list_by_userId(1)
-
-
   def clean_message(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
   end
-
-
 end

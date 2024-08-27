@@ -2,7 +2,7 @@ defmodule Battle.Service.WebService.WebSocketHandler do
   require Logger
 
   def init(opts) do
-    Battle.Service.BattleService.RoomSupervisorTest.init_game(self())
+    Battle.Service.BattleService.RoomSupervisorTest.init_game()
     {:ok, opts}
   end
 

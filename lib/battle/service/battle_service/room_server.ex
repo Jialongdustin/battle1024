@@ -315,7 +315,6 @@ defmodule Battle.Service.BattleService.RoomServer do
               end
           end
         winner = count_total_piece(new_state, capture)
-        IO.inspect(winner)
 
         {new_state, detail} =
           case winner do
@@ -362,7 +361,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           end
         new_winner =
           cond do
-            state.white == 10 && state.black == 24 && state.appName == nil -> state.winner
+            state.white == 10 && state.black == 24 && state.app_name == nil -> state.winner
             state.ealry_hand == true -> state.black
             true -> state.white
           end

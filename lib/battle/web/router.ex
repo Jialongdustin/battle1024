@@ -67,7 +67,6 @@ defmodule Battle.Web.Router do
       {:error, _reason} ->
         # 如果失败，将 code 设为 400，并重定向到前端
         redirect_url = front_end_url <> "?code=403"
-
         conn
         |> Conn.put_resp_header("location", redirect_url)
         |> Conn.send_resp(302, "")
@@ -91,7 +90,6 @@ defmodule Battle.Web.Router do
           {:error,reason} ->
             body = Ejoy.Jiffy.encode!(%{code: 2003, data: reason, success: false})
         end
-
 
       {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
@@ -143,8 +141,6 @@ defmodule Battle.Web.Router do
     end
   end
 
-
-
   # 获取胜率排行榜
   get "/game/ranking_list" do
     moment_token = conn.params["moment_token"]
@@ -153,7 +149,7 @@ defmodule Battle.Web.Router do
     case Token.verify_token(moment_token) do
       {:ok, _} ->
         message =
-          case RankList.get_rank_list(String.to_integer(page),String.to_integer(limit)) do
+          case RankList.get_rank_list(String.to_integer(page), String.to_integer(limit)) do
             {:ok, rank_list} ->
               %{code: 200, data: rank_list,success: true}
             {:error, message} ->
@@ -164,12 +160,14 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
         conn
@@ -213,6 +211,7 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
         conn
@@ -227,9 +226,8 @@ defmodule Battle.Web.Router do
     avatar = conn.params["avatar"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        User.update_avatar(String.to_integer(user_id),avatar)
+        User.update_avatar(user_id, avatar)
         body = Ejoy.Jiffy.encode!(%{code: 200, data: "update success", success: true})
-
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
@@ -249,8 +247,6 @@ defmodule Battle.Web.Router do
     end
   end
 
-
-
   get "user/get_avatar" do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
@@ -262,14 +258,14 @@ defmodule Battle.Web.Router do
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
             |> Conn.halt()
-          {:error,reason} ->
+
+          {:error, reason} ->
             body = Ejoy.Jiffy.encode!(%{code: 2006, data: reason, success: false})
             conn
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
             |> Conn.halt()
         end
-
 
       {:error, _} ->
         uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
@@ -290,19 +286,19 @@ defmodule Battle.Web.Router do
   get "/game/detail" do
     moment_token = conn.params["moment_token"]
     game_id = conn.params["game_id"]
+    IO.inspect(game_id)
     case Token.verify_token(moment_token) do
       {:ok, _} ->
         message = case BattleInfo.get_battle_by_game_id(game_id) do
           {:ok, battle_info} ->
-
             message = %{
             detail: battle_info.detail,
             game_id: battle_info.game_id,
             steps: battle_info.steps
             }
             %{code: 200, battle_info: message, success: true}
-            {:error, _} ->
-              %{code: 2007, error: "contest not exists",success: false}
+          {:error, _} ->
+            %{code: 2007, error: "game not exists", success: false}
         end
         body = Ejoy.Jiffy.encode!(message)
         conn
@@ -332,7 +328,7 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        UserAi.insert_ai(user_id,ai_name)
+        UserAi.insert_ai(user_id, ai_name)
         body = Ejoy.Jiffy.encode!(%{code: 200, data: "ok", success: true})
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -363,11 +359,9 @@ defmodule Battle.Web.Router do
     case Token.verify_token(token) do
       {:ok, user_id} ->
         game_id = UUID.uuid4()
-        {:ok, user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+        {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
         BattleResultTest.save_battle_result(user_id, game_id, user_info.ai_name, git_url, tag)
         Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
-        # BattleStatistics.submit_increment()
-        # UserAi.insert_ai(user_id, ai_name, git_url, tag)
         body = Ejoy.Jiffy.encode!(%{code: 200, data: "ok", success: true})
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -393,15 +387,15 @@ defmodule Battle.Web.Router do
   # 更新git仓库
   json_rpc "/user/update_git", "schema/user/update_git" do
     moment_token = conn.params["moment_token"]
-    git_url = conn.params["git"]
-    ai_name = conn.params["ai_name"]
+    git_url = conn.params["git_url"]
     tag = conn.params["tag"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
+        {:ok, ai_name} = UserAi.get_ai_name(user_id)
         game_id = UUID.uuid4()
         BattleResultTest.save_battle_result(user_id, game_id, ai_name, git_url, tag)
         Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
-        body = Ejoy.Jiffy.encode!(%{code: 0, message: "ok", state: "testing now"})
+        body = Ejoy.Jiffy.encode!(%{code: 200, data: "ok", success: true})
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
@@ -412,6 +406,14 @@ defmodule Battle.Web.Router do
         conn
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
         |> Conn.halt()
     end
 end
@@ -469,6 +471,13 @@ end
             |> Conn.send_resp(200, body)
             |> Conn.halt()
         end
+
+      {:room_error, reason} ->
+        body = Ejoy.Jiffy.encode!(reason)
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(404, body)
+        |> Conn.halt()
     end
   end
 
@@ -515,6 +524,7 @@ end
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, _} ->
         receive do
           {:query, detail} ->
@@ -529,6 +539,13 @@ end
             |> Conn.send_resp(200, body)
             |> Conn.halt()
         end
+
+      {:room_error, reason} ->
+          body = Ejoy.Jiffy.encode!(reason)
+          conn
+          |> Conn.put_resp_content_type("application/json")
+          |> Conn.send_resp(404, body)
+          |> Conn.halt()
     end
   end
 

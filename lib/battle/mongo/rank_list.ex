@@ -1,8 +1,8 @@
 defmodule Battle.Mongo.RankList do
   use Ejoy.Db
 
-
   alias Battle.Mongo.UserAi
+
   @db "battle"
   @collection "rank_list"
   @indexes [
@@ -11,14 +11,14 @@ defmodule Battle.Mongo.RankList do
   ]
   @cleanable false
 
-  field :user_id, :integer, required: true
+  field :user_id, :string, required: true
   field :ai_name, :string, required: true
   field :rate, :float, required: true
   field :date, :datetime, required: true
 
-  def get_rank_list(page,limit) do
+  def get_rank_list(page, limit) do
     time_query = Battle.Utils.GetTime24.get_time()
-    case __MODULE__.pquery_sort_limit(time_query,[rate: -1],limit, page*limit) do
+    case __MODULE__.pquery_sort_limit(time_query, [rate: -1], limit, page*limit) do
       nil -> {:error, "empty rank list" }
       res ->
         details = res |> Enum.map(fn message ->
@@ -76,9 +76,9 @@ defmodule Battle.Mongo.RankList do
   def save_rank(user_id, ai_name, rate) do
     current_time = Ejoy.Bson.utc_now()
     __MODULE__.psave(%{user_id: user_id, ai_name: ai_name, rate: rate, date: current_time})
-    #UserAi.insert_ai(1,"Biu","git.com","1.0")
-    #UserAi.get_ai_list_by_userId(1)
-
   end
 
+  def remove_rank(user_id) do
+    __MODULE__.pdelete(%{user_id: user_id})
+  end
 end

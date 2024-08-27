@@ -29,15 +29,19 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   end
 
   def query(caller, user_id, game_id) do
-    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-    case RoomServer.query(pid, user_id) do
-        {:ok, detail} ->
-          # 当前询问回合，写回成功
-          {:ok, detail}
-        {:error, detail} ->
-          :ets.insert(:pid_info, {game_id, caller})
-          # 不是当前询问回合，写回错误
-          {:error, detail}
+    case Registry.lookup(Battle.RoomRegistry, game_id) do
+      [{pid, _}] ->
+        case RoomServer.query(pid, user_id) do
+          {:ok, detail} ->
+            # 当前询问回合，写回成功
+            {:ok, detail}
+          {:error, detail} ->
+            :ets.insert(:pid_info, {game_id, caller})
+            # 不是当前询问回合，写回错误
+            {:error, detail}
+        end
+      [] ->
+        {:room_error, "game is over, do not query again"}
     end
   end
 
@@ -54,7 +58,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
                 {:ok, success_detail}
               [{_, dest}] -> #对方查询棋盘状态
                 new_detail = %{
-                  code: 10003,
+                  code: success_detail.code,
                   move_detail: success_detail.move_detail,
                   board: success_detail.board,
                   winner: success_detail.winner

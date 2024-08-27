@@ -22,7 +22,7 @@ defmodule Battle.Mongo.BattleInfo do
 
   def get_battle_by_game_id(game_id) do
     case __MODULE__.pquery2(%{game_id: game_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[game_id: 1]]}) do
-      nil -> {:error, "game not exist"}
+      [] -> {:error, "game not exist"}
       res -> {:ok, res |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
       end)|>List.first()}
