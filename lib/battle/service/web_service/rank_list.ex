@@ -10,15 +10,16 @@ defmodule Battle.Service.WebService.RankList do
         # 统计每个玩家的胜利次数
         win_counts =
           results
-          |> Enum.map(fn [_, winner] -> winner end)
+          |> Enum.map(fn %{:winner => winner} -> winner end)
           |> Enum.frequencies()
 
         # 统计每个玩家参与的总场次
         total_counts =
           results
-          |> Enum.flat_map(fn [players, _winner] -> players end)
+          |> Enum.flat_map(fn %{:user_id_2 => players} -> players end)
           |> Enum.frequencies()
-
+        IO.inspect(win_counts)
+        IO.inspect(total_counts)
         # 计算每个玩家的胜率
         win_rates =
           Enum.map(total_counts, fn {user_id, total_games} ->
@@ -39,7 +40,6 @@ defmodule Battle.Service.WebService.RankList do
     end
   end
   def insert_win_rate(user_infos) do
-
     Enum.map(user_infos, fn user_info -> RankList.save_rank(user_info.user_id,user_info.ai_name,user_info.rate) end)
   end
 end

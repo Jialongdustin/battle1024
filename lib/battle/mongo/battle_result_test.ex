@@ -46,11 +46,10 @@ defmodule Battle.Mongo.BattleResultTest do
     bson_id = info._id
     if winner != nil do
       user_id = info.user_id
-      ai_name = info.ai_name
       git_url = info.gir_url
       tag = info.tag
       BattleStatistics.submit_increment()
-      UserAi.insert_ai(user_id, ai_name, git_url, tag)
+      UserAi.update_git(user_id,git_url, tag)
     end
     __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_costs_2: time_costs, memory_costs_2: memory_costs, total_steps_2: total_steps})
   end

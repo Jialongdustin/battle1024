@@ -25,8 +25,7 @@ defmodule Battle.Service.WebService.Auth do
 
     case resp do
       %{
-        "code" => 0, "access_token" => access_token, "account" => account,
-        "expires_in" => expires_in
+         "account" => account
       } ->
         user_id = UUID.uuid1()
         {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)

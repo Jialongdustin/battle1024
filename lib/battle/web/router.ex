@@ -55,12 +55,10 @@ defmodule Battle.Web.Router do
   get "/login/redirect" do
     code = conn.params["code"]
     front_end_url = "http://www.battle1024.ejoy.com"
-
     case Auth.verify_code(code) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
         redirect_url = front_end_url <> "?code=200&moment_token=" <> moment_token
-
         conn
         |> Conn.put_resp_header("location", redirect_url)
         |> Conn.send_resp(302, "")
@@ -144,6 +142,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
     end
   end
+
+
 
   # 获取胜率排行榜
   get "/game/ranking_list" do
@@ -249,6 +249,8 @@ defmodule Battle.Web.Router do
     end
   end
 
+
+
   get "user/get_avatar" do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
@@ -325,15 +327,44 @@ defmodule Battle.Web.Router do
   end
 
   # 创建AI
-  json_rpc "/user/create_AI", "schema/user/create_AI" do
+  json_rpc "/user/create_ai", "schema/user/create_ai" do
     ai_name = conn.params["ai_name"]
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        UserAi.insert_ai(user_id,ai_name)
+        body = Ejoy.Jiffy.encode!(%{code: 200, data: "ok", success: true})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+  # 创建AI
+  json_rpc "/user/submit_git", "schema/user/submit_git" do
     git_url = conn.params["git_url"]
     tag = conn.params["tag"]
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
         game_id = UUID.uuid4()
-        BattleResultTest.save_battle_result(user_id, game_id, ai_name, git_url, tag)
+        {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+        BattleResultTest.save_battle_result(user_id, game_id, user_info.ai_name, git_url, tag)
         Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
         # BattleStatistics.submit_increment()
         # UserAi.insert_ai(user_id, ai_name, git_url, tag)

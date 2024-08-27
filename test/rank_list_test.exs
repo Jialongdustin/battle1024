@@ -14,17 +14,15 @@ defmodule BattleTest do
   end
 
   test "insert into rank list db" do
-    {:ok,user_infos} = RankList.get_battle_info()
-    RankList.insert_win_rate(user_infos)
-    {:ok,get_infos} = Battle.Mongo.RankList.get_rank_list()
+    {:ok,user_infos} = Battle.Service.WebService.RankList.get_battle_info()
+    Battle.Service.WebService.RankList.insert_win_rate(user_infos)
+    {:ok,get_infos} = Battle.Mongo.RankList.get_rank_list(0,6)
     IO.inspect(get_infos)
+    IO.inspect(user_infos)
     # 忽略 `date` 和 `_id` 字段
 
-    sanitized_get_infos = Enum.map(get_infos, fn get_info ->
-      Map.drop(get_info, [:date, :_id])
-    end)
     # 检查所有的 sanitized_user_infos 是否都在 sanitized_get_infos 中
-    assert Enum.all?(user_infos, fn user_info -> user_info in sanitized_get_infos end)
+    assert Enum.all?(user_infos, fn user_info -> user_info in get_infos end)
   end
 
   test "get rank list" do

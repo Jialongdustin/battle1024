@@ -23,10 +23,9 @@ defmodule Battle.Mongo.RankList do
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()
-
           %{
             ai_name: message.ai_name,
-            use_id: message.user_id,
+            user_id: message.user_id,
             rate: message.rate
           }
         end)

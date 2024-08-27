@@ -16,7 +16,7 @@ defmodule Battle.Mongo.BattleResult do
   field :memory_cost_2, {:list,:string}, required: true
   field :early_hand, :integer, required: true
   field :total_step_2, {:list, :integer}, required: true
-#  field :date, :datetime, required: true
+  field :date, :datetime, required: true
 
 #  Battle.Mongo.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
 

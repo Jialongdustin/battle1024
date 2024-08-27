@@ -4,6 +4,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
+  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
   def start_link(size) do
@@ -11,6 +12,17 @@ defmodule Battle.Service.BattleService.ThreadPool do
   end
 
   def init(size) do
+    :ets.new(:services_info, [:named_table, :public, read_concurrency: true])
+    Enum.each(@service_groups, fn group_name ->
+      Enum.each(Map.keys(@appNames), fn app_name ->
+        case :ets.lookup(:services_info, group_name) do
+          [] ->
+            :ets.insert(:services_info, {group_name, app_name})
+          [{group_name, app_name_old}] ->
+            :ets.insert(:services_info, {group_name, [app_name | app_name_old]})
+        end
+      end)
+    end)
     {:ok, %{users: [], workers: [], size: size, queue: :queue.new(), busy: %{}}}
   end
 
@@ -41,14 +53,13 @@ defmodule Battle.Service.BattleService.ThreadPool do
   end
 
   def handle_cast({:add_task, task}, state) do
-    if length(state.workers) < state.size do
-      # 如果有空闲的 worker，直接执行任务
-      worker = Task.async(fn -> execute_task(task) end)
-      contest_id = Tuple.to_list(task) |> Enum.at(2)
-      {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, contest_id, worker)}}
-    else
-      # 否则，将任务加入队列
-      {:noreply, %{state | queue: :queue.in(task, state.queue)}}
+    case get_first_and_pop() do
+      {:ok, service} ->
+        worker = Task.async(fn -> execute_task(task, service) end)
+        contest_id = Tuple.to_list(task) |> Enum.at(2)
+        {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, contest_id, worker)}}
+      {:error, _} ->
+        {:noreply, %{state | queue: :queue.in(task, state.queue)}}
     end
   end
 
@@ -56,9 +67,6 @@ defmodule Battle.Service.BattleService.ThreadPool do
     # 从 busy 列表中移除已完成的任务
     {worker, busy} = Map.pop(state.busy, contest_id)
     workers = List.delete(state.workers, worker)
-
-    # 创建卸载任务单
-    terminate_service(group_key, app_name)
 
     # 如果队列中有任务，将其分配给空闲的 worker
     case :queue.out(state.queue) do
@@ -71,6 +79,35 @@ defmodule Battle.Service.BattleService.ThreadPool do
     end
   end
 
+  def handle_info({ref, result}, state) when is_reference(ref) do
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, ref, :process, pid, reason}, state) do
+    {:noreply, state}
+  end
+
+  defp get_first_and_pop() do
+    case :ets.first(:services_info) do
+      :"$end_of_table" ->
+        {:error, "ETS is empty"}
+      key ->
+        [{groupName, appName_lists}] = :ets.lookup(:services_info, key)
+        [head | tail] = case is_list(appName_lists) do
+          true ->
+            appName_lists
+          false ->
+            [appName_lists]
+        end
+        if tail == [] do
+          :ets.delete(:services_info, key)
+        else
+          :ets.insert(:services_info, {groupName, tail})
+        end
+        {:ok, {groupName, head}}
+    end
+  end
+
   # 对局结束后, 直接把当前服务组信息复用给下一个worker, 省去了调kun的接口去查询空闲的服务组
   defp reuse_group_for_task({user_id1, user_id2, contest_id, players}, {groupName, groupKey, appName}) do
     update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id)
@@ -79,9 +116,8 @@ defmodule Battle.Service.BattleService.ThreadPool do
   end
 
   # players建立user_id和每个用户的构建包的映射
-  defp execute_task({user_id1, user_id2, contest_id, players}) do
-    {groupName, appName} = Kun.get_idle_service()
-    IO.inspect({groupName, appName})
+  defp execute_task({user_id1, user_id2, contest_id, players}, {groupName, appName}) do
+    # {groupName, appName} = Kun.get_idle_service()
     groupKey =
       Regex.run(~r/players\d+/, groupName)
       |> List.first()

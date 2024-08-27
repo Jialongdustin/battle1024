@@ -52,14 +52,23 @@ defmodule Mongo.UserAi do
     end
 
     test "get newest ai info" do
-    user_id = 1
+    user_id = 1313
     ai_name = "Biu biu biu~~!!"
-    git_url = "biu.com"
-    tag = "4.0"
-    Battle.Mongo.UserAi.insert_ai(user_id,ai_name,git_url,tag)
+
+    Battle.Mongo.UserAi.insert_ai(user_id,ai_name)
     {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
 
-    assert user_info.user_id == user_id && user_info.ai_name == ai_name && user_info.git_url == git_url && user_info.tag == tag
+    assert user_info.user_id == user_id && user_info.ai_name == ai_name
+    end
+
+    test "update ai info" do
+    user_id = 1313
+    git_url = "http://example.com/repo1.git"
+    tag = "1.0"
+    Battle.Mongo.UserAi.update_git(user_id, tag,git_url)
+    {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+
+    assert user_info.user_id == user_id && user_info.git_url == git_url
     end
 
     test "get gits and user_infos"do
