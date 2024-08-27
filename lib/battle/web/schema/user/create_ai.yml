@@ -1,4 +1,4 @@
-api: "/user/create_AI"
+api: "/user/create_ai"
 request:
   type: object
   properties:
