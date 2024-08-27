@@ -5,6 +5,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
 
+  @service_groups ["battle-test1", "battle-test2", "battle-test3", "battle-test4", "battle-test5"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
   # alias Battle.Service.BattleService.ThreadPoolTest
@@ -17,6 +18,17 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   def init(size) do
+    :ets.new(:services_info_test, [:named_table, :public, read_concurrency: true])
+    Enum.each(@service_groups, fn group_name ->
+      Enum.each(Map.keys(@appNames), fn app_name ->
+        case :ets.lookup(:services_info_test, group_name) do
+          [] ->
+            :ets.insert(:services_info_test, {group_name, app_name})
+          [{group_name, app_name_old}] ->
+            :ets.insert(:services_info_test, {group_name, [app_name | app_name_old]})
+        end
+      end)
+    end)
     {:ok, %{users: [], workers: [], size: size, queue: :queue.new(), busy: %{}}}
   end
 
@@ -25,14 +37,13 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   def handle_cast({:add_task, task}, state) do
-    if length(state.workers) < state.size do
-      # 如果有空闲的 worker，直接执行任务
-      worker = Task.async(fn -> execute_task(task) end)
-      game_id = Tuple.to_list(task) |> Enum.at(2)
-      {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, game_id, worker)}}
-    else
-      # 否则，将任务加入队列
-      {:noreply, %{state | queue: :queue.in(task, state.queue)}}
+    case get_first_and_pop() do
+      {:ok, service} ->
+        worker = Task.async(fn -> execute_task(task, service) end)
+        contest_id = Tuple.to_list(task) |> Enum.at(2)
+        {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, contest_id, worker)}}
+      {:error, _} ->
+        {:noreply, %{state | queue: :queue.in(task, state.queue)}}
     end
   end
 
@@ -41,9 +52,6 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
     {worker, busy} = Map.pop(state.busy, game_id)
     workers = List.delete(state.workers, worker)
 
-    # 创建卸载任务单
-    terminate_service(group_key, app_name)
-
     # 如果队列中有任务，将其分配给空闲的 worker
     case :queue.out(state.queue) do
       {{:value, next_task}, new_queue} ->
@@ -51,7 +59,43 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         new_worker = Task.async(fn -> reuse_group_for_task(next_task, {group_name, group_key, app_name}) end)
         {:noreply, %{state | workers: [new_worker | workers], busy: Map.put(busy, next_game_id, new_worker), queue: new_queue}}
       {:empty, _} ->
+        terminate_service(group_key, app_name)
+        case :ets.lookup(:services_info_test, group_name) do
+          [] ->
+            :ets.insert(:services_info_test, {group_name, app_name})
+          [{group_name, app_name_old}] ->
+            :ets.insert(:services_info_test, {group_name, [app_name | app_name_old]})
+        end
         {:noreply, %{state | workers: workers, busy: busy}}
+    end
+  end
+
+  def handle_info({ref, result}, state) when is_reference(ref) do
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, ref, :process, pid, reason}, state) do
+    {:noreply, state}
+  end
+
+  defp get_first_and_pop() do
+    case :ets.first(:services_info_test) do
+      :"$end_of_table" ->
+        {:error, "ETS is empty"}
+      key ->
+        [{groupName, appName_lists}] = :ets.lookup(:services_info_test, key)
+        [head | tail] = case is_list(appName_lists) do
+          true ->
+            appName_lists
+          false ->
+            [appName_lists]
+        end
+        if tail == [] do
+          :ets.delete(:services_info_test, key)
+        else
+          :ets.insert(:services_info_test, {groupName, tail})
+        end
+        {:ok, {groupName, head}}
     end
   end
 
@@ -74,9 +118,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   # players建立user_id和每个用户的构建包的映射
-  defp execute_task({git, tag, game_id}) do
+  defp execute_task({git, tag, game_id}, {groupName, appName}) do
     package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
-    {groupName, appName} = Kun.get_idle_service(true)
     groupKey =
       Regex.run(~r/test\d+/, groupName)
       |> List.first()
@@ -95,6 +138,12 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
       },
     ] |> Kun.create_deploy_task()
     RoomSupervisor.init_game(10, 24, game_id, groupName, groupKey, appName)
+  end
+
+  defp terminate_service(groupKey, appName) do
+    result = create_uninstalls(groupKey, appName)
+    :timer.sleep(3000)
+    result
   end
 
   defp update_services(groupName, groupKey, appName, game_id) do
@@ -132,25 +181,4 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         }]
   end
 
-  defp terminate_service(groupKey, appName) do
-    result = create_uninstalls(groupKey, appName)
-    :timer.sleep(3000)
-    result
-  end
-
-  defp create_uninstalls(groupKey, appName) do
-    create_uninstall(groupKey, appName) ++
-    create_uninstall(groupKey, Map.get(@appNames, appName))
-    |> Kun.create_uninstall_task()
-  end
-
-  defp create_uninstall(groupKey, appName) do
-    [
-      %{
-        "serviceGroup": groupKey,
-        "service": appName,
-        "deleteExclusivePvc": true
-      }
-    ]
-  end
 end

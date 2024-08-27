@@ -4,6 +4,8 @@ defmodule Battle.Service.BattleService.ThreadPool do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
+  # @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5", "battle-players6", "battle-players7", "battle-players8", "battle-players9", "battle-players10",
+  #                 "battle-players11", "battle-players12", "battle-players13", "battle-players14"]
   @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
@@ -56,25 +58,32 @@ defmodule Battle.Service.BattleService.ThreadPool do
     case get_first_and_pop() do
       {:ok, service} ->
         worker = Task.async(fn -> execute_task(task, service) end)
-        contest_id = Tuple.to_list(task) |> Enum.at(2)
-        {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, contest_id, worker)}}
+        game_id = Tuple.to_list(task) |> Enum.at(2)
+        {:noreply, %{state | workers: [worker | state.workers], busy: Map.put(state.busy, game_id, worker)}}
       {:error, _} ->
         {:noreply, %{state | queue: :queue.in(task, state.queue)}}
     end
   end
 
-  def handle_info({:terminate, contest_id, group_name, group_key, app_name}, state) do
+  def handle_info({:terminate, game_id, group_name, group_key, app_name}, state) do
     # 从 busy 列表中移除已完成的任务
-    {worker, busy} = Map.pop(state.busy, contest_id)
+    {worker, busy} = Map.pop(state.busy, game_id)
     workers = List.delete(state.workers, worker)
 
     # 如果队列中有任务，将其分配给空闲的 worker
     case :queue.out(state.queue) do
       {{:value, next_task}, new_queue} ->
-        next_contest_id = Tuple.to_list(next_task) |> Enum.at(2)
+        next_game_id = Tuple.to_list(next_task) |> Enum.at(2)
         new_worker = Task.async(fn -> reuse_group_for_task(next_task, {group_name, group_key, app_name}) end)
-        {:noreply, %{state | workers: [new_worker | workers], busy: Map.put(busy, next_contest_id, new_worker), queue: new_queue}}
+        {:noreply, %{state | workers: [new_worker | workers], busy: Map.put(busy, next_game_id, new_worker), queue: new_queue}}
       {:empty, _} ->
+        terminate_service(group_key, app_name)
+        case :ets.lookup(:services_info, group_name) do
+          [] ->
+            :ets.insert(:services_info, {group_name, app_name})
+          [{group_name, app_name_old}] ->
+            :ets.insert(:services_info, {group_name, [app_name | app_name_old]})
+        end
         {:noreply, %{state | workers: workers, busy: busy}}
     end
   end
@@ -109,22 +118,22 @@ defmodule Battle.Service.BattleService.ThreadPool do
   end
 
   # 对局结束后, 直接把当前服务组信息复用给下一个worker, 省去了调kun的接口去查询空闲的服务组
-  defp reuse_group_for_task({user_id1, user_id2, contest_id, players}, {groupName, groupKey, appName}) do
-    update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id)
+  defp reuse_group_for_task({user_id1, user_id2, game_id, players}, {groupName, groupKey, appName}) do
+    update_services(groupName, groupKey, appName, user_id1, user_id2, game_id)
     create_deploys(groupKey, appName, user_id1, user_id2, players)
-    RoomSupervisor.init_game(user_id1, user_id2, contest_id, groupName, groupKey, appName)
+    RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
   end
 
   # players建立user_id和每个用户的构建包的映射
-  defp execute_task({user_id1, user_id2, contest_id, players}, {groupName, appName}) do
+  defp execute_task({user_id1, user_id2, game_id, players}, {groupName, appName}) do
     # {groupName, appName} = Kun.get_idle_service()
     groupKey =
       Regex.run(~r/players\d+/, groupName)
       |> List.first()
       |> (fn name -> "plat1024-#{name}" end).()
-    update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id)
+    update_services(groupName, groupKey, appName, user_id1, user_id2, game_id)
     create_deploys(groupKey, appName, user_id1, user_id2, players)
-    RoomSupervisor.init_game(user_id1, user_id2, contest_id, groupName, groupKey, appName)
+    RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
   end
 
   defp terminate_service(groupKey, appName) do
@@ -144,7 +153,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
       %{
         "serviceGroup": groupKey,
         "service": appName,
-        "appConfBuildName": configName
+        "appConfBuildName": configName,
       }
     ]
   end
@@ -165,14 +174,14 @@ defmodule Battle.Service.BattleService.ThreadPool do
     ]
   end
 
-  defp update_services(groupName, groupKey, appName, user_id1, user_id2, contest_id) do
-    update_service(appName, user_id1, contest_id) ++
-    update_service(appName, user_id2, contest_id)
+  defp update_services(groupName, groupKey, appName, user_id1, user_id2, game_id) do
+    update_service(appName, user_id1, game_id) ++
+    update_service(appName, user_id2, game_id)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
-  defp update_service(appName, user_id, contest_id) do
-    {:ok, token} = Token.generate_token(user_id, contest_id)
+  defp update_service(appName, user_id, game_id) do
+    {:ok, token} = Token.generate_token(user_id, game_id)
     [%{
           "name" => appName,
           "version" => appName,
@@ -200,3 +209,10 @@ defmodule Battle.Service.BattleService.ThreadPool do
         }]
   end
 end
+# services = [
+#   %{
+#     "serviceGroup": "plat1024-players1",
+#     "service": "battle-player-python",
+#     "appConfBuildName": "plat1024-battle-players:20240827143548",
+#   }
+# ]

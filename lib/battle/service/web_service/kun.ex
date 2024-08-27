@@ -139,7 +139,7 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.create_deploy_task(%{contest_id: "111", package_name: "plat1024-battle-players:20240815173843"})
+  # Kun.create_deploy_task(services)
   def create_deploy_task(services) do
     path = "/api/env/#{@query_namespace}/createDeployTask"
     content = %{

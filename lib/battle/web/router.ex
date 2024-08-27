@@ -326,7 +326,7 @@ defmodule Battle.Web.Router do
     end
   end
 
-  # 创建AI
+  # 创建ai_name
   json_rpc "/user/create_ai", "schema/user/create_ai" do
     ai_name = conn.params["ai_name"]
     token = conn.params["moment_token"]
@@ -363,7 +363,7 @@ defmodule Battle.Web.Router do
     case Token.verify_token(token) do
       {:ok, user_id} ->
         game_id = UUID.uuid4()
-        {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+        {:ok, user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
         BattleResultTest.save_battle_result(user_id, game_id, user_info.ai_name, git_url, tag)
         Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
         # BattleStatistics.submit_increment()
