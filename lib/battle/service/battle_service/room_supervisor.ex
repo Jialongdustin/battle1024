@@ -13,13 +13,11 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   def init(:ok) do
     :ets.new(:pid_info, [:named_table, :public, read_concurrency: true])
     opts = [strategy: :one_for_one]
-    IO.puts("init room now")
     DynamicSupervisor.init(opts)
   end
 
   def init_game(white, black, game_id, groupName, groupKey, appName) do
     # child_spec_server = {RoomServer, white: white, black: black, game_id: game_id}
-    IO.puts("init game now")
     child_spec_server = %{
       id: RoomServer,
       start: {RoomServer, :start_link, [%{white: white, black: black, game_id: game_id, groupName: groupName, groupKey: groupKey, appName: appName}]},

@@ -181,4 +181,20 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         }]
   end
 
+  defp create_uninstalls(groupKey, appName) do
+    create_uninstall(groupKey, appName) ++
+    create_uninstall(groupKey, Map.get(@appNames, appName))
+    |> Kun.create_uninstall_task()
+  end
+
+  defp create_uninstall(groupKey, appName) do
+    [
+      %{
+        "serviceGroup": groupKey,
+        "service": appName,
+        "deleteExclusivePvc": true
+      }
+    ]
+  end
+
 end
