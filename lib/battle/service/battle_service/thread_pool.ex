@@ -175,12 +175,12 @@ defmodule Battle.Service.BattleService.ThreadPool do
   end
 
   defp update_services(groupName, groupKey, appName, user_id1, user_id2, game_id) do
-    update_service(appName, user_id1, game_id) ++
-    update_service(appName, user_id2, game_id)
+    update_service(appName, user_id1, game_id, true) ++
+    update_service(appName, user_id2, game_id, false)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
-  defp update_service(appName, user_id, game_id) do
+  defp update_service(appName, user_id, game_id, white) do
     {:ok, token} = Token.generate_token(user_id, game_id)
     [%{
           "name" => appName,
@@ -192,7 +192,8 @@ defmodule Battle.Service.BattleService.ThreadPool do
           "svcCapacity" => 0,
           "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
           "params" => %{
-            "token" => token
+            "token" => token,
+            "white" => white
           },
           "resources" => %{
             "kun-run" => %{
