@@ -20,13 +20,13 @@ defmodule Battle.Service.BattleService.RoomServer do
   @timeout 3000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [0, 0, 0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 3, 0, 0, 0, 0, 0, 0],
+    [4, 0, 0, 0, 0, 0, 0, 0]
   ]
 
   def start_link(opts) do
@@ -167,9 +167,11 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call({:movement, user_id, moves}, _from, state) do
+    IO.inspect(state.can_move)
     white = state.early_hand
     board = state.board
     move_list = state.can_move
+
     winner =
       case {count_piece([1, 2], board), count_piece([3, 4], board)} do
         {0, _} -> state.black
@@ -312,20 +314,24 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
               end
           end
-        winner = count_total_piece(new_state)
+        winner = count_total_piece(new_state, capture)
+        IO.inspect(winner)
+
         {new_state, detail} =
           case winner do
-          0 -> # 平局
-            %{new_state | winner: 0}
-            %{detail| winner: 0}
-            {new_state,detail}
-          _ -> # 还没赢家，继续
-            {new_state,detail}
-          winner -> # # 已经有赢家
-            %{new_state | winner: winner}
-            %{detail| winner: winner}
-            {new_state,detail}
-        end
+            0 -> # 平局
+              new_state = %{new_state | winner: 0}
+              detail = %{detail | winner: 0}
+              {new_state, detail}
+
+            winner  -> # 已经有赢家且winner是整数
+              new_state = %{new_state | winner: winner}
+              detail = %{detail | winner: winner}
+              {new_state, detail}
+
+            nil -> # 还没有赢家，继续
+              {new_state, detail}
+          end
         IO.inspect(new_state)
         {:reply, {:ok, detail}, new_state}
 
@@ -379,7 +385,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:via, Registry, {Battle.RoomRegistry, game_id}}
   end
 
-  defp count_total_piece(new_state) do
+  def count_total_piece(new_state,get_captures) do
     # 获取各类棋子的数量
     count_diff_pieces = {
       count_piece([1], new_state.board),
@@ -389,19 +395,23 @@ defmodule Battle.Service.BattleService.RoomServer do
     }
 
     # 根据棋子数量判断胜者
-    winner = case count_diff_pieces do
+    winner = case {count_diff_pieces,List.first(get_captures)} do
       # 一方有一个普通棋子和一个王棋，另一方有一个普通棋子
-      {_, 1, 1, 0} ->
+      {{_, 1, 1, 0},%{captured: nil, moves: _}} ->
         new_state.white  # 白方胜
-      {1, 0, _, 1} ->
+      {{1, 0, _, 1},%{captured: nil, moves: _}} ->
         new_state.black  # 黑方胜
       # 双方各有一个普通棋子
-      {1, 0, 1, 0} ->
+      {{1, 0, 1, 0},%{captured: nil, moves: _}} ->
         0  # 平局
       # 双方各有一个王棋
-      {0, 1, 0, 1} ->
+      {{0, 1, 0, 1},%{captured: nil, moves: _}} ->
         0  # 平局
       # 如果有其他情况，暂时设置为没有赢家
+      {{0, 0, _, _},_} ->
+        new_state.black
+      {{_, _, 0, 0},_} ->
+        new_state.white
       _ ->
         nil
     end

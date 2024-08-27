@@ -11,11 +11,11 @@ defmodule BattleTest.RoomServerTest do
   test "battle_early_hand" do
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "10008", "11", "22", "33")
+      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "11", "groupName", "groupKey", "appName")
 
-    # "66cbf00f45826e234382f9b9"
+    # "66cd6eadeee7d7224be32a91"
     {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
-    # "66cbf01245826e234382f9ba"
+    # "66cd6eadeee7d7224be32a90"
     {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
     #    RoomSupervisor.query(123, contest_id)
     #    RoomSupervisor.query(456, contest_id)
@@ -102,12 +102,22 @@ defmodule BattleTest.RoomServerTest do
   end
 
   test "check repeat remove" do
+    board = [
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 2, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 3, 0, 0, 0, 0, 0, 0],
+      [4, 0, 0, 0, 0, 0, 0, 0]
+    ]
     state = %{
       white: 11,
       black: 22,
       contest_id: 33,
       winner: nil,
-      board: @board_init,
+      board: board,
       early_hand: true,
       steps: [],
       illegal_times: [0, 0],
@@ -121,6 +131,7 @@ defmodule BattleTest.RoomServerTest do
       time_counter_white: 0,
       time_counter_black: 0
     }
+    capture = [%{captured: nil, moves: [[2, 0], [3, 0]]}]
 
     {_, state} = RoomServer.check_repeat_move(state, [[2, 0], [3, 0]], [])
     {_, state} = RoomServer.check_repeat_move(state, [[3, 0], [2, 0]], [])
@@ -128,26 +139,54 @@ defmodule BattleTest.RoomServerTest do
   end
 
   test "count total pieces" do
-    new_state = %{
-      board: [
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1, 0, 1, 0],
-        [0, 1, 1, 1, 2, 1, 2, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 3, 3, 3, 3, 3, 4, 4],
-        [0, 3, 3, 3, 3, 3, 4, 4],
-        [1, 0, 0, 0, 0, 0, 0, 0]
-      ]
-    }
 
-    count_diff_pieces = {
-      RoomServer.count_piece([1], new_state.board),
-      RoomServer.count_piece([2], new_state.board),
-      RoomServer.count_piece([3], new_state.board),
-      RoomServer.count_piece([4], new_state.board)
-    }
+#    board = [
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 2, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 3, 0, 0, 0, 0, 0, 0],
+#      [4, 0, 0, 0, 0, 0, 0, 0]
+#    ]
 
-    IO.inspect(count_diff_pieces)
+    board = [
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 4, 0, 0, 0, 0, 0]
+    ]
+    state = %{
+      white: 11,
+      black: 22,
+      contest_id: 33,
+      winner: nil,
+      board: board,
+      early_hand: true,
+      steps: [],
+      illegal_times: [0, 0],
+      time_ref: nil,
+      steps_white: 0,
+      steps_black: 0,
+      pre_step_white: %{move: [], cnt: 0},
+      pre_step_black: %{move: [], cnt: 0},
+      time_cost_white: 0,
+      time_cost_black: 0,
+      time_counter_white: 0,
+      time_counter_black: 0
+    }
+    capture = [%{captured: [7, 1], moves: [[7, 0], [7, 2]]}]
+
+    res = RoomServer.count_total_piece(state,capture)
+#    Battle.Service.BattleService.RoomSupervisorTest.init_game()
+#    66cd7371d4801d3027bf7100
+#    66cd7371d4801d3027bf70ff
+    IO.inspect(res)
   end
+
 end
