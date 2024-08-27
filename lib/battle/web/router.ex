@@ -34,7 +34,7 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "http://battle1024.ejoy.com/login/redirect"
+  @redirect_uri "http://localhost:4000/login/redirect"
 
   get "/" do
     conn
@@ -54,7 +54,7 @@ defmodule Battle.Web.Router do
 
   get "/login/redirect" do
     code = conn.params["code"]
-    front_end_url = "http://www.battle1024.ejoy.com"
+    front_end_url = "https://ieu-battle1024.alibaba.net/login"
     case Auth.verify_code(code) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL

@@ -20,13 +20,13 @@ defmodule Battle.Service.BattleService.RoomServer do
   @timeout 3000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 2, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 3, 0, 0, 0, 0, 0, 0],
-    [4, 0, 0, 0, 0, 0, 0, 0]
+    [3, 3, 3, 3, 3, 3, 3, 3],
+    [3, 3, 3, 3, 3, 3, 3, 3],
+    [0, 0, 0, 0, 0, 0, 0, 0]
   ]
 
   def start_link(opts) do
@@ -38,6 +38,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     appName = opts[:appName]
     {init_move, _} = Battle.BattleHandler.move_list(@board_init, true)
     initial_state = %{
+      code: 10002,
       white: white,
       black: black,
       game_id: game_id,
@@ -156,10 +157,12 @@ defmodule Battle.Service.BattleService.RoomServer do
     if (user_id == state.white and state.early_hand == true) or
     (user_id == state.black and state.early_hand == false) do
       detail = %{
-        code: 10002,
+        code: state.code,
         board: state.board,
-        winner: nil,
+        winner: state.winner,
       }
+      IO.inspect("============")
+      IO.inspect(state)
       {:reply, {:ok, detail}, state}
     else
       {:reply, {:error, Map.get(@code_info, 300)}, state}
@@ -167,7 +170,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call({:movement, user_id, moves}, _from, state) do
-    IO.inspect(state.can_move)
+
     white = state.early_hand
     board = state.board
     move_list = state.can_move
@@ -231,6 +234,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   {
                     %{
                       state |
+                      code: 10003,
                       board: new_board,
                       winner: winner,
                       early_hand: !white,
@@ -252,6 +256,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                     {
                       %{
                         state |
+                        code: 10001,
                         board: new_board,
                         winner: winner,
                         early_hand: !white,
@@ -276,6 +281,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   {
                     %{
                       state |
+                      code: 10003,
                       board: new_board,
                       winner: winner,
                       early_hand: !white,
@@ -297,6 +303,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   {
                     %{
                       state |
+                      code: 10001,
                       board: new_board,
                       winner: winner,
                       early_hand: !white,
@@ -315,24 +322,19 @@ defmodule Battle.Service.BattleService.RoomServer do
               end
           end
         winner = count_total_piece(new_state, capture)
-        IO.inspect(winner)
 
         {new_state, detail} =
           case winner do
             0 -> # 平局
-              new_state = %{new_state | winner: 0}
-              detail = %{detail | winner: 0}
-              {new_state, detail}
+              {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
 
-            winner  -> # 已经有赢家且winner是整数
-              new_state = %{new_state | winner: winner}
-              detail = %{detail | winner: winner}
-              {new_state, detail}
+            winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
+              {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
 
             nil -> # 还没有赢家，继续
               {new_state, detail}
           end
-        IO.inspect(new_state)
+          IO.inspect(new_state)
         {:reply, {:ok, detail}, new_state}
 
       false ->
@@ -362,7 +364,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           end
         new_winner =
           cond do
-            state.white == 10 && state.black == 24 && state.appName == nil -> state.winner
+            state.white == 10 && state.black == 24 && state.app_name == nil -> state.winner
             state.ealry_hand == true -> state.black
             true -> state.white
           end
@@ -503,8 +505,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     # 提取初始位置和最终位置
     [[x0, y0] | _] = moves
     [x1, y1] = List.last(moves)
-    IO.inspect(state)
-    IO.inspect(moves)
+
     new_state =
       case List.first(capture) do
         %{captured: nil, moves: _} ->

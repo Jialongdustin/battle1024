@@ -184,8 +184,8 @@ defmodule BattleTest.RoomServerTest do
 
     res = RoomServer.count_total_piece(state,capture)
 #    Battle.Service.BattleService.RoomSupervisorTest.init_game()
-#    66cd7371d4801d3027bf7100
-#    66cd7371d4801d3027bf70ff
+#    66cd8f9d81e4b8e68e599c19
+#    66cd8f9d81e4b8e68e599c18
     IO.inspect(res)
   end
 

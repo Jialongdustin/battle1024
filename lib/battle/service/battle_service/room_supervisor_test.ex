@@ -32,6 +32,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   end
 
   def query(caller, user_id, game_id) do
+
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
     case RoomServer.query(pid, user_id) do
       {:ok, detail} ->
@@ -58,7 +59,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
                 {:ok, success_detail}
               [{_, dest}] -> #对方查询棋盘状态
                 new_detail = %{
-                  code: 10003,
+                  code: success_detail.code,
                   move_detail: success_detail.move_detail,
                   board: success_detail.board,
                   winner: success_detail.winner
