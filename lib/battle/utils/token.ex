@@ -7,7 +7,7 @@ defmodule Battle.Utils.Token do
     moment_token = Holo.Moment.Token.new(user, account, 2) |> to_string()
     Logger.info(moment_token)
     {:ok, moment_token}
-
+#WB01483622
   end
 
   def generate_token(user_id, contest_id) do

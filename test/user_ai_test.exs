@@ -14,14 +14,16 @@ defmodule Mongo.UserAi do
     end
 
     test "insert ai" do
-      user_id = 4
-      ai_name = "4!4"
-      git_url = "ccc.com"
+
+      user_id = "453912"
+      ai_name = "AI_biubiubiu"
+      git_url = "http://example.com/repo1.git"
       tag = "1.0"
+
 
       {:ok,user_info_list_before} = Battle.Mongo.UserAi.get_ai_list_by_userId(user_id)
       initial_length = length(user_info_list_before)
-      Battle.Mongo.UserAi.insert_ai(user_id,ai_name,git_url,tag)
+      Battle.Mongo.UserAi.insert_ai(user_id,ai_name)
       {:ok,user_info_list_after} = Battle.Mongo.UserAi.get_ai_list_by_userId(user_id)
 
       assert length(user_info_list_after) == initial_length+1
@@ -52,8 +54,8 @@ defmodule Mongo.UserAi do
     end
 
     test "get newest ai info" do
-    user_id = 1313
-    ai_name = "Biu biu biu~~!!"
+    user_id = "2"
+    ai_name = "wawawawa"
 
     Battle.Mongo.UserAi.insert_ai(user_id,ai_name)
     {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
@@ -62,9 +64,9 @@ defmodule Mongo.UserAi do
     end
 
     test "update ai info" do
-    user_id = 1313
-    git_url = "http://example.com/repo1.git"
-    tag = "1.0"
+    user_id = "456"
+    git_url = "http://example.com/ssds"
+    tag = "1.0.0.0.0.0.0"
     Battle.Mongo.UserAi.update_git(user_id, tag,git_url)
     {:ok,user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
 
@@ -73,8 +75,8 @@ defmodule Mongo.UserAi do
 
     test "get gits and user_infos"do
 
-    user_id = 5
-    ai_name = "AI_555"
+    user_id = "453912"
+    ai_name = "AI_biubiubiu"
     git_url = "http://example.com/repo1.git"
     tag = "1.0"
 

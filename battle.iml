@@ -74,7 +74,9 @@
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/xlsxir" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/yamerl" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/yaml_elixir" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/excoveralls" />
     </content>
+    <orderEntry type="jdk" jdkName="Elixir 1.12.3-otp-24" jdkType="Elixir SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="ejoy_plug" level="project" />
     <orderEntry type="library" name="ejoy_token" level="project" />
@@ -147,5 +149,13 @@
     <orderEntry type="library" name="mime" level="project" />
     <orderEntry type="library" name="plug_crypto" level="project" />
     <orderEntry type="library" name="quantile_estimator" level="project" />
+    <orderEntry type="library" name="websock_adapter" level="project" />
+    <orderEntry type="library" name="websock" level="project" />
+    <orderEntry type="library" name="bandit" level="project" />
+    <orderEntry type="library" name="meck" level="project" />
+    <orderEntry type="library" name="markdown" level="project" />
+    <orderEntry type="library" name="bypass" level="project" />
+    <orderEntry type="library" name="sax_map" level="project" />
+    <orderEntry type="library" name="saxy" level="project" />
   </component>
 </module>

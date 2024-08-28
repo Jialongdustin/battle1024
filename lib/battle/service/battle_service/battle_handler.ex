@@ -2,7 +2,6 @@ defmodule Battle.BattleHandler do
   require Logger
 
   def dfs_lady(chess,i,j,color,n,m,pre_i,pre_j) do
-
     best_paths =
       Enum.reduce(pairwise([-1, 0, 1, 0, -1]), [], fn [qx, qy], acc ->
         check_lady_direction(chess, i, j, qx, qy,true, pre_i, pre_j, color, n, m, acc)
@@ -11,7 +10,6 @@ defmodule Battle.BattleHandler do
   end
 
   def dfs(chess, i, j, color, n, m) do
-
     best_paths =
         Enum.reduce(pairwise([-1, 0, 1, 0, -1]), [], fn [qx, qy], acc ->
           check_normal_direction(chess, i, j, qx, qy, color, n, m, acc)
@@ -213,7 +211,7 @@ defmodule Battle.BattleHandler do
     end
   end
 
-  def explore_free_list(turkish_flag, i, j, dx, dy, nx, ny, res, n, m) do
+  defp explore_free_list(turkish_flag, i, j, dx, dy, nx, ny, res, n, m) do
 
     if valid_move?(turkish_flag, nx, ny, n, m) do
       explore_free_list(turkish_flag, i, j, dx, dy, nx+dx, ny+dy, [[[i, j], [nx, ny]] | res], n, m)
@@ -224,7 +222,6 @@ defmodule Battle.BattleHandler do
 
   defp valid_move?(turkish_flag, nx, ny, n, m) do
     res = nx >= 0 and nx < n and ny >= 0 and ny < m and Enum.at(Enum.at(turkish_flag, nx), ny) == 0
-
     res
   end
 
@@ -237,7 +234,7 @@ defmodule Battle.BattleHandler do
     end
   end
 
-  def pairwise(list) do
+  defp pairwise(list) do
     Enum.chunk_every(list, 2, 1, :discard)
   end
 end

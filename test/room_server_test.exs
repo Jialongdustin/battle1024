@@ -1,6 +1,6 @@
 defmodule BattleTest.RoomServerTest do
   use ExUnit.Case
-  doctest Battle.Service.BattleService.RoomSupervisor
+  doctest Battle.Service.BattleService.RoomServer
 
   require Logger
 

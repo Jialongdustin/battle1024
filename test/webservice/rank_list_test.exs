@@ -1,0 +1,96 @@
+defmodule BattleTest.WebService.RankListTest do
+  use ExUnit.Case
+  import Mock
+  #  doctest Battle.BattleDfs
+  doctest Battle.Service.WebService.RankList
+  alias Battle.Service.WebService.Auth
+  alias Battle.Utils.Token
+
+  test "calculate win rate" do
+    # 模拟函数返回一个正确的列表
+    with_mock Battle.Mongo.BattleResult, [:passthrough],
+      get_battle_results_within_24_hour: fn ->
+        {:ok,
+         [
+           %{
+             game_id: "123212",
+             memory_cost_2: ["11", "22"],
+             time_cost_2: [11, 22],
+             total_step_2: [20, 30],
+             user_id_2: ["123", "456"],
+             winner: "123"
+           },
+           %{
+             date: ~U[2024-08-28T06:26:23Z],
+             early_hand: "456",
+             game_id: "123212",
+             memory_cost_2: ["11", "22"],
+             time_cost_2: [11, 22],
+             total_step_2: [20, 30],
+             user_id_2: ["123", "456"],
+             winner: "456"
+           },
+           %{
+             date: ~U[2024-08-28T06:26:43Z],
+             early_hand: "2",
+             game_id: "12dss23",
+             memory_cost_2: ["11", "22"],
+             time_cost_2: [11, 22],
+             total_step_2: [20, 30],
+             user_id_2: ["1", "2"],
+             winner: "1"
+           },
+           %{
+             date: ~U[2024-08-28T06:27:11Z],
+             early_hand: "1",
+             game_id: "12dss231",
+             memory_cost_2: ["11", "22"],
+             time_cost_2: [11, 22],
+             total_step_2: [20, 30],
+             user_id_2: ["1", "2"],
+             winner: "1"
+           }
+         ]}
+      end do
+      {:ok, win_rates} = Battle.Service.WebService.RankList.get_battle_info()
+
+      calculate_winrate = [
+        %{user_id: "1", rate: 1.0, ai_name: "hahaha"},
+        %{user_id: "123", rate: 0.5, ai_name: "Biu biu biu~~!!"},
+        %{user_id: "2", rate: 0.0, ai_name: "wawawawa"},
+        %{user_id: "456", rate: 0.5, ai_name: "Biu"}
+      ]
+
+      assert calculate_winrate == win_rates
+    end
+  end
+
+  test "calculate win rate failure" do
+    # 模拟函数返回一个正确的列表
+    with_mock Battle.Mongo.BattleResult, [:passthrough],
+              get_battle_results_within_24_hour: fn ->
+                {:error,"not found"}
+              end
+      do
+      {:error, reason} = Battle.Service.WebService.RankList.get_battle_info()
+
+      assert reason == []
+    end
+  end
+
+
+  test "insert win rate" do
+    calculate_win_rate = [
+      %{user_id: "1", rate: 1.0, ai_name: "hahaha"},
+      %{user_id: "123", rate: 0.5, ai_name: "Biu biu biu~~!!"},
+      %{user_id: "456", rate: 0.5, ai_name: "Biu"},
+      %{user_id: "2", rate: 0.0, ai_name: "wawawawa"}
+    ]
+
+    Battle.Service.WebService.RankList.insert_win_rate(calculate_win_rate)
+    {:ok, detail} = Battle.Mongo.RankList.get_rank_list(0, 4)
+    Enum.map(detail,fn message -> Battle.Mongo.RankList.remove_rank(message.user_id) end)
+    assert detail == calculate_win_rate
+  end
+end
+

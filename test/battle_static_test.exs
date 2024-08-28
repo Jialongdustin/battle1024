@@ -1,4 +1,4 @@
-defmodule BattleTest.RoomServerTest do
+defmodule BattleTest.BattleStatisticsTest do
   use ExUnit.Case
   doctest Battle.Mongo.BattleStatistics
 

@@ -37,6 +37,7 @@ defmodule Battle.Mongo.RankList do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       [] -> {:error, "user_id error"}
       res ->
+
         detail =
           case res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end)|>List.first() do
             nil ->
@@ -50,7 +51,9 @@ defmodule Battle.Mongo.RankList do
                 count: cnt
               }
             info ->
+              IO.inspect(info)
               {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
+              IO.inspect(user_info)
               {_,cnt} = UserAi.count_user(user_id)
 
               query = %{
@@ -63,9 +66,11 @@ defmodule Battle.Mongo.RankList do
               %{
                 user_id: user_id,
                 rate: info.rate,
-                last_submit_date: user_info.create_time.ms,
+                ai_name: user_info.ai_name,
+                last_submit_date: user_info.create_time,
                 count: cnt,
                 rank: rank
+
               }
           end
 

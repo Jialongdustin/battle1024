@@ -75,7 +75,7 @@ defmodule Battle.Mongo.BattleResultTest do
               }
               %{white: white, black: black}
             end)
-            {:ok, battle_info}
+            {:ok, self_and_opponent}
     end
   end
 

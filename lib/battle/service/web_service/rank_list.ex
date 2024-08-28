@@ -18,8 +18,7 @@ defmodule Battle.Service.WebService.RankList do
           results
           |> Enum.flat_map(fn %{:user_id_2 => players} -> players end)
           |> Enum.frequencies()
-        IO.inspect(win_counts)
-        IO.inspect(total_counts)
+
         # 计算每个玩家的胜率
         win_rates =
           Enum.map(total_counts, fn {user_id, total_games} ->
@@ -32,10 +31,8 @@ defmodule Battle.Service.WebService.RankList do
                 %{user_id: user_id, rate: win_rate, ai_name: "not register yet"}
             end
           end)
-          IO.inspect(win_rates)
           {:ok,win_rates}
       {:error, reason} ->
-        IO.puts(reason)
         {:error, []}
     end
   end

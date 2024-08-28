@@ -1,4 +1,4 @@
-defmodule BattleTest do
+defmodule RankListTest do
   use ExUnit.Case
   #  doctest Battle.BattleDfs
   doctest Battle.BattleHandler
