@@ -34,6 +34,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
         case RoomServer.query(pid, user_id) do
           {:ok, detail} ->
             # 当前询问回合，写回成功
+            RoomServer.start_countdown(pid)
+            RoomServer.start_time_step(pid, user_id)
             {:ok, detail}
           {:error, detail} ->
             :ets.insert(:pid_info, {game_id, caller})
@@ -56,13 +58,14 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
             case :ets.lookup(:pid_info, game_id) do
               [] -> # 对方没有查询
                 {:ok, success_detail}
-              [{_, dest}] -> #对方查询棋盘状态
+              [{_, dest}] -> # 对方查询棋盘状态
                 new_detail = %{
                   code: success_detail.code,
                   move_detail: success_detail.move_detail,
                   board: success_detail.board,
                   winner: success_detail.winner
                 }
+                :ets.delete(:pid_info, game_id)
                 send(dest, {:query, new_detail})
                 {:ok, success_detail}
             end

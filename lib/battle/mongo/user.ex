@@ -9,7 +9,7 @@ defmodule Battle.Mongo.User do
   ]
   @cleanable false
 
-  field :account, :integer, required: true
+  field :account, :string, required: true
   field :user_id, :string, required: true
   field :date, :datetime, required: true
   field :avatar, :string, required: false
@@ -17,7 +17,7 @@ defmodule Battle.Mongo.User do
   def save_user(user_id, account) do
     info = %{
     user_id: user_id,
-    account: String.to_integer(account),
+    account: account,
     date: Ejoy.Bson.utc_now()
     }
     __MODULE__.psave(info)

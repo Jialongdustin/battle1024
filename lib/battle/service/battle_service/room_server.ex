@@ -18,6 +18,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Mongo.UserAi
 
   @timeout 3000
+  @timeout_test 120_000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1],
@@ -49,6 +50,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       steps: [],
       illegal_times: [0, 0],
       time_ref: nil,
+      time_ref_test: nil,
       steps_white: 0,
       steps_black: 0,
       group_name: groupName,
@@ -68,8 +70,9 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:ok, state}
   end
 
-  def start_countdown(pid, timeout \\ @timeout) do
-    GenServer.call(pid, {:start_countdown, timeout})
+  def start_countdown(pid, test \\ false) do
+    timeout = if test, do: @timeout_test, else: @timeout
+    GenServer.call(pid, {:start_countdown, timeout, test})
   end
 
   # 玩家加入战斗
@@ -145,12 +148,21 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:stop, :normal, :ok, state}
   end
 
-  def handle_call({:start_countdown, timeout}, _from, state) do
-    if state.time_ref do
-      Process.cancel_timer(state.time_ref)
+  def handle_call({:start_countdown, timeout, test}, _from, state) do
+    case test do
+      true ->
+        if state.time_ref_test do
+          Process.cancel_timer(state.time_ref_test)
+        end
+        new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
+        {:reply, :ok, %{state | time_ref_test: new_ref_test}}
+      false ->
+        if state.time_ref do
+          Process.cancel_timer(state.time_ref)
+        end
+        new_ref = Process.send_after(self(), :execute_task, timeout)
+        {:reply, :ok, %{state | time_ref: new_ref}}
     end
-    new_ref = Process.send_after(self(), :execute_task, timeout)
-    {:reply, :ok, %{state | time_ref: new_ref}}
   end
 
   def handle_call({:query, user_id}, _from, state) do
@@ -161,8 +173,6 @@ defmodule Battle.Service.BattleService.RoomServer do
         board: state.board,
         winner: state.winner,
       }
-      IO.inspect("============")
-      IO.inspect(state)
       {:reply, {:ok, detail}, state}
     else
       {:reply, {:error, Map.get(@code_info, 300)}, state}
@@ -381,6 +391,11 @@ defmodule Battle.Service.BattleService.RoomServer do
       false ->
         {:noreply, %{state | winner: state.white}}
     end
+  end
+
+  def handle_info(:execute_task_test, state) do
+    IO.puts "overtime operation of testing"
+    {:stop, :normal, :ok, state}
   end
 
   defp via_tuple(game_id) do

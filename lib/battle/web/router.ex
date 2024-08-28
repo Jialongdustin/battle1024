@@ -465,6 +465,7 @@ end
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, _} ->
         receive do
           {:query, detail} ->
@@ -520,8 +521,6 @@ end
     case RoomSupervisor.query(self(), user_id, game_id) do
       {:ok, detail} ->
         [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-        RoomServer.start_countdown(pid)
-        RoomServer.start_time_step(pid, user_id)
         body = Ejoy.Jiffy.encode!(detail)
         conn
         |> Conn.put_resp_content_type("application/json")

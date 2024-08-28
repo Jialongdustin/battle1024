@@ -16,6 +16,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
 
   def init_game() do
     game_id = UUID.uuid4()
+    IO.inspect game_id
     {:ok, token_black} = Token.generate_token(24, game_id)
     {:ok, token_white} = Token.generate_token(10, game_id)
     child_spec_server = %{
@@ -25,6 +26,8 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
       type: :worker
     }
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
+    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+    RoomServer.start_countdown(pid, true)
     %{
       token_white: token_white,
       token_black: token_black
@@ -34,6 +37,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   def query(caller, user_id, game_id) do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
+        RoomServer.start_countdown(pid, true)
         case RoomServer.query(pid, user_id) do
           {:ok, detail} ->
             # 当前询问回合，写回成功
@@ -51,6 +55,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   def movement(moves, user_id, game_id) do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
+        RoomServer.start_countdown(pid, true)
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
             # 将your_step改为opponent_step
@@ -60,13 +65,14 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
             case :ets.lookup(:pid_info_test, game_id) do
               [] -> # 对方没有查询
                 {:ok, success_detail}
-              [{_, dest}] -> #对方查询棋盘状态
+              [{_, dest}] -> # 对方查询棋盘状态
                 new_detail = %{
                   code: success_detail.code,
                   move_detail: success_detail.move_detail,
                   board: success_detail.board,
                   winner: success_detail.winner
                 }
+                :ets.delete(:pid_info_test, game_id)
                 send(dest, {:query, new_detail})
                 {:ok, success_detail}
             end
