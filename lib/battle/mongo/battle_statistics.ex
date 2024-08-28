@@ -83,4 +83,9 @@ defmodule Battle.Mongo.BattleStatistics do
     __MODULE__.pupdate(%{_id: bson_id}, %{info | last_submit_time: update_time})
   end
 
+  def delete_message() do
+    {:ok, info} = query_statistics_info()
+    __MODULE__.pdelete(%{_id: info._id},false)
+  end
+
 end

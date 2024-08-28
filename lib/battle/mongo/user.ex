@@ -10,13 +10,15 @@ defmodule Battle.Mongo.User do
   @cleanable false
 
   field :account, :string, required: true
+  field :user_name, :string, required: true
   field :user_id, :string, required: true
   field :date, :datetime, required: true
   field :avatar, :string, required: false
 
-  def save_user(user_id, account) do
+  def save_user(user_id, account, user_name) do
     info = %{
     user_id: user_id,
+    user_name: user_name,
     account: account,
     date: Ejoy.Bson.utc_now()
     }
@@ -37,5 +39,14 @@ defmodule Battle.Mongo.User do
 
   def remove_user(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
+  end
+
+  def get_user_name(user_id) do
+    case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+      [] -> {:error, "user_id error"}
+      res -> user_info = res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()
+
+        {:ok,user_info.user_name}
+    end
   end
 end

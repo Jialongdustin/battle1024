@@ -11,21 +11,31 @@ defmodule Battle.Service.WebService.Auth do
   ]
 
   @callback verify_code(String.t()) :: {:ok, map()} | {:error, any()}
-  def verify_code(code) do
-    params =  %{
-      client_id: @client_id,
-      client_secret: @client_secret,
-      grant_type: "authorization_code",
-      code: code
+  def verify_code(access_token) do
+#    params =  %{
+#      client_id: @client_id,
+#      client_secret: @client_secret,
+#      grant_type: "authorization_code",
+#      code: code,
+#      product_code: "P11387",
+#      product_secret: "U9e8ZB5x46+f6NR4Gxjl0A=="
+#    }
+#    url = "https://one.ejoy.com/api/oauth_v3/token"
+#    IO.inspect(url)
+#    IO.inspect(params)
+##    {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
+#    resp = 1
+#    IO.inspect("=========")
+    url = "https://one.ejoy.com/api/oapi/user/get_user_info"
+    params = %{
+      access_token: access_token
     }
-    url = "https://one.ejoy.com/api/oauth_v3/token"
-
     {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-    Logger.info(resp)
 
     case resp do
       %{
-         "account" => account
+        "account" => account,
+        "name" =>name
       } ->
         res =
           case User.query_user(account) do
@@ -42,7 +52,7 @@ defmodule Battle.Service.WebService.Auth do
           code: code,
           message: Map.get(resp, "message")
         }
-        {:error, %{one_resp: one_resp}}
+        {:error,one_resp}
     end
 
   end

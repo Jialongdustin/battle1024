@@ -1,4 +1,4 @@
-defmodule BattleTest.RouterTest do
+defmodule BattleTest.UserTest do
   use ExUnit.Case
   use Plug.Test
   doctest Battle.Mongo.User

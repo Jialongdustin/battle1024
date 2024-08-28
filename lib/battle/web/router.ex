@@ -34,7 +34,7 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "http://localhost:4000/login/redirect"
+  @redirect_uri "http://battle1024.ejoy.com/login/redirect"
 
   get "/" do
     conn
@@ -45,7 +45,10 @@ defmodule Battle.Web.Router do
   ## web
   # 登录验证, 重定向授权网址
   get "/login/one_code" do
-    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+#    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&product_code=P11387&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+    uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
+    IO.inspect(uri)
+    IO.inspect(@client_id)
     conn
     |> Conn.put_resp_header("location",  uri)
     |> Conn.send_resp(302, "")
@@ -53,9 +56,9 @@ defmodule Battle.Web.Router do
   end
 
   get "/login/redirect" do
-    code = conn.params["code"]
-    front_end_url = "https://ieu-battle1024.alibaba.net/login-success"
-    case Auth.verify_code(code) do
+    access_token = conn.params["access_token"]
+    front_end_url = "https://ieu-battle1024.alibaba.net/login"
+    case Auth.verify_code(access_token) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
         redirect_url = front_end_url <> "?code=200&moment_token=" <> moment_token
@@ -115,6 +118,7 @@ defmodule Battle.Web.Router do
   # 获取某个用户的排名信息
   get "/user/ranking_list" do
     moment_token = conn.params["moment_token"]
+    IO.inspect(moment_token)
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
         body = case RankList.get_rank_by_user_id(user_id) do
@@ -509,6 +513,7 @@ end
     case RoomSupervisorTest.query(self(), user_id, game_id) do
       {:ok, detail} ->
         body = Ejoy.Jiffy.encode!(detail)
+
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)

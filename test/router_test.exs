@@ -139,7 +139,7 @@ defmodule BattleTest.RouterTest do
       RankList.save_rank("1", "fuck", 0.8)
       conn =
         :get
-        |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
+        |> conn("/user/ranking_list")
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
@@ -157,6 +157,7 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
+      IO.inspect(conn.resp_body)
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2004, "data" => "user_id error", "success" => false}
