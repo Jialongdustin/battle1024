@@ -46,7 +46,7 @@ defmodule Battle.Mongo.User do
       [] -> {:error, "user_id error"}
       res -> user_info = res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()
 
-        {:ok,user_info.user_name}
+        {:ok, user_info.user_name}
     end
   end
 end
