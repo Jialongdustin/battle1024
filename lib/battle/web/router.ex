@@ -80,15 +80,19 @@ defmodule Battle.Web.Router do
 
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        case BattleResult.get_battle_result_by_user_id(String.to_integer(user_id)) do
+        case BattleResult.get_battle_result_by_user_id(user_id) do
           {:ok, game} ->
             body = Ejoy.Jiffy.encode!(%{code: 200, data: game, success: true})
             conn
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
             |> Conn.halt()
-          {:error,reason} ->
+          {:error, reason} ->
             body = Ejoy.Jiffy.encode!(%{code: 2003, data: reason, success: false})
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, body)
+            |> Conn.halt()
         end
 
       {:error, _} ->
@@ -113,7 +117,6 @@ defmodule Battle.Web.Router do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
-
         body = case RankList.get_rank_by_user_id(String.to_integer(user_id)) do
           {:ok, info} ->
             Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
@@ -151,9 +154,9 @@ defmodule Battle.Web.Router do
         message =
           case RankList.get_rank_list(String.to_integer(page), String.to_integer(limit)) do
             {:ok, rank_list} ->
-              %{code: 200, data: rank_list,success: true}
+              %{code: 200, data: rank_list, success: true}
             {:error, message} ->
-              %{code: 2004, data: message,success: false}
+              %{code: 2004, data: message, success: false}
           end
         body = Ejoy.Jiffy.encode!(message)
         conn
@@ -574,12 +577,5 @@ end
         |> Conn.send_resp(400, body)
         |> Conn.halt()
     end
-  end
-
-  # 将用户创建测试比赛的http请求升级为websocket
-  get "/test/websocket" do
-    conn
-    |> WebSockAdapter.upgrade(WebSocketHandler, [self()], timeout: :infinity)
-    |> halt()
   end
 end

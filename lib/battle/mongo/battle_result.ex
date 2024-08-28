@@ -9,12 +9,12 @@ defmodule Battle.Mongo.BattleResult do
   ]
   @cleanable false
 
-  field :user_id_2, {:list, :integer}, require: true
+  field :user_id_2, {:list, :string}, require: true
   field :game_id, :string, required: true
-  field :winner, :integer, required: true
+  field :winner, :string, required: true
   field :time_cost_2, {:list, :integer}, required: true
   field :memory_cost_2, {:list,:string}, required: true
-  field :early_hand, :integer, required: true
+  field :early_hand, :string, required: true
   field :total_step_2, {:list, :integer}, required: true
   field :date, :datetime, required: true
 
@@ -36,8 +36,8 @@ defmodule Battle.Mongo.BattleResult do
   end
 
   def get_battle_result_by_user_id(user_id) do
-    case pquery2(%{user_id_2: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id_2: 1]]}) do
-      nil -> {:error,"Battle.BattleResult error "}
+    case pquery2(%{user_id_2: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id_2: 1]]}) do
+      [] -> {:error, "no games of user"}
       res -> battle_info = res |> Enum.map(&__MODULE__.to_raw/1)
              self_and_opponent = Enum.map(battle_info, fn battle ->
                self_id = user_id
@@ -81,7 +81,7 @@ defmodule Battle.Mongo.BattleResult do
 
   def get_battle_results() do
     case pquery(%{}) do
-      nil -> {:error,"empty battle"}
+      [] -> {:error, "empty battle"}
       res ->
         {:ok,res |> Enum.map(&__MODULE__.to_raw/1)|>Enum.map(fn message ->  [message.user_id_2,message.winner] end)}
     end
@@ -98,7 +98,11 @@ defmodule Battle.Mongo.BattleResult do
   end
 
   def count_battle() do
-    {:ok,count} = __MODULE__.pcount(%{})
+    {:ok, count} = __MODULE__.pcount(%{})
     count
+  end
+
+  def remove_battle(user_id) do
+    __MODULE__.pdelete(%{user_id: user_id})
   end
 end

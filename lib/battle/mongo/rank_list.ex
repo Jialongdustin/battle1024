@@ -19,7 +19,7 @@ defmodule Battle.Mongo.RankList do
   def get_rank_list(page, limit) do
     time_query = Battle.Utils.GetTime24.get_time()
     case __MODULE__.pquery_sort_limit(time_query, [rate: -1], limit, page*limit) do
-      nil -> {:error, "empty rank list" }
+      [] -> {:error, "empty rank list" }
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()

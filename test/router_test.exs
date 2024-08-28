@@ -10,11 +10,21 @@ defmodule BattleTest.RouterTest do
   alias Battle.Mongo.User
   alias Battle.Mongo.BattleStatistics
   alias Battle.Mongo.RankList
+  alias Battle.Mongo.BattleResult
 
   @opts Router.init([])
 
+  test "return html on /" do
+    conn =
+      :get
+      |> conn("/", "")
+      |> Router.call(@opts)
+    assert conn.state == :sent
+    assert conn.status == 200
+  end
+
   test "redirects to the correct URL on /login/one_code" do
-    expected_url = "http://one.ejoy.com/oauth_v3?client_id=10052&redirect_uri=http://localhost:4000/login/redirect&response_type=code&scope=acl&state=123"
+    expected_url = "http://one.ejoy.com/oauth_v3?client_id=10052&redirect_uri=http://battle1024.ejoy.com/login/redirect&response_type=code&scope=acl&state=123"
     conn =
       :get
       |> conn("/login/one_code", "")
@@ -28,16 +38,16 @@ defmodule BattleTest.RouterTest do
     with_mock Battle.Service.WebService.Auth, [:passthrough], [
       verify_code: fn
         _ ->
-          {:ok, %{user_id: 1, name: "ljl"}}
+          {:ok, "abc"}
       end
     ] do
       conn =
         :get
-        |> conn("/login/redirect", "")
+        |> conn("/login/redirect", %{"code" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"user_id" => 1, "name" => "ljl"}
-      assert conn.status == 200
+      assert conn.status == 302
+      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login?code=200&moment_token=abc"]
     end
   end
 
@@ -47,26 +57,75 @@ defmodule BattleTest.RouterTest do
     ] do
       conn =
         :get
-        |> conn("/login/redirect", "")
+        |> conn("/login/redirect", %{"code" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 302
+      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login?code=403"]
     end
   end
 
   test "/user/all, return 200" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
-        {:ok, "123"}
+        {:ok, "111"}
+      end
+    ] do
+      BattleResult.save_battle_result(["111", "222"], "333", "111", [11, 22], ["11","22"], "111", [20, 30])
+      conn =
+        :get
+        |> conn("/user/all", %{"moment_token" => "asgkasgag"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      BattleResult.remove_battle("111")
+    end
+  end
+
+  test "/user/all, return 200 with code 2003 when no any game of this user" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
       end
     ] do
       conn =
         :get
-        |> conn("/user/all", "")
+        |> conn("/user/all", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2003, "data" => "no games of user", "success" => false}
+    end
+  end
+
+  test "/user/all, return 302 when token is invalid" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:error, "invalid token"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/all", %{"moment_token" => "asgkasgag"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 302
+    end
+  end
+
+  test "/user/all, return 500 when server error" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:server_error, "server error"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/all", %{"moment_token" => "asgkasgag"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 500
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
     end
   end
 
@@ -76,33 +135,125 @@ defmodule BattleTest.RouterTest do
         {:ok, "1"}
       end
     ] do
+      RankList.save_rank("1", "fuck", 0.8)
       conn =
         :get
-        |> conn("/user/ranking_list", "")
+        |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      IO.inspect(Ejoy.Jiffy.decode!(conn.resp_body))
+      RankList.remove_rank("1")
+    end
+  end
+
+  test "/user/ranking_list, return 200 with code 2004 when no game of user_id" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "1"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2004, "data" => "user_id error", "success" => false}
+    end
+  end
+
+  test "/user/ranking_list, return 302 when token is invalid" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:error, "invalid token"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 302
+    end
+  end
+
+  test "/user/ranking_list, return 500 when server error" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:server_error, "server error"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 500
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
     end
   end
 
   test "GET /game/ranking_list with pagination, return 200" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
-        {:ok, "1"}
+        {:ok, "111"}
       end
     ] do
-      RankList.save_rank()
+      RankList.save_rank("111", "fuck", 0.98)
       conn =
         :get
         |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
         |> Router.call(@opts)
-
       assert conn.state == :sent
       assert conn.status == 200
+      RankList.remove_rank("111")
+    end
+  end
 
-      response = Ejoy.Jiffy.decode!(conn.resp_body)
-      IO.inspect(response)
+  test "GET /game/ranking_list with pagination, return 200 with code 2004 when no games" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2004, "data" => "empty rank list", "success" => false}
+    end
+  end
+
+  test "GET /game/ranking_list with pagination, return 302 when token is invalid" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:error, "invalid token"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 302
+    end
+  end
+
+  test "GET /game/ranking_list with pagination, return 500 when server error" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:server_rror, "server error"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 500
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
     end
   end
 
@@ -612,5 +763,9 @@ defmodule BattleTest.RouterTest do
       assert conn.status == 500
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
     end
+  end
+
+  test "" do
+    
   end
 end
