@@ -34,7 +34,7 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "http://battle1024.ejoy.com/login/redirect"
+  @redirect_uri "http://localhost:4000/login/redirect"
 
   get "/" do
     conn
@@ -387,6 +387,54 @@ defmodule Battle.Web.Router do
     end
   end
 
+  # 检查git的测试结果
+  get "/user/check_update" do
+    moment_token = conn.params["moment_token"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        case BattleResultTest.get_result_by_user_id(user_id) do
+          {:ok, info} ->
+            IO.inspect(info.white.winner)
+            message = case info.white.winner == nil do
+              true ->
+                %{"code" => 200, "data" => "failure", "success" => false}
+              false ->
+                %{"code" => 200, "data" => "success", "success" => true}
+            end
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(message))
+            |> Conn.halt()
+          {:processing, _} ->
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => "processing", "success" => true}))
+            |> Conn.halt()
+
+          {:error, _} ->
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(403, Ejoy.Jiffy.encode!("do not submit git before"))
+            |> Conn.halt()
+        end
+
+      {:error, _} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
   # 更新git仓库
   json_rpc "/user/update_git", "schema/user/update_git" do
     moment_token = conn.params["moment_token"]
@@ -520,7 +568,6 @@ end
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisor.query(self(), user_id, game_id) do
       {:ok, detail} ->
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
         body = Ejoy.Jiffy.encode!(detail)
         conn
         |> Conn.put_resp_content_type("application/json")

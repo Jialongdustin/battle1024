@@ -11,6 +11,7 @@ defmodule BattleTest.RouterTest do
   alias Battle.Mongo.BattleStatistics
   alias Battle.Mongo.RankList
   alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.BattleResultTest
 
   @opts Router.init([])
 
@@ -765,7 +766,108 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "" do
+  test "return 200 when check processing on /user/check_update" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      BattleResultTest.save_battle_result("111", "first", "牛逼", "git@alibaba-inc.com", "main")
+      conn =
+        :get
+        |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "processing", "success" => true}
+      BattleResultTest.remove_all_battle("111")
+    end
+  end
 
+  test "return 200 when check success on /user/check_update" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      UserAi.insert_ai("111", "牛逼")
+      BattleResultTest.save_battle_result("111", "first", "牛逼", "git@alibaba-inc.com", "main")
+      BattleResultTest.update_battle_result("first", "111", "111", [1, 2], ["1g", "2g"], [30, 31])
+      conn =
+        :get
+        |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "success", "success" => true}
+      BattleResultTest.remove_all_battle("111")
+      UserAi.clean_message("111")
+    end
+  end
+
+  test "return 200 when check failed on /user/check_update" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      BattleResultTest.remove_all_battle("111")
+      UserAi.insert_ai("111", "牛逼")
+      BattleResultTest.save_battle_result("111", "first", "牛逼", "git@alibaba-inc.com", "main")
+      BattleResultTest.update_battle_result("first", "111", nil, [1, 2], ["1g", "2g"], [30, 31])
+      conn =
+        :get
+        |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "failure", "success" => false}
+      BattleResultTest.remove_all_battle("111")
+      UserAi.clean_message("111")
+    end
+  end
+
+  test "return 302 when token invalid on /user/check_update" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:error, "invalid token"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 302
+    end
+  end
+
+  test "return 500 when server error on /user/check_update" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:server_error, "server error"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 500
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
+    end
+  end
+
+  test "return 200 with token info when create test game on /user/create_test" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      request_body = %{"token" => "abcdefghijklmn"}
+      conn =
+        :post
+        |> conn("/user/create_test")
+    end
   end
 end
