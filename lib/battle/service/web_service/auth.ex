@@ -27,10 +27,16 @@ defmodule Battle.Service.WebService.Auth do
       %{
          "account" => account
       } ->
-        user_id = UUID.uuid1()
-        {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)
-        User.save_user(user_id, account)
-        {:ok, moment_token}
+        res =
+          case User.query_user(account) do
+            {:error, _} ->
+              user_id = UUID.uuid1()
+              User.save_user(user_id, account)
+              user_id
+            {:ok, res} ->
+              res.user_id
+          end
+          Battle.Utils.Token.generate_token(res)
       %{"code" => code} when code in @verify_token_invalid_codes ->
         one_resp = %{
           code: code,
