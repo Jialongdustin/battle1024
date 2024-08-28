@@ -54,7 +54,7 @@ defmodule Battle.Web.Router do
 
   get "/login/redirect" do
     code = conn.params["code"]
-    front_end_url = "https://ieu-battle1024.alibaba.net/login"
+    front_end_url = "https://ieu-battle1024.alibaba.net/login-success"
     case Auth.verify_code(code) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
@@ -117,7 +117,7 @@ defmodule Battle.Web.Router do
     moment_token = conn.params["moment_token"]
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
-        body = case RankList.get_rank_by_user_id(String.to_integer(user_id)) do
+        body = case RankList.get_rank_by_user_id(user_id) do
           {:ok, info} ->
             Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
           {:error, reason} ->
@@ -128,12 +128,12 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-        {:error, _} ->
-          uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-          conn
-          |> Conn.put_resp_header("location",  uri)
-          |> Conn.send_resp(302, "")
-          |> Conn.halt()
+      {:error, _} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
 
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})

@@ -14,6 +14,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     DynamicSupervisor.init(opts)
   end
 
+  # game_id = "bf0712bc-fa34-4741-8f9a-4cd26ee76234"
   def init_game() do
     game_id = UUID.uuid4()
     IO.inspect game_id

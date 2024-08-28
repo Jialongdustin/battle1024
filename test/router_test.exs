@@ -572,7 +572,7 @@ defmodule BattleTest.RouterTest do
   test "return 200 with insert ai_name on /user/create_ai" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
-          {:ok, 1}
+          {:ok, "1"}
       end
     ] do
       request_body = %{
@@ -766,6 +766,6 @@ defmodule BattleTest.RouterTest do
   end
 
   test "" do
-    
+
   end
 end
