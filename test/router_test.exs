@@ -859,6 +859,43 @@ defmodule BattleTest.RouterTest do
     end
   end
 
+  test "return 200 when no test games on /test/all" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      BattleResultTest.save_battle_result("111", "666", "牛逼", "git@fuckyourselr.com", "maybe")
+      conn =
+        :get
+        |> conn("/test/all", %{"moment_token" => "sgkjaags"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => true}
+      BattleResultTest.remove_all_battle("111")
+    end
+  end
+
+  test "return 200 when test game finish on /test/all" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "111"}
+      end
+    ] do
+      BattleResultTest.save_battle_result("111", "666", "牛逼", "git@fuckyourselr.com", "maybe")
+      BattleResultTest.update_battle_result("666", "111", nil, [1, 2], ["1g", "2g"], [30, 31])
+      conn =
+        :get
+        |> conn("/test/all", %{"moment_token" => "sgkjaags"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [%{"black" => %{"game_id" => "666", "memory_cost_black" => "2g", "time_cost_black" => 2, "total_step_black" => 31, "winner" => nil}, "tag" => "maybe", "white" => %{"game_id" => "666", "memory_cost_white" => "1g", "time_cost_white" => 1, "total_step_white" => 30, "winner" => nil}}], "success" => true}
+      BattleResultTest.remove_all_battle("111")
+    end
+  end
+
   test "return 200 with token info when create test game on /user/create_test" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->

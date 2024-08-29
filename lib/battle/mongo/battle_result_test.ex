@@ -87,6 +87,33 @@ defmodule Battle.Mongo.BattleResultTest do
     end
   end
 
+  def get_all_results_by_user_id(user_id) do
+    case __MODULE__.pquery_sort(%{user_id: user_id}, [date: -1]) do
+      [] -> {:error, "no results of test game"}
+      res -> battle_info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)
+              self_and_opponent = Enum.map(battle_info, fn battle ->
+                if battle.early_hand do
+                    white = %{
+                      time_cost_white: Enum.at(battle.time_cost_2, 0),
+                      total_step_white: Enum.at(battle.total_step_2, 0),
+                      memory_cost_white: Enum.at(battle.memory_cost_2, 0),
+                      game_id: battle.game_id,
+                      winner: battle.winner
+                    }
+                    black = %{
+                      time_cost_black: Enum.at(battle.time_cost_2, 1),
+                      total_step_black: Enum.at(battle.total_step_2, 1),
+                      memory_cost_black: Enum.at(battle.memory_cost_2, 1),
+                      game_id: battle.game_id,
+                      winner: battle.winner
+                    }
+                    %{white: white, black: black, tag: battle.tag}
+               end
+            end) |> Enum.filter(& &1)
+            {:ok, self_and_opponent}
+    end
+  end
+
   def get_battle_results() do
     case pquery(%{}) do
       [] -> {:error,"empty battle"}
