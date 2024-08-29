@@ -53,7 +53,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
             RoomServer.record_time_step(pid, user_id)
-            RoomServer.start_cpuntdown(pid)
+            RoomServer.start_countdown(pid)
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end

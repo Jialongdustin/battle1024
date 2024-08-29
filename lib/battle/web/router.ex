@@ -257,7 +257,7 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        case User.query_user(String.to_integer(user_id)) do
+        case User.query_user(user_id) do
           {:ok, message} ->
             body = Ejoy.Jiffy.encode!(%{code: 200, data: message.avatar, success: true})
             conn
@@ -302,7 +302,7 @@ defmodule Battle.Web.Router do
             game_id: battle_info.game_id,
             steps: battle_info.steps
             }
-            %{code: 200, battle_info: message, success: true}
+            %{code: 200, data: message, success: true}
           {:error, _} ->
             %{code: 2007, error: "game not exists", success: false}
         end
@@ -538,7 +538,7 @@ end
   json_rpc "/test/query", "schema/test/query" do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
@@ -575,7 +575,7 @@ end
     token = conn.params["token"]
     moves = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
 
     case RoomSupervisorTest.movement(moves, user_id, game_id) do
@@ -599,7 +599,7 @@ end
   json_rpc "/play/query", "schema/play/query" do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
@@ -635,7 +635,7 @@ end
     token = conn.params["token"]
     move = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
     # 处理棋步
     case RoomSupervisor.movement(move, user_id, game_id) do

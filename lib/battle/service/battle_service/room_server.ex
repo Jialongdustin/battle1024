@@ -152,12 +152,10 @@ defmodule Battle.Service.BattleService.RoomServer do
     case test do
       true ->
         if state.time_ref_test do
-          # Process.cancel_timer(state.time_ref_test)
-          {:reply, :ok, %{state | time_ref_test: nil}}
-        else
-          new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
-          {:reply, :ok, %{state | time_ref_test: new_ref_test}}
+          Process.cancel_timer(state.time_ref_test)
         end
+        new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
+        {:reply, :ok, %{state | time_ref_test: new_ref_test}}
 
       false ->
         if state.time_ref do
