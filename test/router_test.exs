@@ -896,6 +896,37 @@ defmodule BattleTest.RouterTest do
     end
   end
 
+  test "return 302 when token invalid on /test/all" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:error, "invalid token"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/test/all", %{"moment_token" => "sgkjaags"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 302
+    end
+  end
+
+  test "return 500 when server error on /test/all" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:server_error, "server error"}
+      end
+    ] do
+      conn =
+        :get
+        |> conn("/test/all", %{"moment_token" => "sgkjaags"})
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 500
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
+    end
+  end
+
   test "return 200 with token info when create test game on /user/create_test" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
@@ -906,6 +937,9 @@ defmodule BattleTest.RouterTest do
       conn =
         :post
         |> conn("/user/create_test")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == :status
     end
   end
 end

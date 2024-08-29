@@ -62,11 +62,11 @@ defmodule Battle.Mongo.RankList do
               }
               {:ok, rank} = __MODULE__.pcount(query)
 
-              {:ok, user_name} = User.get_user_name(user_id)
+              # {:ok, user_name} = User.get_user_name(user_id)
 
               %{
                 user_id: user_id,
-                user_name: user_name,
+                # user_name: user_name,
                 rate: info.rate,
                 ai_name: user_info.ai_name,
                 last_submit_date: user_info.create_time,

@@ -45,10 +45,8 @@ defmodule Battle.Web.Router do
   ## web
   # 登录验证, 重定向授权网址
   get "/login/one_code" do
-    # uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&product_code=P11387&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-    uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
-    IO.inspect(uri)
-    IO.inspect(@client_id)
+    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+    # uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
     conn
     |> Conn.put_resp_header("location",  uri)
     |> Conn.send_resp(302, "")
@@ -57,7 +55,7 @@ defmodule Battle.Web.Router do
 
   get "/login/redirect" do
     Logger.info(conn)
-    access_token = conn.params["access_token"]
+    access_token = conn.params["code"]
     front_end_url = "https://ieu-battle1024.alibaba.net/login"
     case Auth.verify_code(access_token) do
       {:ok, moment_token} ->
