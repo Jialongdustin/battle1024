@@ -163,7 +163,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
           "mem" => 96,
           "capacity" => 20,
           "svcCapacity" => 0,
-          "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
+          "nodepoolId" => "np0f3c8a13074143ff90da1f198a756367", 
           "params" => %{
             "token" => token,
             "white" => white,
