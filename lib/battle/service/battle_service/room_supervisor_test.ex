@@ -60,6 +60,8 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
             # 将your_step改为opponent_step
+            RoomServer.start_countdown(pid, true)
+            RoomServer.start_time_step(pid, user_id)
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
@@ -75,10 +77,6 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
                 }
                 :ets.delete(:pid_info_test, game_id)
                 send(dest, {:query, new_detail})
-                if new_detail.winner == nil do
-                  RoomServer.start_countdown(pid, true)
-                  RoomServer.start_time_step(pid, user_id)
-                end
                 {:ok, success_detail}
             end
 
