@@ -614,11 +614,6 @@ end
       {:error, _} ->
         receive do
           {:query, detail} ->
-            if detail.winner == nil do
-              [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-              RoomServer.start_countdown(pid)
-              RoomServer.start_time_step(pid, user_id)
-            end
             body = Ejoy.Jiffy.encode!(detail)
             conn
             |> Conn.put_resp_content_type("application/json")
