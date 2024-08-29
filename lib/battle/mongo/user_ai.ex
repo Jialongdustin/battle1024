@@ -17,14 +17,14 @@ defmodule Battle.Mongo.UserAi do
 
   def get_newest_ai_by_userId(user_id)do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [create_time: -1], 1) do
-      nil -> {:error, "Battle.UserAi error"}
+      [] -> {:error, "Battle.UserAi error"}
       res -> {:ok, res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
   def get_ai_list_by_userId(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-      nil -> {:error, "Battle.UserAi error"}
+      [] -> {:error, "Battle.UserAi error"}
       res -> {:ok, res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
     end
 
@@ -32,7 +32,7 @@ defmodule Battle.Mongo.UserAi do
 
   def get_all_gits() do
     case __MODULE__.pquery(%{}) do
-      nil ->{:error, "no user_info"}
+      [] ->{:error, "no user_info"}
       res ->{:ok, res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url, tag: message.tag} end)}
     end
   end
@@ -53,7 +53,7 @@ defmodule Battle.Mongo.UserAi do
 
   def get_newest_submit_time() do
     case __MODULE__.pquery_sort_limit(%{},[create_time: -1],1) do
-      nil->{:error,"Battle.UserAi error"}
+      [] ->{:error,"Battle.UserAi error"}
       res ->
         newest_info = res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)|> List.first()
         newest_info.create_time
@@ -71,7 +71,7 @@ defmodule Battle.Mongo.UserAi do
 
   def get_ai_name(user_id) do
     case __MODULE__.pquery(%{user_id: user_id}) do
-      nil -> {:error, "no user_info"}
+      [] -> {:error, "no user_info"}
       res ->
         info = res |> Enum.map(fn message ->message |> __MODULE__.to_raw() end)|> List.first()
         {:ok, info.ai_name}

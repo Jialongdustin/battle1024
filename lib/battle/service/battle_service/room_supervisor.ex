@@ -67,6 +67,10 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
                 }
                 :ets.delete(:pid_info, game_id)
                 send(dest, {:query, new_detail})
+                if new_detail.winner == nil do
+                  RoomServer.start_countdown(pid)
+                  RoomServer.start_time_step(pid, user_id)
+                end
                 {:ok, success_detail}
             end
           {:error, error_detail} ->
