@@ -25,7 +25,7 @@ defmodule BattleTest.RouterTest do
   end
 
   test "redirects to the correct URL on /login/one_code" do
-    expected_url = "http://one.ejoy.com/oauth_v3?client_id=10052&redirect_uri=http://battle1024.ejoy.com/login/redirect&response_type=code&scope=acl&state=123"
+    expected_url = "http://one.ejoy.com/oauth_v3?client_id=10052&redirect_uri=https://battle1024.ejoy.com/login/redirect&response_type=code&scope=acl&state=123"
     conn =
       :get
       |> conn("/login/one_code", "")
@@ -265,6 +265,7 @@ defmodule BattleTest.RouterTest do
         {:ok, ""}
       end
     ] do
+      BattleStatistics.delete_message()
       query_params = %{
         "moment_token" => "sfakjflasfla"
       }
@@ -296,6 +297,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
+      BattleStatistics.delete_message()
     end
   end
 
@@ -791,6 +793,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
+      BattleStatistics.save_init()
       UserAi.insert_ai("111", "牛逼")
       BattleResultTest.save_battle_result("111", "first", "牛逼", "git@alibaba-inc.com", "main")
       BattleResultTest.update_battle_result("first", "111", "111", [1, 2], ["1g", "2g"], [30, 31])
@@ -803,6 +806,7 @@ defmodule BattleTest.RouterTest do
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "success", "success" => true}
       BattleResultTest.remove_all_battle("111")
       UserAi.clean_message("111")
+      BattleStatistics.delete_message()
     end
   end
 
@@ -939,7 +943,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/create_test")
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == :status
+      assert conn.status == 200
     end
   end
 end

@@ -375,7 +375,7 @@ defmodule Battle.Service.BattleService.RoomServer do
         new_winner =
           cond do
             state.white == 10 && state.black == 24 && state.app_name == nil -> state.winner
-            state.ealry_hand == true -> state.black
+            state.early_hand == true -> state.black
             true -> state.white
           end
 

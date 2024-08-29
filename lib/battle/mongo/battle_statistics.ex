@@ -84,8 +84,7 @@ defmodule Battle.Mongo.BattleStatistics do
   end
 
   def delete_message() do
-    {:ok, info} = query_statistics_info()
-    __MODULE__.pdelete(%{_id: info._id},false)
+    __MODULE__.pdelete(%{}, false)
   end
 
 end

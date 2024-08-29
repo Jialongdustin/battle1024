@@ -154,6 +154,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
 
   defp update_service(appName, user_id, game_id) do
     {:ok, token} = Token.generate_token(user_id, game_id)
+    white = user_id == 10
     [%{
           "name" => appName,
           "version" => appName,
@@ -164,7 +165,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
           "svcCapacity" => 0,
           "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
           "params" => %{
-            "token" => token
+            "token" => token,
+            "white" => white,
           },
           "resources" => %{
             "kun-run" => %{

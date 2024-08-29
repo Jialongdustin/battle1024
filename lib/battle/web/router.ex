@@ -347,6 +347,7 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+
       _ ->
         Logger.error("Unexpected result from verify_code")
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
@@ -357,7 +358,7 @@ defmodule Battle.Web.Router do
     end
   end
 
-  # 创建AI
+  # 提交git
   json_rpc "/user/submit_git", "schema/user/submit_git" do
     git_url = conn.params["git_url"]
     tag = conn.params["tag"]
@@ -397,7 +398,6 @@ defmodule Battle.Web.Router do
       {:ok, user_id} ->
         case BattleResultTest.get_result_by_user_id(user_id) do
           {:ok, info} ->
-            IO.inspect(info.white.winner)
             message = case info.white.winner == nil do
               true ->
                 %{"code" => 200, "data" => "failure", "success" => false}

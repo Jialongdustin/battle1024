@@ -44,7 +44,6 @@ defmodule Battle.Mongo.BattleResultTest do
       end)
       |> List.first()
 
-      IO.inspect(info)
     bson_id = info._id
     if winner != nil do
       user_id = info.user_id
