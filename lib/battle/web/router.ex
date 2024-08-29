@@ -56,6 +56,7 @@ defmodule Battle.Web.Router do
   end
 
   get "/login/redirect" do
+    Logger.info(conn)
     access_token = conn.params["access_token"]
     front_end_url = "https://ieu-battle1024.alibaba.net/login"
     case Auth.verify_code(access_token) do
