@@ -76,16 +76,14 @@ defmodule Battle.Mongo.BattleStatistics do
     __MODULE__.pupdate(%{_id: bson_id}, %{info | average_time_cost: count})
   end
 
-  def update_last_commit_time() do
+  def update_last_commit_time(time) do
     {:ok, info} = query_statistics_info()
     bson_id = info._id
-    update_time = Ejoy.Bson.utc_now()
-    __MODULE__.pupdate(%{_id: bson_id}, %{info | last_submit_time: update_time})
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | last_submit_time: time})
   end
 
   def delete_message() do
-    {:ok, info} = query_statistics_info()
-    __MODULE__.pdelete(%{_id: info._id},false)
+    __MODULE__.pdelete(%{},false)
   end
 
 end

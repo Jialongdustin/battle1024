@@ -7,16 +7,14 @@ defmodule BattleTest.BattleStatisticsTest do
   alias Battle.Mongo.BattleStatistics
   alias Battle.Mongo.BattleResult
 
-  test "count" do
-    res = BattleStatistics.count()
-    IO.inspect(res)
-  end
 
-  test "save_init" do
+  test "save init" do
     BattleStatistics.save_init()
   end
 
-  test "save static info" do
+  test "update static info" do
+    BattleStatistics.delete_message()
+    BattleStatistics.save_init()
     update_info = %{
       user_count: 1,
       submit_count: 1,
@@ -24,9 +22,14 @@ defmodule BattleTest.BattleStatisticsTest do
       average_time_cost: 30
     }
     BattleStatistics.update_statistics_info(update_info.user_count,update_info.submit_count,update_info.average_step,update_info.average_time_cost)
+    {:ok,after_res} = BattleStatistics.query_statistics_info()
+    assert update_info.user_count == after_res.user_count && update_info.submit_count == after_res.submit_count
+
   end
 
   test "add_user" do
+    BattleStatistics.delete_message()
+    BattleStatistics.save_init()
     {:ok,pre_res} = BattleStatistics.query_statistics_info()
 
     BattleStatistics.user_increment()
@@ -45,15 +48,26 @@ defmodule BattleTest.BattleStatisticsTest do
   end
 
   test "calculate average" do
+    BattleStatistics.delete_message()
+    BattleStatistics.save_init()
 
     {:ok,moment_token} = Battle.Utils.Token.generate_token("1")
     {:ok,pre_res} = BattleStatistics.query_statistics_info()
 
     steps = 40
-    BattleStatistics.update_average_step(1,steps)
-
+    times = 10000
+    BattleStatistics.update_average_step(40)
+    BattleStatistics.update_average_time_cost(times)
     {:ok,after_res} = BattleStatistics.query_statistics_info()
-    assert pre_res.average_step*(BattleResult.count_battle()-1) ==
-             after_res.submit_count*BattleResult.count_battle()-steps
+    IO.inspect(after_res)
+    assert steps/2 == after_res.average_step && times/1000/2 == after_res.average_time_cost
+
+  end
+
+  test "update submit time" do
+    update_time = Ejoy.Bson.utc_now()
+    BattleStatistics.update_last_commit_time(update_time)
+    {:ok,user_info} = BattleStatistics.query_statistics_info()
+    assert user_info.last_submit_time == update_time
   end
 end

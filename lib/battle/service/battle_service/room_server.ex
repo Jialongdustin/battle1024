@@ -17,7 +17,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Mongo.BattleResultTest
   alias Battle.Mongo.UserAi
 
-  @timeout 3000
+  @timeout 30000
   @timeout_test 120_000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -185,12 +185,6 @@ defmodule Battle.Service.BattleService.RoomServer do
     board = state.board
     move_list = state.can_move
 
-    winner =
-      case {count_piece([1, 2], board), count_piece([3, 4], board)} do
-        {0, _} -> state.black
-        {_, 0} -> state.white
-        _ -> nil
-      end
     is_match =
       Enum.any?(move_list, fn path ->
         path == moves
@@ -228,11 +222,20 @@ defmodule Battle.Service.BattleService.RoomServer do
             List.replace_at(acc, row, update_row)
           end)
 
+        winner =
+          case {count_piece([1, 2], new_board), count_piece([3, 4], new_board)} do
+            {0, _} -> state.black
+
+            {_, 0} -> state.white
+            _ -> nil
+          end
+
+        IO.inspect(winner)
         {can_move, flag} = Battle.BattleHandler.move_list(new_board, !white)
 
         move_detail = %{
           user_id: user_id,
-          captured: capture
+          movement: capture
         }
 
         {new_state, detail} =
@@ -331,21 +334,27 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
               end
           end
-        winner = count_total_piece(new_state, capture)
 
-        {new_state, detail} =
-          case winner do
-            0 -> # 平局
-              {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
+        case new_state.winner do
+          nil ->
+            winner = count_total_piece(new_state, capture)
+            {new_state, detail} =
+              case winner do
+                0 -> # 平局
+                  {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
 
-            winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
-              {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
+                winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
+                  {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
 
-            nil -> # 还没有赢家，继续
-              {new_state, detail}
-          end
-          IO.inspect(new_state)
-        {:reply, {:ok, detail}, new_state}
+                nil -> # 还没有赢家，继续
+                  {new_state, detail}
+              end
+#              IO.inspect(new_state)
+            {:reply, {:ok, detail}, new_state}
+          _ ->
+#            IO.inspect(new_state)
+            {:reply, {:ok, detail}, new_state}
+        end
 
       false ->
         available_step =
@@ -375,7 +384,7 @@ defmodule Battle.Service.BattleService.RoomServer do
         new_winner =
           cond do
             state.white == 10 && state.black == 24 && state.app_name == nil -> state.winner
-            state.ealry_hand == true -> state.black
+            state.early_hand == true -> state.black
             true -> state.white
           end
 
@@ -517,6 +526,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def check_repeat_move(state, moves, capture) do
+    IO.inspect(state)
     # 提取初始位置和最终位置
     [[x0, y0] | _] = moves
     [x1, y1] = List.last(moves)
@@ -524,29 +534,29 @@ defmodule Battle.Service.BattleService.RoomServer do
     new_state =
       case List.first(capture) do
         %{captured: nil, moves: _} ->
-        if state.early_hand do
-          if [[x0, y0], [x1, y1]] == state.pre_step_white.move do
-            if state.pre_step_white.cnt == 2 do
-              # 重复下子超过3次
-              new_state = %{state | winner: state.black}
+          if state.early_hand do
+            if [[x0, y0], [x1, y1]] == state.pre_step_white.move do
+              if state.pre_step_white.cnt == 2 do
+                # 重复下子超过3次
+                new_state = %{state | winner: state.black}
+              else
+                new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
+              end
             else
-              new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
+              new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: 0}}
             end
           else
-            new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: 1}}
-          end
-        else
-          if [[x0, y0], [x1, y1]] == state.pre_step_black.move do
-            if state.pre_step_black.cnt == 2 do
-              # 重复下子超过3次
-              new_state = %{state | winner: state.white}
+            if [[x0, y0], [x1, y1]] == state.pre_step_black.move do
+              if state.pre_step_black.cnt == 2 do
+                # 重复下子超过3次
+                new_state = %{state | winner: state.white}
+              else
+                new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
+              end
             else
-              new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
+              new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: 0}}
             end
-          else
-            new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: 1}}
           end
-        end
       _res ->
         if state.white do
           %{state | pre_step_white: %{move: nil, cnt: 0}}
@@ -559,6 +569,10 @@ defmodule Battle.Service.BattleService.RoomServer do
       pre_step_white: new_state.pre_step_white,
       pre_step_black: new_state.pre_step_black,
     }
+    IO.inspect("========")
+    IO.inspect(new_state)
+    IO.inspect(new_detail)
+    IO.inspect("+++++")
     case new_state.winner do
       nil ->
         {:continue,new_detail}

@@ -10,23 +10,24 @@ defmodule BattleTest.RoomServerTest do
 
   test "battle_early_hand" do
     #    Logger.configure(level: :none)
+    {:ok, pool} =Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
     {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "11", "groupName", "groupKey", "appName")
+      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", "11", "groupName", "groupKey", "appName")
 
     # "66cd6eadeee7d7224be32a91"
-    {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
+    {:ok, moment_token_123} = Battle.Utils.Token.generate_token("123", contest_id)
     # "66cd6eadeee7d7224be32a90"
-    {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
+    {:ok, moment_token_456} = Battle.Utils.Token.generate_token("456", contest_id)
     #    RoomSupervisor.query(123, contest_id)
     #    RoomSupervisor.query(456, contest_id)
 
-    RoomSupervisor.movement([[2, 0], [3, 0]], 123, contest_id)
-    RoomSupervisor.movement([[5, 4], [4, 4]], 456, contest_id)
-    RoomSupervisor.movement([[3, 0], [3, 1]], 123, contest_id)
-    RoomSupervisor.movement([[4, 4], [4, 3]], 456, contest_id)
-    RoomSupervisor.movement([[3, 1], [3, 0]], 123, contest_id)
-    RoomSupervisor.movement([[4, 3], [4, 4]], 456, contest_id)
-    RoomSupervisor.movement([[3, 0], [3, 1]], 123, contest_id)
+    RoomSupervisor.movement([[2, 0], [3, 0]], "123", contest_id)
+    RoomSupervisor.movement([[5, 4], [4, 4]], "456", contest_id)
+    RoomSupervisor.movement([[3, 0], [3, 1]], "123", contest_id)
+    RoomSupervisor.movement([[4, 4], [4, 3]], "456", contest_id)
+    RoomSupervisor.movement([[3, 1], [3, 0]], "123", contest_id)
+    RoomSupervisor.movement([[4, 3], [4, 4]], "456", contest_id)
+    RoomSupervisor.movement([[3, 0], [3, 1]], "123", contest_id)
   end
 
   test "calculate capture" do

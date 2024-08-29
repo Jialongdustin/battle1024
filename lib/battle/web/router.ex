@@ -45,7 +45,6 @@ defmodule Battle.Web.Router do
   ## web
   # 登录验证, 重定向授权网址
   get "/login/one_code" do
-#    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&product_code=P11387&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
     uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
     IO.inspect(uri)
     IO.inspect(@client_id)
@@ -304,7 +303,7 @@ defmodule Battle.Web.Router do
             game_id: battle_info.game_id,
             steps: battle_info.steps
             }
-            %{code: 200, battle_info: message, success: true}
+            %{code: 200, data: message, success: true}
           {:error, _} ->
             %{code: 2007, error: "game not exists", success: false}
         end
@@ -520,13 +519,13 @@ end
   json_rpc "/play/query", "schema/play/query" do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisor.query(self(), user_id, game_id) do
       {:ok, detail} ->
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+
         body = Ejoy.Jiffy.encode!(detail)
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -562,7 +561,7 @@ end
     token = conn.params["token"]
     move = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
     # 处理棋步
     case RoomSupervisor.movement(move, user_id, game_id) do

@@ -3,7 +3,7 @@ defmodule Battle.Service.BattleService.Tournament do
   alias Battle.Service.WebService.Kun
 
   def start_tournament() do
-    {:ok, pool} = ThreadPool.start_link(10)  # 启动一个大小为10的线程池
+    {:ok, pool} =Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
 
     players =
       Kun.start_build()
