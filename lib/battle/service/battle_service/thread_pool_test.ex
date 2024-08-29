@@ -5,7 +5,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
 
-  @service_groups ["battle-test1"] # , "battle-test2", "battle-test3", "battle-test4", "battle-test5"]
+  @service_groups ["battle-test1", "battle-test2", "battle-test3", "battle-test4", "battle-test5"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
   # alias Battle.Service.BattleService.ThreadPoolTest
