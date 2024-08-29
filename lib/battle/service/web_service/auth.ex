@@ -30,8 +30,9 @@ defmodule Battle.Service.WebService.Auth do
     params = %{
       access_token: access_token
     }
+    Logger.info(params)
     {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-
+    Logger.info(resp)
     case resp do
       %{
         "account" => account,
@@ -52,7 +53,7 @@ defmodule Battle.Service.WebService.Auth do
           code: code,
           message: Map.get(resp, "message")
         }
-        {:error,one_resp}
+        {:error, one_resp}
     end
 
   end

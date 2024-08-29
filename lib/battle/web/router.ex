@@ -34,7 +34,7 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "http://battle1024.ejoy.com/login/redirect"
+  @redirect_uri "https://battle1024.ejoy.com/login/redirect"
 
   get "/" do
     conn
@@ -45,7 +45,7 @@ defmodule Battle.Web.Router do
   ## web
   # 登录验证, 重定向授权网址
   get "/login/one_code" do
-#    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&product_code=P11387&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+    # uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&product_code=P11387&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
     uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
     IO.inspect(uri)
     IO.inspect(@client_id)
