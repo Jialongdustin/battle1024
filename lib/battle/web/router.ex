@@ -640,9 +640,6 @@ end
     # 处理棋步
     case RoomSupervisor.movement(move, user_id, game_id) do
       {:ok, response} ->
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-        RoomServer.record_time_step(pid, user_id)
-        RoomServer.start_countdown(pid)
         body = Ejoy.Jiffy.encode!(response)
         conn
         |> Conn.put_resp_content_type("application/json")
