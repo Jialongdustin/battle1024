@@ -17,7 +17,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Mongo.BattleResultTest
   alias Battle.Mongo.UserAi
 
-  @timeout 3000
+  @timeout 10000
   @timeout_test 120_000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -235,6 +235,7 @@ defmodule Battle.Service.BattleService.RoomServer do
             _ -> nil
           end
 
+        IO.inspect("count winner is: ")
         IO.inspect(winner)
         {can_move, flag} = Battle.BattleHandler.move_list(new_board, !white)
 
@@ -339,6 +340,8 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
               end
           end
+        IO.inspect("new_state winner is: ")
+        IO.inspect(new_state.winner)
         case new_state.winner do
           nil ->
             winner = count_total_piece(new_state, capture)
@@ -353,8 +356,14 @@ defmodule Battle.Service.BattleService.RoomServer do
                 nil -> # 还没有赢家，继续
                   {new_state, detail}
               end
+            IO.inspect("return value: ")
+            IO.inspect(moves)
+            IO.inspect(new_state.winner)
               {:reply, {:ok, detail}, new_state}
           _ ->
+            IO.inspect("return value: ")
+            IO.inspect(moves)
+            IO.inspect(new_state.winner)
             {:reply, {:ok, detail}, new_state}
         end
 
