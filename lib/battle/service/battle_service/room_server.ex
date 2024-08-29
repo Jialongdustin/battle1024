@@ -152,16 +152,21 @@ defmodule Battle.Service.BattleService.RoomServer do
     case test do
       true ->
         if state.time_ref_test do
-          Process.cancel_timer(state.time_ref_test)
+          # Process.cancel_timer(state.time_ref_test)
+          {:reply, :ok, %{state | time_ref_test: nil}}
+        else
+          new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
+          {:reply, :ok, %{state | time_ref_test: new_ref_test}}
         end
-        new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
-        {:reply, :ok, %{state | time_ref_test: new_ref_test}}
+
       false ->
         if state.time_ref do
-          Process.cancel_timer(state.time_ref)
+          # Process.cancel_timer(state.time_ref)
+          {:reply, :ok, %{state | time_ref: nil}}
+        else
+          new_ref = Process.send_after(self(), :execute_task, timeout)
+          {:reply, :ok, %{state | time_ref: new_ref}}
         end
-        new_ref = Process.send_after(self(), :execute_task, timeout)
-        {:reply, :ok, %{state | time_ref: new_ref}}
     end
   end
 
@@ -239,8 +244,8 @@ defmodule Battle.Service.BattleService.RoomServer do
           case state.early_hand do
             # white
             true ->
-              case check_repeat_move(state,moves,capture) do
-                {:continue,new_detail} ->
+              case check_repeat_move(state, moves, capture) do
+                {:continue, new_detail} ->
                   {
                     %{
                       state |
@@ -262,7 +267,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       board: new_board
                     }
                   }
-                {:game_over,winner} ->
+                {:game_over, winner} ->
                     {
                       %{
                         state |
@@ -309,7 +314,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       board: new_board
                     }
                   }
-                {:game_over,winner} ->
+                {:game_over, winner} ->
                   {
                     %{
                       state |
@@ -331,21 +336,24 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
               end
           end
-        winner = count_total_piece(new_state, capture)
+        case new_state.winner do
+          nil ->
+            winner = count_total_piece(new_state, capture)
+            {new_state, detail} =
+              case winner do
+                0 -> # 平局
+                  {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
 
-        {new_state, detail} =
-          case winner do
-            0 -> # 平局
-              {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
+                winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
+                  {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
 
-            winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
-              {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
-
-            nil -> # 还没有赢家，继续
-              {new_state, detail}
-          end
-          IO.inspect(new_state)
-        {:reply, {:ok, detail}, new_state}
+                nil -> # 还没有赢家，继续
+                  {new_state, detail}
+              end
+              {:reply, {:ok, detail}, new_state}
+          _ ->
+            {:reply, {:ok, detail}, new_state}
+        end
 
       false ->
         available_step =
@@ -402,7 +410,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:via, Registry, {Battle.RoomRegistry, game_id}}
   end
 
-  def count_total_piece(new_state,get_captures) do
+  def count_total_piece(new_state, get_captures) do
     # 获取各类棋子的数量
     count_diff_pieces = {
       count_piece([1], new_state.board),
@@ -414,20 +422,20 @@ defmodule Battle.Service.BattleService.RoomServer do
     # 根据棋子数量判断胜者
     winner = case {count_diff_pieces,List.first(get_captures)} do
       # 一方有一个普通棋子和一个王棋，另一方有一个普通棋子
-      {{_, 1, 1, 0},%{captured: nil, moves: _}} ->
+      {{_, 1, 1, 0}, %{captured: nil, moves: _}} ->
         new_state.white  # 白方胜
-      {{1, 0, _, 1},%{captured: nil, moves: _}} ->
+      {{1, 0, _, 1}, %{captured: nil, moves: _}} ->
         new_state.black  # 黑方胜
       # 双方各有一个普通棋子
-      {{1, 0, 1, 0},%{captured: nil, moves: _}} ->
+      {{1, 0, 1, 0}, %{captured: nil, moves: _}} ->
         0  # 平局
       # 双方各有一个王棋
-      {{0, 1, 0, 1},%{captured: nil, moves: _}} ->
+      {{0, 1, 0, 1}, %{captured: nil, moves: _}} ->
         0  # 平局
       # 如果有其他情况，暂时设置为没有赢家
-      {{0, 0, _, _},_} ->
+      {{0, 0, _, _}, _} ->
         new_state.black
-      {{_, _, 0, 0},_} ->
+      {{_, _, 0, 0}, _} ->
         new_state.white
       _ ->
         nil
@@ -561,9 +569,9 @@ defmodule Battle.Service.BattleService.RoomServer do
     }
     case new_state.winner do
       nil ->
-        {:continue,new_detail}
+        {:continue, new_detail}
       res ->
-        {:game_over,new_state.winner}
+        {:game_over, new_state.winner}
     end
   end
 end
