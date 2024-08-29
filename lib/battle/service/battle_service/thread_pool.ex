@@ -176,7 +176,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
 
   defp update_services(groupName, groupKey, appName, user_id1, user_id2, game_id) do
     update_service(appName, user_id1, game_id, true) ++
-    update_service(appName, user_id2, game_id, false)
+    update_service(Map.get(@appNames, appName), user_id2, game_id, false)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
@@ -193,7 +193,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
           "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
           "params" => %{
             "token" => token,
-            "white" => white
+            "white" => to_string(white)
           },
           "resources" => %{
             "kun-run" => %{

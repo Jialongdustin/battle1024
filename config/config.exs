@@ -35,15 +35,15 @@ config :union_config_app,
         },
         require_admin_gate_version: "202404181500",
         kun_key: %{
-          # id: "be92dae571ad41a9",
-          # secret: "9f4c599f855c493fae05776801b22aa5"
-          # 测试环境
-          id: "77c49be6e5494740",
-          secret: "c63871c2231c4d57b52df04f882df192"
+          id: "be92dae571ad41a9",
+          secret: "9f4c599f855c493fae05776801b22aa5"
         }
       }
     }
   ]
+  # 测试环境
+          # id: "77c49be6e5494740",
+          # secret: "c63871c2231c4d57b52df04f882df192"
 
 config :ejoy_utils, db_pool: 10
 config :ejoy_utils, send_vortex_heartbeat: false

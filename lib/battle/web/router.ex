@@ -34,7 +34,7 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "http://localhost:4000/login/redirect"
+  @redirect_uri "https://battle1024.ejoy.com/login/redirect"
 
   get "/" do
     conn
@@ -45,9 +45,8 @@ defmodule Battle.Web.Router do
   ## web
   # 登录验证, 重定向授权网址
   get "/login/one_code" do
-    uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
-    IO.inspect(uri)
-    IO.inspect(@client_id)
+    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+    # uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
     conn
     |> Conn.put_resp_header("location",  uri)
     |> Conn.send_resp(302, "")
@@ -55,8 +54,7 @@ defmodule Battle.Web.Router do
   end
 
   get "/login/redirect" do
-    IO.inspect(conn)
-    access_token = conn.params["access_token"]
+    access_token = conn.params["code"]
     front_end_url = "https://ieu-battle1024.alibaba.net/login"
     case Auth.verify_code(access_token) do
       {:ok, moment_token} ->
@@ -132,12 +130,12 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-        {:error, _} ->
-          uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-          conn
-          |> Conn.put_resp_header("location",  uri)
-          |> Conn.send_resp(302, "")
-          |> Conn.halt()
+      {:error, _} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
 
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
@@ -348,6 +346,7 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+
       _ ->
         Logger.error("Unexpected result from verify_code")
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
@@ -358,7 +357,7 @@ defmodule Battle.Web.Router do
     end
   end
 
-  # 创建AI
+  # 提交git
   json_rpc "/user/submit_git", "schema/user/submit_git" do
     git_url = conn.params["git_url"]
     tag = conn.params["tag"]
@@ -381,6 +380,86 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+  # 检查git的测试结果
+  get "/user/check_update" do
+    moment_token = conn.params["moment_token"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        case BattleResultTest.get_result_by_user_id(user_id) do
+          {:ok, info} ->
+            message = case info.white.winner == nil do
+              true ->
+                %{"code" => 200, "data" => "failure", "success" => false}
+              false ->
+                %{"code" => 200, "data" => "success", "success" => true}
+            end
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(message))
+            |> Conn.halt()
+          {:processing, _} ->
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => "processing", "success" => true}))
+            |> Conn.halt()
+
+          {:error, _} ->
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(403, Ejoy.Jiffy.encode!("do not submit git before"))
+            |> Conn.halt()
+        end
+
+      {:error, _} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+  # 查看用户所有测试比赛接口
+  get "/test/all" do
+    moment_token = conn.params["moment_token"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        message = case BattleResultTest.get_all_results_by_user_id(user_id) do
+          {:error, _} ->
+            %{"code" => 200, "data" => [], "success" => true}
+          {:ok, info} ->
+            %{"code" => 200, "data" => info, "success" => true}
+        end
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(message))
+        |> Conn.halt()
+
+      {:error, _} ->
+        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
+        conn
+        |> Conn.put_resp_header("location",  uri)
+        |> Conn.send_resp(302, "")
+        |> Conn.halt()
+
       _ ->
         Logger.error("Unexpected result from verify_code")
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
@@ -568,6 +647,7 @@ end
       {:ok, response} ->
         [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
         RoomServer.record_time_step(pid, user_id)
+        RoomServer.start_cpuntdown(pid)
         body = Ejoy.Jiffy.encode!(response)
         conn
         |> Conn.put_resp_content_type("application/json")

@@ -2,6 +2,7 @@ defmodule Battle.Mongo.RankList do
   use Ejoy.Db
 
   alias Battle.Mongo.UserAi
+  alias Battle.Mongo.User
 
   @db "battle"
   @collection "rank_list"
@@ -51,26 +52,26 @@ defmodule Battle.Mongo.RankList do
                 count: cnt
               }
             info ->
-              IO.inspect(info)
-              {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
-              IO.inspect(user_info)
-              {_,cnt} = UserAi.count_user(user_id)
+              {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
+              {_, cnt} = UserAi.count_user(user_id)
 
               query = %{
                 rate: %{
                   "$gte": info.rate
                 }
               }
-              {:ok,rank} = __MODULE__.pcount(query)
+              {:ok, rank} = __MODULE__.pcount(query)
+
+              # {:ok, user_name} = User.get_user_name(user_id)
 
               %{
                 user_id: user_id,
+                # user_name: user_name,
                 rate: info.rate,
                 ai_name: user_info.ai_name,
                 last_submit_date: user_info.create_time,
                 count: cnt,
                 rank: rank
-
               }
           end
 

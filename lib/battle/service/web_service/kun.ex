@@ -1,6 +1,6 @@
 defmodule Battle.Service.WebService.Kun do
-  # @kun_api_url "https://kunapi.ejoy.com"
-  @kun_api_url "https://kundevapi.ejoy.com"
+  @kun_api_url "https://kunapi.ejoy.com"
+  # @kun_api_url "https://kundevapi.ejoy.com"  kun测试环境
   @query_namespace "plat1024-platformbattle"
   @userId "453574"
   @status_success 4
@@ -46,7 +46,7 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.change_config(%{user_id: "444", git_url: "git@gitlab.alibaba-inc.com:battle-players-test/player-c_cpp.git", tag: "master"})
+  # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "dustin"})
   def change_config(info) do
     user_id = info.user_id
     git_url = info.git_url

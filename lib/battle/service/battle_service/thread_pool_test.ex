@@ -10,7 +10,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
 
   # alias Battle.Service.BattleService.ThreadPoolTest
   # game_id = UUID.uuid4()
-  # ThreadPoolTest.add_task({"git@gitlab.alibaba-inc.com:Test_elixir/battle1024_jdk8.git", "dustin", game_id})
+  # ThreadPoolTest.add_task({"git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", "dustin", "2509c75f-f636-4c95-8be7-15036fa16950"})
   # ThreadPoolTest.terminate_service("plat1024-test1", "battle-player-python")
   # send(Battle.Service.BattleService.ThreadPoolTest, {game_id, "battle-test1", "plat1024-test1", "battle-player-python"})
   def start_link(size) do
@@ -147,12 +147,12 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   defp update_services(groupName, groupKey, appName, game_id) do
-    update_service(appName, 10, game_id) ++
-    update_service(appName, 24, game_id)
+    update_service(appName, 10, game_id, true) ++
+    update_service(Map.get(@appNames, appName), 24, game_id, false)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
-  defp update_service(appName, user_id, game_id) do
+  defp update_service(appName, user_id, game_id, white) do
     {:ok, token} = Token.generate_token(user_id, game_id)
     [%{
           "name" => appName,
@@ -162,9 +162,10 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
           "mem" => 96,
           "capacity" => 20,
           "svcCapacity" => 0,
-          "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
+          "nodepoolId" => "np0f3c8a13074143ff90da1f198a756367",
           "params" => %{
-            "token" => token
+            "token" => token,
+            "white" => to_string(white),
           },
           "resources" => %{
             "kun-run" => %{

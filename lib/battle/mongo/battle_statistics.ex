@@ -83,7 +83,7 @@ defmodule Battle.Mongo.BattleStatistics do
   end
 
   def delete_message() do
-    __MODULE__.pdelete(%{},false)
+    __MODULE__.pdelete(%{}, false)
   end
 
 end

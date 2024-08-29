@@ -14,9 +14,9 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     DynamicSupervisor.init(opts)
   end
 
+  # game_id = "d9279888-1962-494c-aed9-1058dfd2805a"
   def init_game() do
     game_id = UUID.uuid4()
-    IO.inspect game_id
     {:ok, token_black} = Token.generate_token(24, game_id)
     {:ok, token_white} = Token.generate_token(10, game_id)
     child_spec_server = %{
@@ -28,10 +28,11 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
     RoomServer.start_countdown(pid, true)
-    %{
+    {:ok, %{
       token_white: token_white,
-      token_black: token_black
-    }
+      token_black: token_black,
+      game_id: game_id
+    }}
   end
 
   def query(caller, user_id, game_id) do

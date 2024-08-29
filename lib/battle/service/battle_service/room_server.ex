@@ -17,7 +17,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Mongo.BattleResultTest
   alias Battle.Mongo.UserAi
 
-  @timeout 30000
+  @timeout 3000
   @timeout_test 120_000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -135,7 +135,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_call(:terminate_game, _from, state) do
     if state.white == 10 && state.black == 24 do
-      BattleResultTest.update_battle_result(state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
+      BattleResultTest.update_battle_result(state.game_id, state.early_hand, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     else
       # 每一局的信息
@@ -152,16 +152,21 @@ defmodule Battle.Service.BattleService.RoomServer do
     case test do
       true ->
         if state.time_ref_test do
-          Process.cancel_timer(state.time_ref_test)
+          # Process.cancel_timer(state.time_ref_test)
+          {:reply, :ok, %{state | time_ref_test: nil}}
+        else
+          new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
+          {:reply, :ok, %{state | time_ref_test: new_ref_test}}
         end
-        new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
-        {:reply, :ok, %{state | time_ref_test: new_ref_test}}
+
       false ->
         if state.time_ref do
-          Process.cancel_timer(state.time_ref)
+          # Process.cancel_timer(state.time_ref)
+          {:reply, :ok, %{state | time_ref: nil}}
+        else
+          new_ref = Process.send_after(self(), :execute_task, timeout)
+          {:reply, :ok, %{state | time_ref: new_ref}}
         end
-        new_ref = Process.send_after(self(), :execute_task, timeout)
-        {:reply, :ok, %{state | time_ref: new_ref}}
     end
   end
 
@@ -242,8 +247,8 @@ defmodule Battle.Service.BattleService.RoomServer do
           case state.early_hand do
             # white
             true ->
-              case check_repeat_move(state,moves,capture) do
-                {:continue,new_detail} ->
+              case check_repeat_move(state, moves, capture) do
+                {:continue, new_detail} ->
                   {
                     %{
                       state |
@@ -265,7 +270,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       board: new_board
                     }
                   }
-                {:game_over,winner} ->
+                {:game_over, winner} ->
                     {
                       %{
                         state |
@@ -312,7 +317,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       board: new_board
                     }
                   }
-                {:game_over,winner} ->
+                {:game_over, winner} ->
                   {
                     %{
                       state |
@@ -334,7 +339,6 @@ defmodule Battle.Service.BattleService.RoomServer do
                   }
               end
           end
-
         case new_state.winner do
           nil ->
             winner = count_total_piece(new_state, capture)
@@ -349,10 +353,8 @@ defmodule Battle.Service.BattleService.RoomServer do
                 nil -> # 还没有赢家，继续
                   {new_state, detail}
               end
-#              IO.inspect(new_state)
-            {:reply, {:ok, detail}, new_state}
+              {:reply, {:ok, detail}, new_state}
           _ ->
-#            IO.inspect(new_state)
             {:reply, {:ok, detail}, new_state}
         end
 
@@ -404,14 +406,14 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_info(:execute_task_test, state) do
     IO.puts "overtime operation of testing"
-    {:stop, :normal, :ok, state}
+    {:stop, :normal, state}
   end
 
   defp via_tuple(game_id) do
     {:via, Registry, {Battle.RoomRegistry, game_id}}
   end
 
-  def count_total_piece(new_state,get_captures) do
+  def count_total_piece(new_state, get_captures) do
     # 获取各类棋子的数量
     count_diff_pieces = {
       count_piece([1], new_state.board),
@@ -423,20 +425,20 @@ defmodule Battle.Service.BattleService.RoomServer do
     # 根据棋子数量判断胜者
     winner = case {count_diff_pieces,List.first(get_captures)} do
       # 一方有一个普通棋子和一个王棋，另一方有一个普通棋子
-      {{_, 1, 1, 0},%{captured: nil, moves: _}} ->
+      {{_, 1, 1, 0}, %{captured: nil, moves: _}} ->
         new_state.white  # 白方胜
-      {{1, 0, _, 1},%{captured: nil, moves: _}} ->
+      {{1, 0, _, 1}, %{captured: nil, moves: _}} ->
         new_state.black  # 黑方胜
       # 双方各有一个普通棋子
-      {{1, 0, 1, 0},%{captured: nil, moves: _}} ->
+      {{1, 0, 1, 0}, %{captured: nil, moves: _}} ->
         0  # 平局
       # 双方各有一个王棋
-      {{0, 1, 0, 1},%{captured: nil, moves: _}} ->
+      {{0, 1, 0, 1}, %{captured: nil, moves: _}} ->
         0  # 平局
       # 如果有其他情况，暂时设置为没有赢家
-      {{0, 0, _, _},_} ->
+      {{0, 0, _, _}, _} ->
         new_state.black
-      {{_, _, 0, 0},_} ->
+      {{_, _, 0, 0}, _} ->
         new_state.white
       _ ->
         nil
@@ -526,7 +528,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def check_repeat_move(state, moves, capture) do
-    IO.inspect(state)
     # 提取初始位置和最终位置
     [[x0, y0] | _] = moves
     [x1, y1] = List.last(moves)
@@ -569,15 +570,11 @@ defmodule Battle.Service.BattleService.RoomServer do
       pre_step_white: new_state.pre_step_white,
       pre_step_black: new_state.pre_step_black,
     }
-    IO.inspect("========")
-    IO.inspect(new_state)
-    IO.inspect(new_detail)
-    IO.inspect("+++++")
     case new_state.winner do
       nil ->
-        {:continue,new_detail}
+        {:continue, new_detail}
       res ->
-        {:game_over,new_state.winner}
+        {:game_over, new_state.winner}
     end
   end
 end
