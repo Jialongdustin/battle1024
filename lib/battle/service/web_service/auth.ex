@@ -35,13 +35,13 @@ defmodule Battle.Service.WebService.Auth do
     case resp do
       %{
         "account" => account,
-        "name" =>name
+        "name" => name
       } ->
         res =
           case User.query_user(account) do
             {:error, _} ->
               user_id = UUID.uuid1()
-              User.save_user(user_id, account)
+              User.save_user(user_id, account, name)
               user_id
             {:ok, res} ->
               res.user_id
