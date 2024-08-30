@@ -937,10 +937,11 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
-      request_body = %{"token" => "abcdefghijklmn"}
+      request_body = %{"moment_token" => "abcdefghijklmn"}
       conn =
         :post
-        |> conn("/user/create_test")
+        |> conn("/user/create_test", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200

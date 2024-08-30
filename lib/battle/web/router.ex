@@ -124,7 +124,7 @@ defmodule Battle.Web.Router do
           {:ok, info} ->
             Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
           {:error, reason} ->
-            Ejoy.Jiffy.encode!(%{code: 2004, data: reason, success: false})
+            Ejoy.Jiffy.encode!(%{code: 200, data: reason, success: false})
         end
         conn
         |> Conn.put_resp_content_type("application/json")
