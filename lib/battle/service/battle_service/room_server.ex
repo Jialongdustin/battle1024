@@ -151,7 +151,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
       false ->
         if state.time_ref do
-          # Process.cancel_timer(state.time_ref)
+          Process.cancel_timer(state.time_ref)
           {:reply, :ok, %{state | time_ref: nil}}
         else
           new_ref = Process.send_after(self(), :execute_task, timeout)
