@@ -9,11 +9,13 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
   # alias Battle.Service.BattleService.ThreadPoolTest
+  # alias Battle.Service.BattleService.RoomServer
   # game_id = UUID.uuid4()
-  # ThreadPoolTest.add_task({"git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", "dustin", "2509c75f-f636-4c95-8be7-15036fa16950"})
+  # ThreadPoolTest.add_task({"git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", "main", game_id})
   # ThreadPoolTest.terminate_service("plat1024-test1", "battle-player-python")
   # send(Battle.Service.BattleService.ThreadPoolTest, {game_id, "battle-test1", "plat1024-test1", "battle-player-python"})
   # [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+  # RoomServer.get_state(pid)
   def start_link(size) do
     GenServer.start_link(__MODULE__, size, name: __MODULE__)
   end
@@ -125,6 +127,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
       Regex.run(~r/test\d+/, groupName)
       |> List.first()
       |> (fn name -> "plat1024-#{name}" end).()
+    RoomSupervisor.init_game(10, 24, game_id, groupName, groupKey, appName)
     update_services(groupName, groupKey, appName, game_id)
     [
       %{
@@ -138,7 +141,6 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         "appConfBuildName": package_name
       },
     ] |> Kun.create_deploy_task()
-    RoomSupervisor.init_game(10, 24, game_id, groupName, groupKey, appName)
   end
 
   defp terminate_service(groupKey, appName) do

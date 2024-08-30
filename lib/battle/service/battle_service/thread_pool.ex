@@ -131,9 +131,9 @@ defmodule Battle.Service.BattleService.ThreadPool do
       Regex.run(~r/players\d+/, groupName)
       |> List.first()
       |> (fn name -> "plat1024-#{name}" end).()
+    RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
     update_services(groupName, groupKey, appName, user_id1, user_id2, game_id)
     create_deploys(groupKey, appName, user_id1, user_id2, players)
-    RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
   end
 
   defp terminate_service(groupKey, appName) do

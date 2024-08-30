@@ -59,6 +59,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def init(state) do
+    IO.puts("roomserver init now: #{state.game_id}")
     {:ok, state}
   end
 
