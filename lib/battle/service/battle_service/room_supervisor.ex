@@ -43,8 +43,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
             {:error, detail}
         end
       [] ->
-        Battle.Mongo.RankList.get_rank_list(0,4)
-        Battle.Mongo.User.query_user("e86fa7b2-652e-11ef-a510-b2a3d4b2d740")
         {:room_error, "game is over, do not query again"}
     end
   end
@@ -54,8 +52,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
-            RoomServer.record_time_step(pid, user_id)
             RoomServer.start_countdown(pid)
+            RoomServer.record_time_step(pid, user_id)
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end

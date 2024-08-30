@@ -37,7 +37,7 @@ defmodule Battle.Mongo.User do
   def query_user(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       [] -> {:error, "user_id error"}
-      res -> {:ok,res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()}
+      res -> {:ok, res |> Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 

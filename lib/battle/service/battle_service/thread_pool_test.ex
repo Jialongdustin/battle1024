@@ -13,6 +13,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   # ThreadPoolTest.add_task({"git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", "dustin", "2509c75f-f636-4c95-8be7-15036fa16950"})
   # ThreadPoolTest.terminate_service("plat1024-test1", "battle-player-python")
   # send(Battle.Service.BattleService.ThreadPoolTest, {game_id, "battle-test1", "plat1024-test1", "battle-player-python"})
+  # [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
   def start_link(size) do
     GenServer.start_link(__MODULE__, size, name: __MODULE__)
   end

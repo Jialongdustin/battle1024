@@ -55,7 +55,7 @@ defmodule Battle.Web.Router do
 
   get "/login/redirect" do
     access_token = conn.params["code"]
-    front_end_url = "https://ieu-battle1024.alibaba.net/login"
+    front_end_url = "https://ieu-battle1024.alibaba.net/login-success"
     case Auth.verify_code(access_token) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
@@ -110,13 +110,11 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(500, body)
         |> Conn.halt()
     end
-
   end
 
   # 获取某个用户的排名信息
   get "/user/ranking_list" do
     moment_token = conn.params["moment_token"]
-    IO.inspect(moment_token)
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
         body = case RankList.get_rank_by_user_id(user_id) do
@@ -256,7 +254,7 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     case Token.verify_token(token) do
       {:ok, user_id} ->
-        case User.query_user(String.to_integer(user_id)) do
+        case User.query_user(user_id) do
           {:ok, message} ->
             body = Ejoy.Jiffy.encode!(%{code: 200, data: message.avatar, success: true})
             conn
@@ -513,7 +511,7 @@ end
         {:ok, info} = RoomSupervisorTest.init_game()
         conn
         |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(info))
+        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => info, "success" => true}))
         |> Conn.halt()
 
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
@@ -537,7 +535,7 @@ end
   json_rpc "/test/query", "schema/test/query" do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
@@ -574,7 +572,7 @@ end
     token = conn.params["token"]
     moves = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
-    user_id = String.to_integer(user_info.user_id)
+    user_id = user_info.user_id
     game_id = user_info.ext.account_id
 
     case RoomSupervisorTest.movement(moves, user_id, game_id) do

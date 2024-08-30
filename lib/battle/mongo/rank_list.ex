@@ -39,18 +39,18 @@ defmodule Battle.Mongo.RankList do
   def get_rank_by_user_id(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       [] ->
-        {:ok,user_info} = User.query_user(user_id)
+        {:ok, user_info} = User.query_user(user_id)
         case UserAi.get_newest_ai_by_userId(user_id) do
-          {:error,_} ->
-            {:error,detail = %{
+          {:error, _} ->
+            {:error, detail = %{
               submit_count: 0,
               user_id: user_id,
               last_submit_date: nil,
               rank: 0,
               ai_name: nil
             }}
-            {:error,res} ->
-             {:ok, detail = %{
+          {:ok, res} ->
+             {:error, detail = %{
                 submit_count: 0,
                 user_id: user_id,
                 last_submit_date: nil,
@@ -60,44 +60,25 @@ defmodule Battle.Mongo.RankList do
         end
 
       res ->
+        {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
+        {:ok, cnt} = UserAi.count_user(user_id)
 
-        detail =
-          case res|>Enum.map(fn message -> message|> __MODULE__.to_raw() end)|>List.first() do
-            nil ->
-              {:ok, user_info} = Battle.Mongo.UserAi.get_newest_ai_by_userId(user_id)
+        query = %{
+          rate: %{
+            "$gte": List.first(res).rate
+          }
+        }
+        {:ok, rank} = __MODULE__.pcount(query)
 
-              {_,cnt} = UserAi.count_user(user_id)
-              %{
-                user_id: user_id,
-                rate: 0,
-                last_submit_date: user_info.create_time.ms,
-                count: cnt
-              }
-            info ->
-              {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
-              {_, cnt} = UserAi.count_user(user_id)
-
-              query = %{
-                rate: %{
-                  "$gte": info.rate
-                }
-              }
-              {:ok, rank} = __MODULE__.pcount(query)
-
-              # {:ok, user_name} = User.get_user_name(user_id)
-
-              %{
-                user_id: user_id,
-                # user_name: user_name,
-                rate: info.rate,
-                ai_name: user_info.ai_name,
-                last_submit_date: user_info.create_time.ms,
-                count: cnt,
-                rank: rank
-              }
-          end
-
-        {:ok, detail}
+        {:ok, %{
+          user_id: user_id,
+          rate: List.first(res).rate,
+          ai_name: user_info.ai_name,
+          last_submit_date: user_info.create_time.ms,
+          count: cnt,
+          rank: rank
+        }
+      }
     end
   end
 
