@@ -237,12 +237,16 @@ defmodule Battle.Service.BattleService.RoomServer do
 
         IO.inspect("count winner is: ")
         IO.inspect(winner)
+        IO.inspect("current state is:")
+        IO.inspect(state)
         {can_move, flag} = Battle.BattleHandler.move_list(new_board, !white)
 
         move_detail = %{
           user_id: user_id,
           movement: capture
         }
+
+
 
         {new_state, detail} =
           case state.early_hand do

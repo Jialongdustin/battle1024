@@ -13,6 +13,7 @@ test "battle_early_hand" do
   {:ok, moment_token_456} = Battle.Utils.Token.generate_token("9927b3de-6385-11ef-aca7-b2a3d4b2d740", contest_id)
   RoomSupervisor.query(123, contest_id)
   RoomSupervisor.query(456, contest_id)
+  is_binary("9927b3de-6385-11ef-aca7-b2a3d4b2d740")
 
   RoomSupervisor.movement([[1, 0], [2, 0]], 123, contest_id)
 

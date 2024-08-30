@@ -51,7 +51,7 @@ defmodule BattleTest.BattleStatisticsTest do
     BattleStatistics.delete_message()
     BattleStatistics.save_init()
 
-    {:ok,moment_token} = Battle.Utils.Token.generate_token("1")
+    {:ok,moment_token} = Battle.Utils.Token.generate_token("656599a4-65b4-11ef-bdb1-b2a3d4b2d740")
     {:ok,pre_res} = BattleStatistics.query_statistics_info()
 
     steps = 40

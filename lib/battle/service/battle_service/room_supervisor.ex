@@ -43,6 +43,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
             {:error, detail}
         end
       [] ->
+        Battle.Mongo.RankList.get_rank_list(0,4)
+        Battle.Mongo.User.query_user("e86fa7b2-652e-11ef-a510-b2a3d4b2d740")
         {:room_error, "game is over, do not query again"}
     end
   end
@@ -53,7 +55,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
             RoomServer.record_time_step(pid, user_id)
-            RoomServer.start_cpuntdown(pid)
+            RoomServer.start_countdown(pid)
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end
@@ -61,14 +63,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
               [] -> # 对方没有查询
                 {:ok, success_detail}
               [{_, dest}] -> # 对方查询棋盘状态
-                new_detail = %{
-                  code: success_detail.code,
-                  move_detail: success_detail.move_detail,
-                  board: success_detail.board,
-                  winner: success_detail.winner
-                }
                 :ets.delete(:pid_info, game_id)
-                send(dest, {:query, new_detail})
+                send(dest, {:query, success_detail})
                 {:ok, success_detail}
             end
           {:error, error_detail} ->

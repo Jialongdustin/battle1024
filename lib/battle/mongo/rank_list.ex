@@ -24,10 +24,12 @@ defmodule Battle.Mongo.RankList do
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()
+          {:ok,user_info} = User.query_user(message.user_id)
           %{
             ai_name: message.ai_name,
             user_id: message.user_id,
-            rate: message.rate
+            rate: message.rate,
+            avatar: user_info.avatar
           }
         end)
         {:ok, details}
@@ -36,7 +38,27 @@ defmodule Battle.Mongo.RankList do
 
   def get_rank_by_user_id(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-      [] -> {:error, "user_id error"}
+      [] ->
+        {:ok,user_info} = User.query_user(user_id)
+        case UserAi.get_newest_ai_by_userId(user_id) do
+          {:error,_} ->
+            {:error,detail = %{
+              submit_count: 0,
+              user_id: user_id,
+              last_submit_date: nil,
+              rank: 0,
+              ai_name: nil
+            }}
+            {:error,res} ->
+             {:ok, detail = %{
+                submit_count: 0,
+                user_id: user_id,
+                last_submit_date: nil,
+                rank: 0,
+                ai_name: res.ai_name
+              }}
+        end
+
       res ->
 
         detail =
@@ -69,7 +91,7 @@ defmodule Battle.Mongo.RankList do
                 # user_name: user_name,
                 rate: info.rate,
                 ai_name: user_info.ai_name,
-                last_submit_date: user_info.create_time,
+                last_submit_date: user_info.create_time.ms,
                 count: cnt,
                 rank: rank
               }
