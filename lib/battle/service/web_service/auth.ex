@@ -24,13 +24,19 @@ defmodule Battle.Service.WebService.Auth do
     case resp do
       %{
         "account" => account,
-        "name" =>name
+        "access_token" => access_token
       } ->
+#        url = "https://one.ejoy.com/api/oapi/user/get_user_info"
+#        params = %{
+#        access_token: access_token
+#        }
+#        {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
+
         res =
           case User.query_user(account) do
             {:error, _} ->
               user_id = UUID.uuid1()
-              User.save_user(user_id, account, name)
+              User.save_user(user_id, account)
               user_id
             {:ok, res} ->
               res.user_id
@@ -41,7 +47,7 @@ defmodule Battle.Service.WebService.Auth do
           code: code,
           message: Map.get(resp, "message")
         }
-        {:error,one_resp}
+        {:error, one_resp}
     end
   end
 end
