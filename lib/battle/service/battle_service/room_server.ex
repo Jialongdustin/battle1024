@@ -229,7 +229,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
         move_detail = %{
           user_id: user_id,
-          captured: capture
+          movement: capture
         }
 
         {new_state, detail} =
