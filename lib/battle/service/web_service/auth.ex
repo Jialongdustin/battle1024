@@ -24,23 +24,24 @@ defmodule Battle.Service.WebService.Auth do
     case resp do
       %{
         "account" => account,
-        "access_token" => access_token
+        "name" =>name
       } ->
-        url = "https://one.ejoy.com/api/oapi/user/get_user_info"
-        params = %{
-        access_token: access_token
-        }
-        {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-        user_id = UUID.uuid1()
-        {:ok, moment_token} = Battle.Utils.Token.generate_token(user_id)
-        User.save_user(user_id, account)
-        {:ok, moment_token}
+        res =
+          case User.query_user(account) do
+            {:error, _} ->
+              user_id = UUID.uuid1()
+              User.save_user(user_id, account, name)
+              user_id
+            {:ok, res} ->
+              res.user_id
+          end
+        Battle.Utils.Token.generate_token(res)
       %{"code" => code} when code in @verify_token_invalid_codes ->
         one_resp = %{
           code: code,
           message: Map.get(resp, "message")
         }
-        {:error, one_resp}
+        {:error,one_resp}
     end
   end
 end
