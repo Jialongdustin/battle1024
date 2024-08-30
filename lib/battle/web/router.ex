@@ -56,7 +56,7 @@ defmodule Battle.Web.Router do
   get "/login/redirect" do
     Logger.info(conn)
     access_token = conn.params["code"]
-    front_end_url = "https://ieu-battle1024.alibaba.net/login"
+    front_end_url = "https://ieu-battle1024.alibaba.net/login-success"
     case Auth.verify_code(access_token) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
@@ -514,7 +514,7 @@ end
         {:ok, info} = RoomSupervisorTest.init_game()
         conn
         |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(info))
+        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => info, "success" => true}))
         |> Conn.halt()
 
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}

@@ -3,14 +3,6 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   require Logger
 
-  @code_info %{
-    100 => "your turn to move",
-    101 => "move success as well as your ",
-    102 => "winner occurred!!! no need to move",
-    200 => "illegal movement, please try again",
-    300 => "not your turn, please wait for your opponent move"
-  }
-
   alias Battle.Mongo.BattleResult
   alias Battle.Mongo.BattleInfo
   alias Battle.Mongo.BattleStatistics
@@ -145,7 +137,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     end
-    {:stop, :normal, :ok, state}
+    {:stop, :normal, state}
   end
 
   def handle_call({:start_countdown, timeout, test}, _from, state) do
@@ -178,7 +170,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       }
       {:reply, {:ok, detail}, state}
     else
-      {:reply, {:error, Map.get(@code_info, 300)}, state}
+      {:reply, {:error, "not your turn, please wait for your opponent move"}, state}
     end
   end
 
