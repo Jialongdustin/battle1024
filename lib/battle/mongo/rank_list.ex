@@ -51,7 +51,7 @@ defmodule Battle.Mongo.RankList do
               ai_name: nil
             }}
           {:ok, res} ->
-            {:ok, date} = BattleReusltTest.get_newest_time_by_user_id(user_id)
+            {:ok, date} = BattleResultTest.get_newest_time_by_user_id(user_id)
             {:ok, count} = UserAi.count_user(user_id)
               {:error, detail = %{
                 submit_count: count,
