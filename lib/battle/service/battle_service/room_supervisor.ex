@@ -52,8 +52,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, moves) do
           {:ok, success_detail} ->
-            RoomServer.record_time_step(pid, user_id)
             RoomServer.start_countdown(pid)
+            RoomServer.record_time_step(pid, user_id)
             if success_detail.winner do
               RoomServer.terminate_game(pid)
             end
@@ -61,14 +61,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
               [] -> # 对方没有查询
                 {:ok, success_detail}
               [{_, dest}] -> # 对方查询棋盘状态
-                new_detail = %{
-                  code: success_detail.code,
-                  move_detail: success_detail.move_detail,
-                  board: success_detail.board,
-                  winner: success_detail.winner
-                }
                 :ets.delete(:pid_info, game_id)
-                send(dest, {:query, new_detail})
+                send(dest, {:query, success_detail})
                 {:ok, success_detail}
             end
           {:error, error_detail} ->

@@ -67,14 +67,8 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
               [] -> # 对方没有查询
                 {:ok, success_detail}
               [{_, dest}] -> # 对方查询棋盘状态
-                new_detail = %{
-                  code: success_detail.code,
-                  move_detail: success_detail.move_detail,
-                  board: success_detail.board,
-                  winner: success_detail.winner
-                }
                 :ets.delete(:pid_info_test, game_id)
-                send(dest, {:query, new_detail})
+                send(dest, {:query, success_detail})
                 {:ok, success_detail}
             end
 
