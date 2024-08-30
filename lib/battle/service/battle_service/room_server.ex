@@ -127,7 +127,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call(:terminate_game, _from, state) do
-    if state.white == 10 && state.black == 24 do
+    if state.white == "10" && state.black == "24" do
       BattleResultTest.update_battle_result(state.game_id, state.early_hand, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     else
@@ -373,7 +373,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           end
         new_winner =
           cond do
-            state.white == 10 && state.black == 24 && state.app_name == nil -> state.winner
+            state.white == "10" && state.black == "24" && state.app_name == nil -> state.winner
             state.early_hand == true -> state.black
             true -> state.white
           end
