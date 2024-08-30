@@ -3,6 +3,7 @@ defmodule Battle.Mongo.RankList do
 
   alias Battle.Mongo.UserAi
   alias Battle.Mongo.User
+  alias Battle.Mongo.BattleStatistics
 
   @db "battle"
   @collection "rank_list"
@@ -50,10 +51,12 @@ defmodule Battle.Mongo.RankList do
               ai_name: nil
             }}
           {:ok, res} ->
-             {:error, detail = %{
-                submit_count: 0,
+            {:ok, date} = BattleStatistics.get_newest_time_by_user_id(user_id)
+            {:ok, count} = UserAi.count_user(user_id)
+              {:error, detail = %{
+                submit_count: count,
                 user_id: user_id,
-                last_submit_date: nil,
+                last_submit_date: date,
                 rank: 0,
                 ai_name: res.ai_name
               }}

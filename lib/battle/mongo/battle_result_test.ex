@@ -50,6 +50,7 @@ defmodule Battle.Mongo.BattleResultTest do
       git_url = info.git_url
       tag = info.tag
       BattleStatistics.submit_increment()
+      BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
       UserAi.update_git(user_id, git_url, tag)
     end
     __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_cost_2: time_costs, memory_cost_2: memory_costs, early_hand: early_hand, total_step_2: total_steps})
@@ -135,6 +136,14 @@ defmodule Battle.Mongo.BattleResultTest do
   def count_battle() do
     {:ok, count} = __MODULE__.pcount(%{})
     count
+  end
+
+  def get_newest_time_by_user_id(user_id) do
+    case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
+      [] -> {:error, "not submit"}
+      res -> detail = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()
+             {:ok, detail.date.ms}
+    end
   end
 
   # BattleResultTest.get_battle_results()
