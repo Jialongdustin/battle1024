@@ -55,6 +55,7 @@ defmodule Battle.Mongo.BattleResultTest do
     __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_cost_2: time_costs, memory_cost_2: memory_costs, early_hand: early_hand, total_step_2: total_steps})
   end
 
+  # BattleResultTest.get_result_by_user_id("111")
   def get_result_by_user_id(user_id) do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
       [] -> {:error, "battletest_result not found"}

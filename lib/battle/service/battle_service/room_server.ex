@@ -128,7 +128,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_call(:terminate_game, _from, state) do
     if state.white == "10" && state.black == "24" do
-      BattleResultTest.update_battle_result(state.game_id, state.early_hand, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
+      BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     else
       # 每一局的信息

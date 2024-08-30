@@ -796,7 +796,7 @@ defmodule BattleTest.RouterTest do
       BattleStatistics.save_init()
       UserAi.insert_ai("111", "牛逼")
       BattleResultTest.save_battle_result("111", "first", "牛逼", "git@alibaba-inc.com", "main")
-      BattleResultTest.update_battle_result("first", "111", "111", [1, 2], ["1g", "2g"], [30, 31])
+      BattleResultTest.update_battle_result("first", "false", "111", [1, 2], ["1g", "2g"], [30, 31])
       conn =
         :get
         |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
