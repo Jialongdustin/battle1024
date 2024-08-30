@@ -111,13 +111,11 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(500, body)
         |> Conn.halt()
     end
-
   end
 
   # 获取某个用户的排名信息
   get "/user/ranking_list" do
     moment_token = conn.params["moment_token"]
-    IO.inspect(moment_token)
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
         body = case RankList.get_rank_by_user_id(user_id) do
