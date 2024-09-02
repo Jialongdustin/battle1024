@@ -35,7 +35,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
           {:ok, detail} ->
             # 当前询问回合，写回成功
             RoomServer.start_countdown(pid)
-            RoomServer.start_time_step(pid, user_id)
+            RoomServer.start_time_step(pid)
             {:ok, detail}
           {:error, detail} ->
             :ets.insert(:pid_info, {game_id, caller})
@@ -63,6 +63,10 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
               [{_, dest}] -> # 对方查询棋盘状态
                 :ets.delete(:pid_info, game_id)
                 send(dest, {:query, success_detail})
+                if success_detail.winner == nil do
+                  RoomServer.start_time_step(pid)
+                  RoomServer.start_countdown(pid)
+                end
                 {:ok, success_detail}
             end
           {:error, error_detail} ->

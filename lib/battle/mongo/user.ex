@@ -15,6 +15,10 @@ defmodule Battle.Mongo.User do
   field :date, :datetime, required: true
   field :avatar, :string, required: false
 
+  # @default_avatar <<255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0, 1, 1, 1, 0, 72, 0, 72,
+  #                   0, 0, 255, 225, 0, 142, 69, 120, 105, 102, 0, 0, 77, 77, 0, 42, 0, 0, 0, 8,
+  #                   0, 5, 1, 18, 0, 3, 0, 0, 0, ...>>
+
   # def save_user(user_id, account, user_name) do
   #   info = %{
   #   user_id: user_id,
@@ -33,6 +37,7 @@ defmodule Battle.Mongo.User do
         info =  %{
           user_id: user_id,
           account: account,
+          # avatar: @default_avatar,
           date: Ejoy.Bson.utc_now()
         }
         __MODULE__.psave(info)

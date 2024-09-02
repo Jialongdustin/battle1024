@@ -77,8 +77,8 @@ defmodule Battle.Service.BattleService.RoomServer do
     GenServer.call(pid, :get_state)
   end
 
-  def start_time_step(pid, user_id) do
-    GenServer.call(pid, {:start_time_step, user_id})
+  def start_time_step(pid) do
+    GenServer.call(pid, :start_time_step)
   end
 
   def record_time_step(pid, user_id) do
@@ -102,8 +102,8 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:reply, state, state}
   end
 
-  def handle_call({:start_time_step, user_id}, _from, state) do
-    case user_id == state.white do
+  def handle_call(:start_time_step, _from, state) do
+    case state.early_hand do
       true ->
         {:reply, :ok, %{state | time_counter_white: DateTime.utc_now()}}
       false ->
@@ -122,7 +122,7 @@ defmodule Battle.Service.BattleService.RoomServer do
         step_cost = DateTime.utc_now()
         |> DateTime.diff(state.time_counter_black, :millisecond)
         new_time_cost = state.time_cost_black + step_cost
-        {:reply, step_cost, %{state | time_cost_white: new_time_cost}}
+        {:reply, step_cost, %{state | time_cost_black: new_time_cost}}
     end
   end
 
