@@ -53,6 +53,8 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
+            IO.inspect("line 56")
+            IO.inspect(success_detail)
             RoomServer.start_countdown(pid)
             RoomServer.record_time_step(pid, user_id)
             if success_detail.winner do

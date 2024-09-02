@@ -49,8 +49,11 @@ defmodule Battle.Utils.Convert do
     Enum.map(moves, fn [x, y] -> [@reflection_y_to_x[y], @reflection_x_to_y[x]] end)
   end
 
-  def convert_array_list(board) do
+  def convert_capture([x, y]) do
+    [@reflection_y_to_x[y], @reflection_x_to_y[x]]
+  end
 
+  def convert_array_list(board) do
     Enum.reduce(0..(length(board) - 1), [], fn x, acc ->
       Enum.reduce(0..(length(Enum.at(board, 0)) - 1), acc, fn y, acc_inner ->
         value = Enum.at(board, x) |> Enum.at(y)

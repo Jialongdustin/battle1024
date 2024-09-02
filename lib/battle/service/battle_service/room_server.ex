@@ -140,7 +140,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     end
-    {:stop, :normal, state}
+    {:stop, :normal, :ok, state}
   end
 
   def handle_call({:start_countdown, timeout, test}, _from, state) do
@@ -204,7 +204,7 @@ defmodule Battle.Service.BattleService.RoomServer do
             [] ->
               # 如果没有捕获的棋子
               [
-                %{captured: nil, moves: moves}
+                %{captured: nil, moves: Convert.convert_array_list(moves)}
               ]
             res ->
               # 如果有捕获的棋子，直接使用返回值
@@ -345,7 +345,7 @@ defmodule Battle.Service.BattleService.RoomServer do
               end
               {:reply, {:ok, detail}, new_state}
           _ ->
-            {:reply, {:ok, detail}, new_state}
+            {:reply, {:ok, %{detail | code: 10001}}, new_state}
         end
 
       false ->
@@ -360,7 +360,7 @@ defmodule Battle.Service.BattleService.RoomServer do
           winner: nil,
           king: nil,
           move_detail: nil,
-          board: state.board,
+          board: Convert.convert_array_list(state.board),
           # available_step: available_step
         }
         {illegal_times_white, illegal_times_black} =
@@ -463,7 +463,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                   # 如果是 0，保持现有的 acc_inner，不改变
                   0 -> acc_inner
                   # 如果是第一个非零值，记录该坐标
-                  value when acc_inner == nil -> %{moves: [[x0,y0],[x1,y1]],captured: [x,y]}
+                  value when acc_inner == nil -> %{moves: Convert.convert_integer_into_string([[x0, y0], [x1, y1]]), captured: Convert.convert_capture([x, y])}
                   # 如果已经有非零值，保持原样
                   _ -> acc_inner
                 end
@@ -504,13 +504,13 @@ defmodule Battle.Service.BattleService.RoomServer do
     end
   end
 
-  def get_update(capture, node_value,x0,y0,x1,y1) do
+  def get_update(capture, node_value, x0, y0, x1, y1) do
     res = Enum.reduce(capture, [{x0, y0, 0}], fn
       %{captured: nil, moves: [[x0, y0], [x1, y1]]}, acc ->
         acc ++ [{x1, y1, node_value}]
 
       %{captured: captures, moves: [[x0, y0], [x1, y1]]}, acc ->
-        [cx,cy] = captures
+        [cx, cy] = captures
         capture_updates =  [{cx, cy, 0}]
         acc ++ capture_updates
     end)
