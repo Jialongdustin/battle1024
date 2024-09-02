@@ -277,7 +277,7 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_header("location",  uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
-        
+
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
         conn
@@ -407,6 +407,7 @@ defmodule Battle.Web.Router do
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, Ejoy.Jiffy.encode!(message))
             |> Conn.halt()
+            
           {:processing, _} ->
             conn
             |> Conn.put_resp_content_type("application/json")

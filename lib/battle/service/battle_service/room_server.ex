@@ -204,7 +204,7 @@ defmodule Battle.Service.BattleService.RoomServer do
             [] ->
               # 如果没有捕获的棋子
               [
-                %{captured: nil, moves: Convert.convert_array_list(moves)}
+                %{captured: nil, moves: Convert.convert_integer_into_string(moves)}
               ]
             res ->
               # 如果有捕获的棋子，直接使用返回值
@@ -343,6 +343,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                 nil -> # 还没有赢家，继续
                   {new_state, detail}
               end
+              IO.inspect(new_state)
               {:reply, {:ok, detail}, new_state}
           _ ->
             {:reply, {:ok, %{detail | code: 10001}}, new_state}
@@ -505,7 +506,17 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def get_update(capture, node_value, x0, y0, x1, y1) do
-    res = Enum.reduce(capture, [{x0, y0, 0}], fn
+    IO.inspect("line 516")
+    IO.inspect(capture)
+    update_info = Enum.reduce(capture, [], fn message, acc ->
+      if message.captured == nil do
+        acc ++ [%{captured: nil, moves: Convert.convert_index_into_integer(message.moves)}]
+      else
+        acc ++ [%{captured: Convert.convert_capture_s_to_i(message.captured), moves: Convert.convert_index_into_integer(message.moves)}]
+      end
+    end)
+    IO.inspect(update_info)
+    res = Enum.reduce(update_info, [{x0, y0, 0}], fn
       %{captured: nil, moves: [[x0, y0], [x1, y1]]}, acc ->
         acc ++ [{x1, y1, node_value}]
 

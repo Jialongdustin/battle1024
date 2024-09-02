@@ -27,3 +27,6 @@ players = %{
 #   333 => "plat1024-battle-players:20240826154521",
 #   444 => "plat1024-battle-players:20240826154500"
 # }
+
+# {:ok, contest_id} =
+# Battle.Service.BattleService.RoomSupervisor.init_game("82844bf6-6385-11ef-890d-b2a3d4b2d740", "9927b3de-6385-11ef-aca7-b2a3d4b2d740", "10000", "battle-players1", "plat1024-playes1", "battle-player-c")

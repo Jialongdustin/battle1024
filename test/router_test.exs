@@ -48,7 +48,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 302
-      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login?code=200&moment_token=abc"]
+      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login-success?code=200&moment_token=abc"]
     end
   end
 
@@ -62,7 +62,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 302
-      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login?code=403"]
+      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login-success?code=403"]
     end
   end
 
@@ -153,14 +153,15 @@ defmodule BattleTest.RouterTest do
         {:ok, "1"}
       end
     ] do
+      User.save_user("1", "666")
       conn =
         :get
         |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
-      IO.inspect(conn.resp_body)
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2004, "data" => "user_id error", "success" => false}
+      User.remove_user("1")
     end
   end
 
@@ -201,6 +202,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
+      User.save_user("111", "666")
       RankList.save_rank("111", "fuck", 0.98)
       conn =
         :get
@@ -209,6 +211,7 @@ defmodule BattleTest.RouterTest do
       assert conn.state == :sent
       assert conn.status == 200
       RankList.remove_rank("111")
+      User.remove_user("111")
     end
   end
 
@@ -876,7 +879,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => true}
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [%{"black" => %{"game_id" => "first", "memory_cost_black" => "2g", "time_cost_black" => 2, "total_step_black" => 31, "winner" => "111"}, "tag" => "main", "white" => %{"game_id" => "first", "memory_cost_white" => "1g", "time_cost_white" => 1, "total_step_white" => 30, "winner" => "111"}}], "success" => true}
       BattleResultTest.remove_all_battle("111")
     end
   end
@@ -946,5 +949,26 @@ defmodule BattleTest.RouterTest do
       assert conn.state == :sent
       assert conn.status == 200
     end
+  end
+
+  test "battle test for user" do
+
+    #    Logger.configure(level: :none)
+    {:ok,contest_info} =Battle.Service.BattleService.RoomSupervisorTest.init_game()
+    #token_black: "66c8088b4d783922fa779fd0"
+    #token_white: "66c8088b4d783922fa779fcf"
+
+    # "66c8028b65cfd1d344393780"
+  #    {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
+    # "66c8029065cfd1d344393781"
+  #    {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
+    #    RoomSupervisor.query(123, contest_id)
+    #    RoomSupervisor.query(456, contest_id)
+
+    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "10", contest_info.game_id)
+    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "24", contest_info.game_id)
+    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 0], [5, 0], [7, 0]]), "10", contest_info.game_id)
+    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 1], [4, 1]]), "24", contest_info.game_id)
+    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 1], [3, 1]]), "10", contest_info.game_id)
   end
 end
