@@ -30,11 +30,9 @@ defmodule Battle.Mongo.User do
       {:ok, info} ->
         __MODULE__.pupdate(%{user_id: user_id}, %{info | date: Ejoy.Bson.utc_now()})
       {:error, _} ->
-        {:ok, avatar} = File.read("./image.jpg")
         info =  %{
           user_id: user_id,
           account: account,
-          avatar: avatar,
           date: Ejoy.Bson.utc_now()
         }
         __MODULE__.psave(info)
