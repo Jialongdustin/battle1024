@@ -26,12 +26,19 @@ defmodule Battle.Mongo.User do
   # end
 
   def save_user(user_id, account) do
-    info = %{
-    user_id: user_id,
-    account: account,
-    date: Ejoy.Bson.utc_now()
-    }
-    __MODULE__.psave(info)
+    case query_user(user_id) do
+      {:ok, info} ->
+        __MODULE__.pupdate(%{user_id: user_id}, %{info | date: Ejoy.Bson.utc_now()})
+      {:error, _} ->
+        {:ok, avatar} = File.read("./image.jpg")
+        info =  %{
+          user_id: user_id,
+          account: account,
+          avatar: avatar,
+          date: Ejoy.Bson.utc_now()
+        }
+        __MODULE__.psave(info)
+    end
   end
 
   def query_user(user_id) do

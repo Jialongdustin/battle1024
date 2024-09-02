@@ -47,7 +47,7 @@ defmodule Battle.Mongo.UserAi do
   def count_user(user_id) do
     case __MODULE__.pcount(%{user_id: user_id}) do
       {:ok, cnt} -> {:ok, cnt}
-      _ -> {:error, 0}
+      _ -> 0
     end
   end
 

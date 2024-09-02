@@ -25,7 +25,7 @@ defmodule Battle.Mongo.RankList do
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()
-          {:ok,user_info} = User.query_user(message.user_id)
+          {:ok, user_info} = User.query_user(message.user_id)
           %{
             ai_name: message.ai_name,
             user_id: message.user_id,
@@ -51,7 +51,12 @@ defmodule Battle.Mongo.RankList do
               ai_name: nil
             }}
           {:ok, res} ->
-            {:ok, date} = BattleResultTest.get_newest_time_by_user_id(user_id)
+            date = case BattleResultTest.get_newest_time_by_user_id(user_id) do
+              {:ok, date} ->
+                date
+              {:error, _} ->
+                nil
+            end
             {:ok, count} = UserAi.count_user(user_id)
               {:error, detail = %{
                 submit_count: count,

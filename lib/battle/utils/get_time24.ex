@@ -8,8 +8,8 @@ defmodule Battle.Utils.GetTime24 do
     end_time_string = "#{Date.to_string(date)} 23:59:59"
 
     # 将字符串转换为 DateTime 类型
-    {:ok, start_time,_offset} = DateTime.from_iso8601("#{start_time_string}Z")
-    {:ok, end_time,_offset} = DateTime.from_iso8601("#{end_time_string}Z")
+    {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
+    {:ok, end_time, _offset} = DateTime.from_iso8601("#{end_time_string}Z")
 
     #    mill = :erlang.system_time()
 
