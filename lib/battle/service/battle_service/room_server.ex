@@ -8,6 +8,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Mongo.BattleStatistics
   alias Battle.Mongo.BattleResultTest
   alias Battle.Mongo.UserAi
+  alias Battle.Utils.Convert
 
   @timeout 3000
   @timeout_test 120_000
@@ -167,7 +168,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     (user_id == state.black and state.early_hand == false) do
       detail = %{
         code: state.code,
-        board: state.board,
+        board: Convert.convert_array_list(state.board),
         winner: state.winner,
       }
       {:reply, {:ok, detail}, state}
@@ -256,7 +257,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       winner: winner,
                       king: white_king,
                       move_detail: move_detail,
-                      board: new_board
+                      board: Convert.convert_array_list(new_board)
                     }
                   }
                 {:game_over, winner} ->
@@ -303,7 +304,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                       winner: winner,
                       king: black_king,
                       move_detail: move_detail,
-                      board: new_board
+                      board: Convert.convert_array_list(new_board)
                     }
                   }
                 {:game_over, winner} ->

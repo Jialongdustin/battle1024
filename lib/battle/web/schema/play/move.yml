@@ -7,8 +7,6 @@ request:
     move:
       items:
         type: array
-        items:
-          type: number
   required: [token, move]
 
 response:

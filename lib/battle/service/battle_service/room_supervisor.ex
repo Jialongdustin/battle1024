@@ -5,6 +5,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
 
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Utils.Token
+  alias Battle.Utils.Convert
 
   def start_link(_) do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -50,7 +51,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   def movement(moves, user_id, game_id) do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
-        case RoomServer.movement(pid, user_id, moves) do
+        case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
             RoomServer.start_countdown(pid)
             RoomServer.record_time_step(pid, user_id)

@@ -3,6 +3,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
 
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Utils.Token
+  alias Battle.Utils.Convert
 
   def start_link(_) do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -17,11 +18,11 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   # game_id = "d9279888-1962-494c-aed9-1058dfd2805a"
   def init_game() do
     game_id = UUID.uuid4()
-    {:ok, token_black} = Token.generate_token(24, game_id)
-    {:ok, token_white} = Token.generate_token(10, game_id)
+    {:ok, token_black} = Token.generate_token("24", game_id)
+    {:ok, token_white} = Token.generate_token("10", game_id)
     child_spec_server = %{
       id: RoomServer,
-      start: {RoomServer, :start_link, [%{white: 10, black: 24, game_id: game_id}]},
+      start: {RoomServer, :start_link, [%{white: "10", black: "24", game_id: game_id}]},
       restart: :transient,
       type: :worker
     }
@@ -57,7 +58,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
         RoomServer.start_countdown(pid, true)
-        case RoomServer.movement(pid, user_id, moves) do
+        case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
             # 将your_step改为opponent_step
             if success_detail.winner do
