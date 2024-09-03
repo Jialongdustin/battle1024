@@ -33,12 +33,8 @@ defmodule Battle.Service.WebService.Auth do
                   res.user_id
               end
           Battle.Utils.Token.generate_token(res)
-        %{"code" => code} when code in @verify_token_invalid_codes ->
-          one_resp = %{
-            code: code,
-            message: Map.get(resp, "message")
-          }
-          {:error, one_resp}
+        %{"code" => code} ->
+          {:error, code}
         end
   end
 end
