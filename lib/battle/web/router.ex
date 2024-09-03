@@ -33,8 +33,7 @@ defmodule Battle.Web.Router do
 
   plug(:dispatch)
 
-  @client_id 10052
-  @redirect_uri "https://battle1024.ejoy.com/login/get_token"
+  @uri "https://ieu-battle1024.alibaba.net/login"
 
   get "/login/get_token" do
     access_token = conn.params["access_token"]
@@ -72,6 +71,7 @@ defmodule Battle.Web.Router do
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
             |> Conn.halt()
+
           {:error, _} ->
             body = Ejoy.Jiffy.encode!(%{code: 2003, data: [], success: false})
             conn
@@ -81,9 +81,8 @@ defmodule Battle.Web.Router do
         end
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -105,7 +104,7 @@ defmodule Battle.Web.Router do
           {:ok, info} ->
             Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
           {:error, info} ->
-            Ejoy.Jiffy.encode!(%{code: 200, data: info, success: false})
+            Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
         end
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -113,9 +112,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location",  @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -140,7 +138,7 @@ defmodule Battle.Web.Router do
             {:ok, rank_list} ->
               %{code: 200, data: rank_list, success: true}
             {:error, message} ->
-              %{code: 2004, data: message, success: false}
+              %{code: 200, data: [], success: true}
           end
         body = Ejoy.Jiffy.encode!(message)
         conn
@@ -149,9 +147,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -193,9 +190,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -219,12 +215,13 @@ defmodule Battle.Web.Router do
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
+
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+
       _ ->
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
         conn
@@ -255,9 +252,8 @@ defmodule Battle.Web.Router do
         end
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -295,11 +291,11 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
+
       _ ->
         Logger.error("Unexpected result from verify_code")
         body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
@@ -324,9 +320,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -358,9 +353,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
       _ ->
@@ -401,9 +395,8 @@ defmodule Battle.Web.Router do
         end
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -434,9 +427,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -468,9 +460,8 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
 
       {:error, _} ->
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 
@@ -497,9 +488,8 @@ end
         |> Conn.halt()
 
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
-        uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
         conn
-        |> Conn.put_resp_header("location",  uri)
+        |> Conn.put_resp_header("location", @uri)
         |> Conn.send_resp(302, "")
         |> Conn.halt()
 

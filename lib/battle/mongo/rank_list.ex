@@ -38,9 +38,9 @@ defmodule Battle.Mongo.RankList do
   end
 
   def get_rank_by_user_id(user_id) do
+    {:ok, user_info} = User.query_user(user_id)
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       [] ->
-        {:ok, user_info} = User.query_user(user_id)
         case UserAi.get_newest_ai_by_userId(user_id) do
           {:error, _} ->
             {:error, detail = %{
@@ -48,7 +48,8 @@ defmodule Battle.Mongo.RankList do
               user_id: user_id,
               last_submit_date: nil,
               rank: 0,
-              ai_name: nil
+              ai_name: nil,
+              user_name: user_info.user_name
             }}
           {:ok, res} ->
             date = case BattleResultTest.get_newest_time_by_user_id(user_id) do
@@ -63,14 +64,14 @@ defmodule Battle.Mongo.RankList do
                 user_id: user_id,
                 last_submit_date: date,
                 rank: 0,
-                ai_name: res.ai_name
+                ai_name: res.ai_name,
+                user_name: user_info.user_name
               }}
         end
 
       res ->
-        {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
+        {:ok, user_info_ai} = UserAi.get_newest_ai_by_userId(user_id)
         {:ok, cnt} = UserAi.count_user(user_id)
-
         query = %{
           rate: %{
             "$gte": List.first(res).rate
@@ -81,9 +82,10 @@ defmodule Battle.Mongo.RankList do
         {:ok, %{
           user_id: user_id,
           rate: List.first(res).rate,
-          ai_name: user_info.ai_name,
-          last_submit_date: user_info.create_time.ms,
+          ai_name: user_info_ai.ai_name,
+          last_submit_date: user_info_ai.create_time.ms,
           count: cnt,
+          user_name: user_info.user_name,
           rank: rank
         }
       }

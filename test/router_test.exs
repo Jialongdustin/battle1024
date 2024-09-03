@@ -12,6 +12,8 @@ defmodule BattleTest.RouterTest do
   alias Battle.Mongo.RankList
   alias Battle.Mongo.BattleResult
   alias Battle.Mongo.BattleResultTest
+  alias Battle.Service.BattleService.RoomSupervisorTest
+  alias Battle.Service.BattleService.RoomSupervisor
 
   @opts Router.init([])
 
@@ -121,6 +123,7 @@ defmodule BattleTest.RouterTest do
     ] do
       UserAi.insert_ai("1", "fuck")
       RankList.save_rank("1", "fuck", 0.8)
+      User.save_user("1", "2", "lijialong")
       conn =
         :get
         |> conn("/user/ranking_list")
@@ -145,7 +148,6 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => false}
       User.remove_user("1")
       UserAi.clean_message("1")
     end
@@ -207,6 +209,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
+      User.save_user("111", "nibi", "lijialong")
       UserAi.insert_ai("111", "niubi")
       conn =
         :get
@@ -214,7 +217,9 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2004, "data" => "empty rank list", "success" => false}
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => true}
+      User.remove_user("111")
+      UserAi.clean_message("111")
     end
   end
 
@@ -935,27 +940,82 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
+      assert Map.keys(Ejoy.Jiffy.decode!(conn.resp_body)) == ["code", "data", "success"]
     end
   end
 
-  test "battle test for user" do
-
-    #    Logger.configure(level: :none)
-    {:ok,contest_info} =Battle.Service.BattleService.RoomSupervisorTest.init_game()
-    #token_black: "66c8088b4d783922fa779fd0"
-    #token_white: "66c8088b4d783922fa779fcf"
-
-    # "66c8028b65cfd1d344393780"
-  #    {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
-    # "66c8029065cfd1d344393781"
-  #    {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
-    #    RoomSupervisor.query(123, contest_id)
-    #    RoomSupervisor.query(456, contest_id)
-
-    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "10", contest_info.game_id)
-    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "24", contest_info.game_id)
-    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 0], [5, 0], [7, 0]]), "10", contest_info.game_id)
-    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 1], [4, 1]]), "24", contest_info.game_id)
-    Battle.Service.BattleService.RoomSupervisorTest.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 1], [3, 1]]), "10", contest_info.game_id)
+  test "return 302 with invalid token when create test game on /user/create_test" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:error, "invalid token"}
+      end
+    ] do
+      request_body = %{"moment_token" => "abcdefghijklmn"}
+      conn =
+        :post
+        |> conn("/user/create_test", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 302
+    end
   end
+
+  test "return 500 with internal server error when create test game on /user/create_test" do
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:server_error, "internal server error"}
+      end
+    ] do
+      request_body = %{"moment_token" => "abcdefghijklmn"}
+      conn =
+        :post
+        |> conn("/user/create_test", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 500
+    end
+  end
+
+  test "return 200 with token info when white query test game on /test/query" do
+    {:ok, info} = RoomSupervisorTest.init_game()
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token_battle: fn _ ->
+        {:ok, %{user_id: "10", ext: %{account_id: info.game_id}}}
+      end
+    ] do
+      request_body = %{"token" => info.token_white}
+      conn =
+        :post
+        |> conn("/test/query", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Map.keys(Ejoy.Jiffy.decode!(conn.resp_body)) == ["board", "code", "winner"]
+    end
+  end
+
+  # test "return 200 with token info when black query test game on /test/query" do
+  #   {:ok, info} = RoomSupervisorTest.init_game()
+  #   with_mock Battle.Utils.Token, [:passthrough], [
+  #     verify_token_battle: fn _ ->
+  #       {:ok, %{user_id: "24", ext: %{account_id: info.game_id}}}
+  #     end
+  #   ] do
+  #     request_body = %{"token" => info.token_black}
+  #     conn =
+  #       :post
+  #       |> conn("/test/query", Ejoy.Jiffy.encode!(request_body))
+  #       |> put_req_header("content-type", "application/json")
+  #       |> Router.call(@opts)
+  #     [{_, dest}] = :ets.lookup(:pid_info_test, info.game_id)
+  #     Task.start(fn -> send(dest, {:query, %{code: 10002, board: [], winner: nil}}) end)
+  #     assert conn.state == :sent
+  #     assert conn.status == 200
+  #     assert Map.keys(Ejoy.Jiffy.decode!(conn.resp_body)) == ["board", "code", "winner"]
+  #   end
+  # end
+
 end

@@ -17,7 +17,6 @@ defmodule Battle.Service.WebService.Auth do
         access_token: access_token
         }
         {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-        IO.inspect(resp)
         case resp do
           %{
             "account" => account,
