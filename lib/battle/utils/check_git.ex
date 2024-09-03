@@ -10,8 +10,11 @@ defmodule Battle.Utils.CheckGit do
 
   defp is_valid_tag?(git, tag) do
     {output, status} = System.cmd("git", ["ls-remote", "--heads", git, tag])
-    status == 0
+    if status == 0 do
+      String.contains?(output, "refs/heads/#{tag}")
+    else
+      false
+    end
   end
 
-  # CheckGit.is_valid?("git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", "dustin")
 end

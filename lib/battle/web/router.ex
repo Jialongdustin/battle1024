@@ -454,32 +454,33 @@ defmodule Battle.Web.Router do
       |> Conn.put_resp_content_type("application/json")
       |> Conn.send_resp(200, body)
       |> Conn.halt()
-    end
-    case Token.verify_token(moment_token) do
-      {:ok, user_id} ->
-        {:ok, ai_name} = UserAi.get_ai_name(user_id)
-        game_id = UUID.uuid4()
-        BattleResultTest.save_battle_result(user_id, game_id, ai_name, git_url, tag)
-        Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
-        body = Ejoy.Jiffy.encode!(%{code: 200, data: "ok", success: true})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, body)
-        |> Conn.halt()
+    else
+      case Token.verify_token(moment_token) do
+        {:ok, user_id} ->
+          {:ok, ai_name} = UserAi.get_ai_name(user_id)
+          game_id = UUID.uuid4()
+          BattleResultTest.save_battle_result(user_id, game_id, ai_name, git_url, tag)
+          Task.start(fn -> ThreadPoolTest.add_task({git_url, tag, game_id}) end)
+          body = Ejoy.Jiffy.encode!(%{code: 200, data: "ok", success: true})
+          conn
+          |> Conn.put_resp_content_type("application/json")
+          |> Conn.send_resp(200, body)
+          |> Conn.halt()
 
-      {:error, _} ->
-        conn
-        |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
-        |> Conn.halt()
+        {:error, _} ->
+          conn
+          |> Conn.put_resp_header("location", @uri)
+          |> Conn.send_resp(302, "")
+          |> Conn.halt()
 
-      _ ->
-        Logger.error("Unexpected result from verify_code")
-        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(500, body)
-        |> Conn.halt()
+        _ ->
+          Logger.error("Unexpected result from verify_code")
+          body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+          conn
+          |> Conn.put_resp_content_type("application/json")
+          |> Conn.send_resp(500, body)
+          |> Conn.halt()
+      end
     end
   end
 

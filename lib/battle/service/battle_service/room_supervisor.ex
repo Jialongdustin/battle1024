@@ -17,7 +17,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     DynamicSupervisor.init(opts)
   end
 
-  def init_game(white, black, game_id, groupName, groupKey, appName, test \\ false) do
+  def init_game(white, black, game_id, groupName, groupKey, appName) do
     # child_spec_server = {RoomServer, white: white, black: black, game_id: game_id}
     child_spec_server = %{
       id: RoomServer,
