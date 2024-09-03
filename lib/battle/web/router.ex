@@ -34,44 +34,27 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "https://battle1024.ejoy.com/login/redirect"
+  @redirect_uri "https://battle1024.ejoy.com/login/get_token"
 
-  get "/" do
-    conn
-    |> put_resp_content_type("text/html")
-    |> send_resp(200, File.read!("priv/static/index.html"))
-  end
-
-  ## web
-  # 登录验证, 重定向授权网址
-  get "/login/one_code" do
-    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-    # uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
-    conn
-    |> Conn.put_resp_header("location",  uri)
-    |> Conn.send_resp(302, "")
-    |> Conn.halt()
-  end
-
-  get "/login/redirect" do
-    Logger.info(conn)
-    access_token = conn.params["code"]
-    front_end_url = "https://ieu-battle1024.alibaba.net/login-success"
+  get "/login/get_token" do
+    access_token = conn.params["access_token"]
     case Auth.verify_code(access_token) do
       {:ok, moment_token} ->
         # 将 code 和 moment_token 作为查询参数添加到 URL
-        redirect_url = front_end_url <> "?code=200&moment_token=" <> moment_token
+        data = %{code: 200, data: moment_token, success: true}
+        body = Ejoy.Jiffy.encode!(data)
         conn
-        |> Conn.put_resp_header("location", redirect_url)
-        |> Conn.send_resp(302, "")
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
         |> Conn.halt()
 
-      {:error, _reason} ->
+      {:error, reason} ->
         # 如果失败，将 code 设为 400，并重定向到前端
-        redirect_url = front_end_url <> "?code=403"
+        data = %{code: 2005, data: reason, success: false}
+        body = Ejoy.Jiffy.encode!(data)
         conn
-        |> Conn.put_resp_header("location", redirect_url)
-        |> Conn.send_resp(302, "")
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
         |> Conn.halt()
     end
   end

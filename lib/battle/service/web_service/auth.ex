@@ -11,43 +11,30 @@ defmodule Battle.Service.WebService.Auth do
   ]
 
   @callback verify_code(String.t()) :: {:ok, map()} | {:error, any()}
-  def verify_code(code) do
-    params =  %{
-      client_id: @client_id,
-      client_secret: @client_secret,
-      grant_type: "authorization_code",
-      code: code
-    }
-    url = "https://one.ejoy.com/api/oauth_v3/token"
-
-    {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-    case resp do
-      %{
-        "account" => account,
-        "access_token" => access_token
-      } ->
-#        url = "https://one.ejoy.com/api/oapi/user/get_user_info"
-#        params = %{
-#        access_token: access_token
-#        }
-#        {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-
-        res =
-          case User.query_user(account) do
-            {:error, _} ->
-              user_id = UUID.uuid1()
-              User.save_user(user_id, account)
-              user_id
-            {:ok, res} ->
-              res.user_id
-          end
-        Battle.Utils.Token.generate_token(res)
-      %{"code" => code} when code in @verify_token_invalid_codes ->
-        one_resp = %{
-          code: code,
-          message: Map.get(resp, "message")
+  def verify_code(access_token) do
+        url = "https://one.ejoy.com/api/oapi/user/get_user_info"
+        params = %{
+        access_token: access_token
         }
-        {:error, one_resp}
-    end
+        {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
+        IO.inspect(resp)
+        case resp do
+          %{
+            "account" => account,
+            "name" =>name
+          } ->
+            res =
+              case User.query_user(account) do
+                {:error, _} ->
+                  user_id = UUID.uuid1()
+                  User.save_user(user_id, account,name)
+                  user_id
+                {:ok, res} ->
+                  res.user_id
+              end
+          Battle.Utils.Token.generate_token(res)
+        %{"code" => code} ->
+          {:error, code}
+        end
   end
 end

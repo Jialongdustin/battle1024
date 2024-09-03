@@ -60,6 +60,8 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         RoomServer.start_countdown(pid, true)
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
+            IO.inspect("line 63")
+            IO.inspect(success_detail)
             # 将your_step改为opponent_step
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
