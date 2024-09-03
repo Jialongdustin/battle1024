@@ -15,27 +15,7 @@ defmodule BattleTest.RouterTest do
 
   @opts Router.init([])
 
-  test "return html on /" do
-    conn =
-      :get
-      |> conn("/", "")
-      |> Router.call(@opts)
-    assert conn.state == :sent
-    assert conn.status == 200
-  end
-
-  test "redirects to the correct URL on /login/one_code" do
-    expected_url = "http://one.ejoy.com/oauth_v3?client_id=10052&redirect_uri=https://battle1024.ejoy.com/login/redirect&response_type=code&scope=acl&state=123"
-    conn =
-      :get
-      |> conn("/login/one_code", "")
-      |> Router.call(@opts)
-    assert conn.state == :sent
-    assert conn.status == 302
-    assert get_resp_header(conn, "location") == [expected_url]
-  end
-
-  test "return 200 with user info on /login/redirect with valid code" do
+  test "return 200 with code 200 on /login/get_token" do
     with_mock Battle.Service.WebService.Auth, [:passthrough], [
       verify_code: fn
         _ ->
@@ -44,25 +24,28 @@ defmodule BattleTest.RouterTest do
     ] do
       conn =
         :get
-        |> conn("/login/redirect", %{"code" => "asgkasgag"})
+        |> conn("/login/get_token", %{"code" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
-      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login-success?code=200&moment_token=abc"]
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "abc", "success" => true}
     end
   end
 
-  test "return 302 with error message on /login/redirect with invalid code" do
+  test "return 200 with code 2005 on /login/get_token" do
     with_mock Battle.Service.WebService.Auth, [:passthrough], [
-      verify_code: fn _ -> {:error, "one_code_error"} end
+      verify_code: fn
+        _ ->
+          {:error, "token invalid"}
+      end
     ] do
       conn =
         :get
-        |> conn("/login/redirect", %{"code" => "asgkasgag"})
+        |> conn("/login/get_token", %{"code" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
-      assert get_resp_header(conn, "location") == ["https://ieu-battle1024.alibaba.net/login-success?code=403"]
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2005, "data" => "token invalid", "success" => false}
     end
   end
 
@@ -154,7 +137,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "1"}
       end
     ] do
-      User.save_user("1", "666")
+      User.save_user("1", "666", "lijialong")
       UserAi.insert_ai("1", "牛逼")
       conn =
         :get
@@ -205,7 +188,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
-      User.save_user("111", "666")
+      User.save_user("111", "666", "lijialong")
       RankList.save_rank("111", "fuck", 0.98)
       conn =
         :get
@@ -353,7 +336,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
-      User.save_user("111", "415500")
+      User.save_user("111", "415500", "lijialong")
       json_data = %{"avatar" => "aaccbb",
                   "moment_token" => "dummy token"} |> Ejoy.Jiffy.encode!()
       conn =
@@ -373,7 +356,7 @@ defmodule BattleTest.RouterTest do
         {:error, "invalid token"}
       end
     ] do
-      User.save_user("111", "415500")
+      User.save_user("111", "415500", "lijialong")
       json_data = %{"avatar" => "aaccbb",
                   "moment_token" => "dummy token"} |> Ejoy.Jiffy.encode!()
       conn =
@@ -393,7 +376,7 @@ defmodule BattleTest.RouterTest do
         {:server_error, "server error"}
       end
     ] do
-      User.save_user("111", "415500")
+      User.save_user("111", "415500", "lijialong")
       json_data = %{"avatar" => "aaccbb",
                   "moment_token" => "dummy token"} |> Ejoy.Jiffy.encode!()
       conn =
@@ -414,7 +397,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
-      User.save_user("111", "415500")
+      User.save_user("111", "415500", "lijialong")
       query_params = %{
         "moment_token" => "sfakjflasfla"
       }
@@ -435,7 +418,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "222"}
       end
     ] do
-      User.save_user("111", "415500")
+      User.save_user("111", "415500", "lijialong")
       query_params = %{
         "moment_token" => "sfakjflasfla"
       }

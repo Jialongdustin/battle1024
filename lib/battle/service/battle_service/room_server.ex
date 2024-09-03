@@ -355,7 +355,6 @@ defmodule Battle.Service.BattleService.RoomServer do
                 nil -> # 还没有赢家，继续
                   {new_state, detail}
               end
-              IO.inspect(new_state)
               {:reply, {:ok, detail}, new_state}
           _ ->
             {:reply, {:ok, %{detail | code: 10001}}, new_state}
@@ -525,8 +524,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def get_update(capture, node_value, x0, y0, x1, y1) do
-    IO.inspect("line 516")
-    IO.inspect(capture)
     update_info = Enum.reduce(capture, [], fn message, acc ->
       if message.captured == nil do
         acc ++ [%{captured: nil, moves: Convert.convert_index_into_integer(message.moves)}]
@@ -534,7 +531,6 @@ defmodule Battle.Service.BattleService.RoomServer do
         acc ++ [%{captured: Convert.convert_capture_s_to_i(message.captured), moves: Convert.convert_index_into_integer(message.moves)}]
       end
     end)
-    IO.inspect(update_info)
     res = Enum.reduce(update_info, [{x0, y0, 0}], fn
       %{captured: nil, moves: [[x0, y0], [x1, y1]]}, acc ->
         acc ++ [{x1, y1, node_value}]
