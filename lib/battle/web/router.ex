@@ -34,28 +34,10 @@ defmodule Battle.Web.Router do
   plug(:dispatch)
 
   @client_id 10052
-  @redirect_uri "https://battle1024.ejoy.com/login/redirect"
+  @redirect_uri "https://battle1024.ejoy.com/login/get_token"
 
-  get "/" do
-    conn
-    |> put_resp_content_type("text/html")
-    |> send_resp(200, File.read!("priv/static/index.html"))
-  end
-
-  ## web
-  # 登录验证, 重定向授权网址
-  get "/login/one_code" do
-    uri = "http://one.ejoy.com/oauth_v3?client_id=#{@client_id}&redirect_uri=#{@redirect_uri}&response_type=code&scope=acl&state=123"
-    # uri = "https://one.ejoy.com/oauth?product_code=P11387&redirect_uri=#{@redirect_uri}&client_id=#{@client_id}&scope=acl&state=login&nonce=84680"
-    conn
-    |> Conn.put_resp_header("location",  uri)
-    |> Conn.send_resp(302, "")
-    |> Conn.halt()
-  end
-
-  get "/login/redirect" do
-    Logger.info(conn)
-    access_token = conn.params["code"]
+  get "/login/get_token" do
+    access_token = conn.params["access_token"]
     front_end_url = "https://ieu-battle1024.alibaba.net/login-success"
     case Auth.verify_code(access_token) do
       {:ok, moment_token} ->

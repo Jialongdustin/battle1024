@@ -19,30 +19,16 @@ defmodule Battle.Mongo.User do
   #                   0, 0, 255, 225, 0, 142, 69, 120, 105, 102, 0, 0, 77, 77, 0, 42, 0, 0, 0, 8,
   #                   0, 5, 1, 18, 0, 3, 0, 0, 0, ...>>
 
-  # def save_user(user_id, account, user_name) do
-  #   info = %{
-  #   user_id: user_id,
-  #   user_name: user_name,
-  #   account: account,
-  #   date: Ejoy.Bson.utc_now()
-  #   }
-  #   __MODULE__.psave(info)
-  # end
+   def save_user(user_id, account, user_name) do
+     info = %{
+     user_id: user_id,
+     user_name: user_name,
+     account: account,
+     date: Ejoy.Bson.utc_now()
+     }
+     __MODULE__.psave(info)
+   end
 
-  def save_user(user_id, account) do
-    case query_user(user_id) do
-      {:ok, info} ->
-        __MODULE__.pupdate(%{user_id: user_id}, %{info | date: Ejoy.Bson.utc_now()})
-      {:error, _} ->
-        info =  %{
-          user_id: user_id,
-          account: account,
-          # avatar: @default_avatar,
-          date: Ejoy.Bson.utc_now()
-        }
-        __MODULE__.psave(info)
-    end
-  end
 
   def query_user(user_id) do
     case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do

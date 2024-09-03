@@ -8,25 +8,27 @@ defmodule BattleTest.RoomServerTest do
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Utils.Token
 
+
   test "battle_early_hand" do
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game(123, 456, "11", "groupName", "groupKey", "appName")
+      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", "11", "groupName", "groupKey", "appName")
 
     # "66cd6eadeee7d7224be32a91"
-    {:ok, moment_token_123} = Battle.Utils.Token.generate_token(123, contest_id)
+    {:ok, moment_token_123} = Battle.Utils.Token.generate_token("123", contest_id)
     # "66cd6eadeee7d7224be32a90"
-    {:ok, moment_token_456} = Battle.Utils.Token.generate_token(456, contest_id)
+    {:ok, moment_token_456} = Battle.Utils.Token.generate_token("456", contest_id)
     #    RoomSupervisor.query(123, contest_id)
     #    RoomSupervisor.query(456, contest_id)
 
-    RoomSupervisor.movement([[2, 0], [3, 0]], 123, contest_id)
-    RoomSupervisor.movement([[5, 4], [4, 4]], 456, contest_id)
-    RoomSupervisor.movement([[3, 0], [3, 1]], 123, contest_id)
-    RoomSupervisor.movement([[4, 4], [4, 3]], 456, contest_id)
-    RoomSupervisor.movement([[3, 1], [3, 0]], 123, contest_id)
-    RoomSupervisor.movement([[4, 3], [4, 4]], 456, contest_id)
-    RoomSupervisor.movement([[3, 0], [3, 1]], 123, contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "456", contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 0], [5, 0],[7,0]]), "123", contest_id)
+#    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[4, 4], [4, 3]]), "456", contest_id)
+#    RoomSupervisor.movement([[3, 1], [3, 0]], 123, contest_id)
+#    RoomSupervisor.movement([[4, 3], [4, 4]], 456, contest_id)
+#    RoomSupervisor.movement([[3, 0], [3, 1]], 123, contest_id)
+    Battle.Utils.Convert.convert_index_into_integer([["a", "6"], ["a", "5"]])
   end
 
   test "calculate capture" do
