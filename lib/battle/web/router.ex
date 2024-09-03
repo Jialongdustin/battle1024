@@ -448,7 +448,7 @@ defmodule Battle.Web.Router do
     moment_token = conn.params["moment_token"]
     git_url = conn.params["git_url"]
     tag = conn.params["tag"]
-    if !CheckGit.is_valid?(git, tag) do
+    if !CheckGit.is_valid?(git_url, tag) do
       body = Ejoy.Jiffy.encode!(%{code: 200, data: "failure", success: true})
       conn
       |> Conn.put_resp_content_type("application/json")
