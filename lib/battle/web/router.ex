@@ -73,7 +73,7 @@ defmodule Battle.Web.Router do
             |> Conn.halt()
 
           {:error, _} ->
-            body = Ejoy.Jiffy.encode!(%{code: 2003, data: [], success: false})
+            body = Ejoy.Jiffy.encode!(%{code: 200, data: [], success: true})
             conn
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
@@ -282,7 +282,7 @@ defmodule Battle.Web.Router do
             }
             %{code: 200, data: message, success: true}
           {:error, _} ->
-            %{code: 2007, error: "game not exists", success: false}
+            %{code: 200, data: "game not exists", success: true}
         end
         body = Ejoy.Jiffy.encode!(message)
         conn
@@ -378,7 +378,7 @@ defmodule Battle.Web.Router do
               2001 ->
                 %{"code" => 200, "data" => "processing", "success" => true}
               2002 ->
-                %{"code" => 200, "data" => "failure", "success" => false}
+                %{"code" => 200, "data" => "failure", "success" => true}
               2000 ->
                 %{"code" => 200, "data" => "success", "success" => true}
             end
@@ -390,7 +390,7 @@ defmodule Battle.Web.Router do
           {:error, _} ->
             conn
             |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(200, Ejoy.Jiffy.encode!("did't submit git before"))
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!( %{"code" => 200, "data" => "do not submit git before", "success" => true}))
             |> Conn.halt()
         end
 

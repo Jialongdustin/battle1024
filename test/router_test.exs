@@ -997,25 +997,25 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  # test "return 200 with token info when black query test game on /test/query" do
-  #   {:ok, info} = RoomSupervisorTest.init_game()
-  #   with_mock Battle.Utils.Token, [:passthrough], [
-  #     verify_token_battle: fn _ ->
-  #       {:ok, %{user_id: "24", ext: %{account_id: info.game_id}}}
-  #     end
-  #   ] do
-  #     request_body = %{"token" => info.token_black}
-  #     conn =
-  #       :post
-  #       |> conn("/test/query", Ejoy.Jiffy.encode!(request_body))
-  #       |> put_req_header("content-type", "application/json")
-  #       |> Router.call(@opts)
-  #     [{_, dest}] = :ets.lookup(:pid_info_test, info.game_id)
-  #     Task.start(fn -> send(dest, {:query, %{code: 10002, board: [], winner: nil}}) end)
-  #     assert conn.state == :sent
-  #     assert conn.status == 200
-  #     assert Map.keys(Ejoy.Jiffy.decode!(conn.resp_body)) == ["board", "code", "winner"]
-  #   end
-  # end
+  test "return 200 with token info when black query test game on /test/query" do
+    {:ok, info} = RoomSupervisorTest.init_game()
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token_battle: fn _ ->
+        {:ok, %{user_id: "24", ext: %{account_id: info.game_id}}}
+      end
+    ] do
+      request_body = %{"token" => info.token_black}
+      conn =
+        :post
+        |> conn("/test/query", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+      [{_, dest}] = :ets.lookup(:pid_info_test, info.game_id)
+      Task.start(fn -> send(dest, {:query, %{code: 10002, board: [], winner: nil}}) end)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Map.keys(Ejoy.Jiffy.decode!(conn.resp_body)) == ["board", "code", "winner"]
+    end
+  end
 
 end
