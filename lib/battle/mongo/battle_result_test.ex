@@ -130,4 +130,12 @@ defmodule Battle.Mongo.BattleResultTest do
   def remove_all_battle(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
   end
+
+  def count_submit(user_id) do
+    info = %{user_id: user_id, code: 2000}
+    case __MODULE__.pcount(info) do
+      {:ok, cnt} -> {:ok, cnt}
+      _ -> {:ok,0}
+    end
+  end
 end

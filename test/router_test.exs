@@ -1004,14 +1004,15 @@ defmodule BattleTest.RouterTest do
         {:ok, %{user_id: "24", ext: %{account_id: info.game_id}}}
       end
     ] do
+      Task.async(fn ->
+        :timer.sleep(1000)
+        send(self(), {:query, %{code: 10002, board: [], winner: nil}}) end)
       request_body = %{"token" => info.token_black}
       conn =
         :post
         |> conn("/test/query", Ejoy.Jiffy.encode!(request_body))
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
-      [{_, dest}] = :ets.lookup(:pid_info_test, info.game_id)
-      Task.start(fn -> send(dest, {:query, %{code: 10002, board: [], winner: nil}}) end)
       assert conn.state == :sent
       assert conn.status == 200
       assert Map.keys(Ejoy.Jiffy.decode!(conn.resp_body)) == ["board", "code", "winner"]

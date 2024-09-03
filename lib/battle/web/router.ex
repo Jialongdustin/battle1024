@@ -6,6 +6,7 @@ defmodule Battle.Web.Router do
   alias Plug.Conn
   alias Battle.Service.WebService.Auth
   alias Battle.Utils.Token
+  alias Battle.Utils.CheckGit
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomSupervisorTest
   alias Battle.Service.BattleService.RoomSupervisor
@@ -447,6 +448,13 @@ defmodule Battle.Web.Router do
     moment_token = conn.params["moment_token"]
     git_url = conn.params["git_url"]
     tag = conn.params["tag"]
+    if !CheckGit.is_valid?(git, tag) do
+      body = Ejoy.Jiffy.encode!(%{code: 200, data: "failure", success: true})
+      conn
+      |> Conn.put_resp_content_type("application/json")
+      |> Conn.send_resp(200, body)
+      |> Conn.halt()
+    end
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
         {:ok, ai_name} = UserAi.get_ai_name(user_id)
@@ -473,7 +481,7 @@ defmodule Battle.Web.Router do
         |> Conn.send_resp(500, body)
         |> Conn.halt()
     end
-end
+  end
 
   # 创建测试比赛
   json_rpc "/user/create_test", "schema/user/create_test" do

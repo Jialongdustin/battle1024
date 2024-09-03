@@ -58,7 +58,7 @@ defmodule Battle.Mongo.RankList do
               {:error, _} ->
                 nil
             end
-            {:ok, count} = UserAi.count_user(user_id)
+            {:ok, count} = BattleResultTest.count_submit(user_id)
               {:error, detail = %{
                 submit_count: count,
                 user_id: user_id,
