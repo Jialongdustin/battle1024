@@ -104,8 +104,8 @@ defmodule Battle.Web.Router do
         body = case RankList.get_rank_by_user_id(user_id) do
           {:ok, info} ->
             Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
-          {:error, _} ->
-            Ejoy.Jiffy.encode!(%{code: 200, data: [], success: false})
+          {:error, info} ->
+            Ejoy.Jiffy.encode!(%{code: 200, data: info, success: false})
         end
         conn
         |> Conn.put_resp_content_type("application/json")
