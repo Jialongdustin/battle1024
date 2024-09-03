@@ -44,6 +44,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       illegal_times: [0, 0],
       time_ref: nil,
       time_ref_test: nil,
+      time_ref_verify: nil,
       steps_white: 0,
       steps_black: 0,
       group_name: groupName,
@@ -60,7 +61,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def init(state) do
-    IO.puts("roomserver init now: #{state.game_id}")
     {:ok, state}
   end
 
@@ -99,8 +99,20 @@ defmodule Battle.Service.BattleService.RoomServer do
     GenServer.stop(pid)
   end
 
+  def time_counter(pid) do
+    GenServer.call(pid, :time_counter)
+  end
+
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
+  end
+
+  def handle_call(:time_counter, _from, state) do
+    if state.time_ref_verify do
+      Process.cancel_timer(state.time_ref_verify)
+    end
+    new_ref_test = Process.send_after(self(), :execute_task_verify, @timeout_test)
+    {:reply, :ok, %{state | time_ref_verify: new_ref_test}}
   end
 
   def handle_call(:start_time_step, _from, state) do
@@ -397,6 +409,13 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_info(:execute_task_test, state) do
     IO.puts "overtime operation of testing"
+    {:stop, :normal, state}
+  end
+
+  def handle_info(:execute_task_verify, state) do
+    IO.puts "no requests in last two minutes"
+    BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black], 2002)
+    send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     {:stop, :normal, state}
   end
 

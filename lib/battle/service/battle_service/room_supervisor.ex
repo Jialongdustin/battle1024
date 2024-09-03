@@ -17,7 +17,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     DynamicSupervisor.init(opts)
   end
 
-  def init_game(white, black, game_id, groupName, groupKey, appName) do
+  def init_game(white, black, game_id, groupName, groupKey, appName, test \\ false) do
     # child_spec_server = {RoomServer, white: white, black: black, game_id: game_id}
     child_spec_server = %{
       id: RoomServer,
@@ -53,8 +53,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
       [{pid, _}] ->
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
-            IO.inspect("line 56")
-            IO.inspect(success_detail)
             RoomServer.start_countdown(pid)
             RoomServer.record_time_step(pid, user_id)
             if success_detail.winner do

@@ -89,8 +89,8 @@ defmodule Battle.Web.Router do
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
             |> Conn.halt()
-          {:error, reason} ->
-            body = Ejoy.Jiffy.encode!(%{code: 2003, data: reason, success: false})
+          {:error, _} ->
+            body = Ejoy.Jiffy.encode!(%{code: 2003, data: [], success: false})
             conn
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, body)
@@ -121,8 +121,8 @@ defmodule Battle.Web.Router do
         body = case RankList.get_rank_by_user_id(user_id) do
           {:ok, info} ->
             Ejoy.Jiffy.encode!(%{code: 200, data: info, success: true})
-          {:error, reason} ->
-            Ejoy.Jiffy.encode!(%{code: 200, data: reason, success: false})
+          {:error, _} ->
+            Ejoy.Jiffy.encode!(%{code: 200, data: [], success: false})
         end
         conn
         |> Conn.put_resp_content_type("application/json")
@@ -396,28 +396,24 @@ defmodule Battle.Web.Router do
     case Token.verify_token(moment_token) do
       {:ok, user_id} ->
         case BattleResultTest.get_result_by_user_id(user_id) do
-          {:ok, info} ->
-            message = case info.white.winner == nil do
-              true ->
+          {:ok, code} ->
+            message = case code do
+              2001 ->
+                %{"code" => 200, "data" => "processing", "success" => true}
+              2002 ->
                 %{"code" => 200, "data" => "failure", "success" => false}
-              false ->
+              2000 ->
                 %{"code" => 200, "data" => "success", "success" => true}
             end
             conn
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, Ejoy.Jiffy.encode!(message))
             |> Conn.halt()
-            
-          {:processing, _} ->
-            conn
-            |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => "processing", "success" => true}))
-            |> Conn.halt()
 
           {:error, _} ->
             conn
             |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(403, Ejoy.Jiffy.encode!("do not submit git before"))
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!("did't submit git before"))
             |> Conn.halt()
         end
 

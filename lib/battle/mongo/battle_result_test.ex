@@ -21,9 +21,10 @@ defmodule Battle.Mongo.BattleResultTest do
   field :tag, :string, required: true
   field :winner, :string, required: false
   field :time_cost_2, {:list, :integer}, required: false
-  field :memory_cost_2, {:list,:string}, required: false
+  field :memory_cost_2, {:list, :string}, required: false
   field :early_hand, :string, required: false
   field :total_step_2, {:list, :integer}, required: false
+  field :code, :integer, required: true
 
   def save_battle_result(user_id, game_id, ai_name, git_url, tag) do
     info = %{
@@ -32,12 +33,13 @@ defmodule Battle.Mongo.BattleResultTest do
       ai_name: ai_name,
       git_url: git_url,
       tag: tag,
+      code: 2001,
       date: Ejoy.Bson.utc_now()
     }
     __MODULE__.psave(info)
   end
 
-  def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps) do
+  def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps, code \\ 2001) do
     info =  __MODULE__.pquery2(%{game_id: game_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[game_id: 1]]})
       |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
@@ -45,6 +47,7 @@ defmodule Battle.Mongo.BattleResultTest do
       |> List.first()
 
     bson_id = info._id
+    code = if winner, do: 2000, else: code
     if winner != nil do
       user_id = info.user_id
       git_url = info.git_url
@@ -53,38 +56,15 @@ defmodule Battle.Mongo.BattleResultTest do
       BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
       UserAi.update_git(user_id, git_url, tag)
     end
-    __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_cost_2: time_costs, memory_cost_2: memory_costs, early_hand: early_hand, total_step_2: total_steps})
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_cost_2: time_costs, memory_cost_2: memory_costs, early_hand: early_hand, total_step_2: total_steps, code: code})
   end
 
   # BattleResultTest.get_result_by_user_id("111")
   def get_result_by_user_id(user_id) do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
       [] -> {:error, "battletest_result not found"}
-      res -> battle_info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)
-            IO.inspect(battle_info)
-            case List.first(battle_info).early_hand == nil do
-              true ->
-                {:processing, "game not over"}
-              false ->
-                self_and_opponent = Enum.map(battle_info, fn battle ->
-                  white = %{
-                    time_cost_white: Enum.at(battle.time_cost_2, 0),
-                    total_step_white: Enum.at(battle.total_step_2, 0),
-                    memory_cost_white: Enum.at(battle.memory_cost_2, 0),
-                    game_id: battle.game_id,
-                    winner: battle.winner
-                  }
-                  black = %{
-                    time_cost_black: Enum.at(battle.time_cost_2, 1),
-                    total_step_black: Enum.at(battle.total_step_2, 1),
-                    memory_cost_black: Enum.at(battle.memory_cost_2, 1),
-                    game_id: battle.game_id,
-                    winner: battle.winner
-                  }
-                  %{white: white, black: black}
-                end)
-                {:ok, List.first(self_and_opponent)}
-            end
+      res -> battle_info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()
+            {:ok, battle_info.code}
     end
   end
 

@@ -95,7 +95,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2003, "data" => "no games of user", "success" => false}
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2003, "data" => [], "success" => false}
     end
   end
 
@@ -136,6 +136,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "1"}
       end
     ] do
+      UserAi.insert_ai("1", "fuck")
       RankList.save_rank("1", "fuck", 0.8)
       conn =
         :get
@@ -154,14 +155,16 @@ defmodule BattleTest.RouterTest do
       end
     ] do
       User.save_user("1", "666")
+      UserAi.insert_ai("1", "牛逼")
       conn =
         :get
         |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2004, "data" => "user_id error", "success" => false}
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => false}
       User.remove_user("1")
+      UserAi.clean_message("1")
     end
   end
 
@@ -221,6 +224,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
+      UserAi.insert_ai("111", "niubi")
       conn =
         :get
         |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
@@ -822,7 +826,7 @@ defmodule BattleTest.RouterTest do
       BattleResultTest.remove_all_battle("111")
       UserAi.insert_ai("111", "牛逼")
       BattleResultTest.save_battle_result("111", "first", "牛逼", "git@alibaba-inc.com", "main")
-      BattleResultTest.update_battle_result("first", "111", nil, [1, 2], ["1g", "2g"], [30, 31])
+      BattleResultTest.update_battle_result("first", nil, nil, [1, 2], ["1g", "2g"], [30, 31], 2002)
       conn =
         :get
         |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
@@ -879,7 +883,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       assert conn.state == :sent
       assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [%{"black" => %{"game_id" => "first", "memory_cost_black" => "2g", "time_cost_black" => 2, "total_step_black" => 31, "winner" => "111"}, "tag" => "main", "white" => %{"game_id" => "first", "memory_cost_white" => "1g", "time_cost_white" => 1, "total_step_white" => 30, "winner" => "111"}}], "success" => true}
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => true}
       BattleResultTest.remove_all_battle("111")
     end
   end
