@@ -4,9 +4,8 @@ defmodule Battle.Service.BattleService.ThreadPool do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
-  # @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5", "battle-players6", "battle-players7", "battle-players8", "battle-players9", "battle-players10",
-  #                 "battle-players11", "battle-players12", "battle-players13", "battle-players14"]
-  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5"]
+  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5", "battle-players6", "battle-players7", "battle-players8", "battle-players9", "battle-players10",
+                  "battle-players11", "battle-players12", "battle-players13", "battle-players14"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
   def start_link(size) do

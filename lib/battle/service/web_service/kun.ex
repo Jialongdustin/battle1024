@@ -59,6 +59,8 @@ defmodule Battle.Service.WebService.Kun do
         package_name = task["name"]
         build_result_check(package_id)
         %{user_id: user_id, package_name: package_name}
+      {:error, reason} ->
+        {:error, reason}
       _ ->
         change_config(info)
     end
@@ -259,9 +261,13 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   def send_put(path, params) do
-    {:ok, resp} = Ejoy.HttpRPC.json_put(@kun_api_url <> path,
-      params, [], make_headers(path, params, "PUT"))
-    resp
+    case Ejoy.HttpRPC.json_put(@kun_api_url <> path,
+      params, [], make_headers(path, params, "PUT")) do
+        {:ok, resp} ->
+          resp
+        {:fail, _} ->
+          {:error, "git or tag illegal"}
+      end
   end
 
   def make_headers(path, params, method \\ "POST") do

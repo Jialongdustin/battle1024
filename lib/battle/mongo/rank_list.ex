@@ -9,7 +9,7 @@ defmodule Battle.Mongo.RankList do
   @collection "rank_list"
   @indexes [
     {[rate: 1], false},
-    {[user_id: 1],false}
+    {[user_id: 1], false}
   ]
   @cleanable false
 

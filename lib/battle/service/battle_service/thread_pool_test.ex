@@ -4,6 +4,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
+  alias Battle.Mongo.BattleResultTest
 
   @service_groups ["battle-test1", "battle-test2", "battle-test3", "battle-test4", "battle-test5"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
@@ -122,25 +123,31 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
 
   # players建立user_id和每个用户的构建包的映射
   defp execute_task({git, tag, game_id}, {groupName, appName}) do
-    package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
-    groupKey =
-      Regex.run(~r/test\d+/, groupName)
-      |> List.first()
-      |> (fn name -> "plat1024-#{name}" end).()
-    RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName, true)
-    update_services(groupName, groupKey, appName, game_id)
-    [
-      %{
-        "serviceGroup": groupKey,
-        "service": appName,
-        "appConfBuildName": package_name
-      },
-      %{
-        "serviceGroup": groupKey,
-        "service": Map.get(@appNames, appName),
-        "appConfBuildName": package_name
-      },
-    ] |> Kun.create_deploy_task()
+    case Kun.change_config(%{user_id: 1024, git_url: git, tag: tag}) do
+      {:error, reason} ->
+        BattleResultTest.update_battle_result_failed(game_id)
+      %{package_name: package_name, user_id: _} ->
+        groupKey =
+          Regex.run(~r/test\d+/, groupName)
+          |> List.first()
+          |> (fn name -> "plat1024-#{name}" end).()
+        RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName, true)
+        update_services(groupName, groupKey, appName, game_id)
+        [
+          %{
+            "serviceGroup": groupKey,
+            "service": appName,
+            "appConfBuildName": package_name
+          },
+          %{
+            "serviceGroup": groupKey,
+            "service": Map.get(@appNames, appName),
+            "appConfBuildName": package_name
+          },
+        ] |> Kun.create_deploy_task()
+    end
+
+
   end
 
   defp terminate_service(groupKey, appName) do

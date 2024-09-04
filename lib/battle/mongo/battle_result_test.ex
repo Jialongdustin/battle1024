@@ -39,6 +39,17 @@ defmodule Battle.Mongo.BattleResultTest do
     __MODULE__.psave(info)
   end
 
+  def update_battle_result_failed(game_id) do
+    info =  __MODULE__.pquery2(%{game_id: game_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[game_id: 1]]})
+      |> Enum.map(fn message ->
+        message |> __MODULE__.to_raw()
+      end)
+      |> List.first()
+
+    bson_id = info._id
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | code: 2002})
+  end
+
   def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps, code \\ 2001) do
     info =  __MODULE__.pquery2(%{game_id: game_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[game_id: 1]]})
       |> Enum.map(fn message ->
