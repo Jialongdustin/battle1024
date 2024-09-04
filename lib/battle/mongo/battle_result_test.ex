@@ -110,13 +110,6 @@ defmodule Battle.Mongo.BattleResultTest do
     end
   end
 
-  def get_battle_results() do
-    case pquery(%{}) do
-      [] -> {:error,"empty battle"}
-      res ->
-        {:ok, res |> Enum.map(&__MODULE__.to_raw/1) |> Enum.map(fn message ->  [message.user_id, message.winner] end)}
-    end
-  end
 
   def get_battle_results_within_24_hour() do
     time_query = Battle.Utils.GetTime24.get_time()
@@ -128,10 +121,6 @@ defmodule Battle.Mongo.BattleResultTest do
     end
   end
 
-  def count_battle() do
-    {:ok, count} = __MODULE__.pcount(%{})
-    count
-  end
 
   def get_newest_time_by_user_id(user_id) do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
@@ -153,4 +142,5 @@ defmodule Battle.Mongo.BattleResultTest do
       _ -> {:ok,0}
     end
   end
+
 end
