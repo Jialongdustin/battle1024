@@ -176,7 +176,7 @@ defmodule Battle.Web.Router do
                   average_time_cost: battle_statistics.average_time_cost,
                   submit_count: battle_statistics.submit_count,
                   user_count: battle_statistics.user_count,
-                  last_submit_time: battle_statistics.last_submit_time.ms
+                  last_submit_time: (if battle_statistics.last_submit_time, do: battle_statistics.last_submit_time.ms, else: 0)
                     },
                 success: true
               }
