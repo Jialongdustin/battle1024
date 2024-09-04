@@ -24,11 +24,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
         end
       end)
     end)
-    {:ok, %{users: [], workers: [], size: size, queue: :queue.new(), busy: %{}}}
-  end
-
-  def get_users(info) do
-    GenServer.call(__MODULE__, {:get_users, info})
+    {:ok, %{workers: [], size: size, queue: :queue.new(), busy: %{}}}
   end
 
   def add_task(task) do
@@ -41,16 +37,6 @@ defmodule Battle.Service.BattleService.ThreadPool do
 
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
-  end
-
-  def handle_call({:get_users, info}, _from, state) do
-    case length(state.users) do
-      0 ->
-        new_users = [info]
-        {:reply, :push, %{state | users: new_users}}
-      1 ->
-        {:reply, state.users, %{state | users: []}}
-    end
   end
 
   def handle_cast({:add_task, task}, state) do
@@ -189,7 +175,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
           "mem" => 96,
           "capacity" => 20,
           "svcCapacity" => 0,
-          "nodepoolId" => "npeba0ac67afb34e028c66e0ba0ece482f", # np0f3c8a13074143ff90da1f198a756367
+          "nodepoolId" => "np0f3c8a13074143ff90da1f198a756367",
           "params" => %{
             "token" => token,
             "white" => to_string(white)

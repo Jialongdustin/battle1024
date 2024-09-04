@@ -33,7 +33,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         end
       end)
     end)
-    {:ok, %{users: [], workers: [], size: size, queue: :queue.new(), busy: %{}}}
+    {:ok, %{workers: [], size: size, queue: :queue.new(), busy: %{}}}
   end
 
   def add_task(task) do

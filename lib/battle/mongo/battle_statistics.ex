@@ -41,7 +41,7 @@ defmodule Battle.Mongo.BattleStatistics do
       submit_count: 0,
       average_step: 0,
       average_time_cost: 0,
-      last_submit_time: Ejoy.Bson.utc_now()
+      last_submit_time: nil
     }
     __MODULE__.psave(info)
   end

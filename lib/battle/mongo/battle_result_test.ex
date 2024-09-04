@@ -63,6 +63,10 @@ defmodule Battle.Mongo.BattleResultTest do
       user_id = info.user_id
       git_url = info.git_url
       tag = info.tag
+      {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
+      if user_info.git_url == nil do
+        BattleStatistics.user_increment()
+      end
       BattleStatistics.submit_increment()
       BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
       UserAi.update_git(user_id, git_url, tag)
