@@ -5,7 +5,8 @@ defmodule Battle.Mongo.User do
   @db "battle"
   @collection "user"
   @indexes [
-    {[user_id: 1], true}
+    {[user_id: 1], true},
+    {[account: 1], true}
   ]
   @cleanable false
 
@@ -27,14 +28,16 @@ defmodule Battle.Mongo.User do
 
 
   def query_user(account) do
-    case __MODULE__.pquery2(%{account: account},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+    case __MODULE__.pquery2(%{account: account},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[account: 1]]}) do
       [] -> {:error, "user_id error"}
       res -> {:ok, res |> Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
   def update_avatar(user_id, avatar) do
-    {:ok, info} = query_user(user_id)
+    info = __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]})
+        |>  Enum.map(fn message -> message|> __MODULE__.to_raw() end)
+        |> List.first()
     __MODULE__.pupdate(%{user_id: user_id}, %{info | avatar: avatar})
   end
 
