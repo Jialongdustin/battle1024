@@ -14,6 +14,7 @@ test "battle_early_hand" do
   RoomSupervisor.query(123, contest_id)
   RoomSupervisor.query(456, contest_id)
   is_binary("9927b3de-6385-11ef-aca7-b2a3d4b2d740")
+  Battle.Service.WebService.Auth.verify_code("AQZQMTEzODdESJnAWL4/09+g5Cia5hgVoZDRWgIN2GZm1ruCu4M0FOSI5uZY05YR2iAAzcbaVFjMA7Sp")
 
   RoomSupervisor.movement([[1, 0], [2, 0]], 123, contest_id)
 

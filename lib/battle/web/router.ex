@@ -1,7 +1,6 @@
 defmodule Battle.Web.Router do
   use Plug.Router
   use Ejoy.Plug.ErrorHandler
-  use Ejoy.Plug.JsonResp2, return_code_module: Battle.Utils.ReturnCode
 
   alias Plug.Conn
   alias Battle.Service.WebService.Auth

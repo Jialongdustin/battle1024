@@ -10,6 +10,7 @@ defmodule BattleTest.RoomServerTest do
 
 
   test "battle_early_hand" do
+    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
       Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", "11", "groupName", "groupKey", "appName")
@@ -20,15 +21,25 @@ defmodule BattleTest.RoomServerTest do
     {:ok, moment_token_456} = Battle.Utils.Token.generate_token("456", contest_id)
     #    RoomSupervisor.query(123, contest_id)
     #    RoomSupervisor.query(456, contest_id)
-
+    RoomSupervisor.query(nil,"123",contest_id)
     RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
-    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "456", contest_id)
-    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 0], [5, 0],[7,0]]), "123", contest_id)
-#    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[4, 4], [4, 3]]), "456", contest_id)
-#    RoomSupervisor.movement([[3, 1], [3, 0]], 123, contest_id)
-#    RoomSupervisor.movement([[4, 3], [4, 4]], 456, contest_id)
-#    RoomSupervisor.movement([[3, 0], [3, 1]], 123, contest_id)
-    Battle.Utils.Convert.convert_index_into_integer([["a", "6"], ["a", "5"]])
+    RoomSupervisor.query(nil,"456",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 4], [4, 4]]), "456", contest_id)
+    RoomSupervisor.query(nil,"123",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 0], [3, 1]]), "123", contest_id)
+    RoomSupervisor.query(nil,"456",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[4, 4], [4, 3]]), "456", contest_id)
+    RoomSupervisor.query(nil,"123",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 1], [3, 0]]), "123", contest_id)
+    RoomSupervisor.query(nil,"456",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[4, 3], [4, 4]]), "456", contest_id)
+    # 重复移动会结束游戏
+    RoomSupervisor.query(nil,"123",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[3, 0], [3, 1]]), "123", contest_id)
+
+    {:ok,battle_info} = Battle.Mongo.BattleInfo.get_battle_by_game_id(contest_id)
+    Battle.Mongo.BattleInfo.remove_battle(contest_id)
+    assert battle_info.steps == 7
   end
 
   test "calculate capture" do
@@ -49,22 +60,7 @@ defmodule BattleTest.RoomServerTest do
     IO.inspect(res)
   end
 
-  test "cal_black_white_and_node_value" do
-    board = [
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [1, 1, 1, 1, 1, 1, 1, 1],
-      [0, 1, 1, 1, 1, 1, 1, 1],
-      [1, 0, 0, 0, 0, 0, 0, 0],
-      [3, 0, 0, 0, 0, 0, 0, 0],
-      [0, 3, 3, 3, 3, 3, 3, 3],
-      [3, 3, 3, 3, 3, 3, 3, 3],
-      [0, 0, 0, 0, 0, 0, 0, 0]
-    ]
 
-    moves = [[3, 0], [5, 0], [7, 0]]
-    res = RoomServer.cal_black_white_and_node_value(moves, board)
-    IO.inspect(res)
-  end
 
   test "update capture" do
     board = [
@@ -142,30 +138,30 @@ defmodule BattleTest.RoomServerTest do
 
   test "count total pieces" do
 
+    board = [
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 2, 0, 0, 0, 0, 0, 0]
+    ]
+
 #    board = [
 #      [0, 0, 0, 0, 0, 0, 0, 0],
 #      [0, 0, 0, 0, 0, 0, 0, 0],
 #      [0, 0, 0, 0, 0, 0, 0, 0],
 #      [0, 0, 0, 0, 0, 0, 0, 0],
-#      [0, 2, 0, 0, 0, 0, 0, 0],
 #      [0, 0, 0, 0, 0, 0, 0, 0],
-#      [0, 3, 0, 0, 0, 0, 0, 0],
-#      [4, 0, 0, 0, 0, 0, 0, 0]
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 0, 0, 0, 0, 0, 0],
+#      [0, 0, 4, 0, 0, 0, 0, 0]
 #    ]
-
-    board = [
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 4, 0, 0, 0, 0, 0]
-    ]
     state = %{
-      white: 11,
-      black: 22,
+      white: "11",
+      black: "22",
       contest_id: 33,
       winner: nil,
       board: board,
@@ -182,13 +178,45 @@ defmodule BattleTest.RoomServerTest do
       time_counter_white: 0,
       time_counter_black: 0
     }
-    capture = [%{captured: [7, 1], moves: [[7, 0], [7, 2]]}]
+    capture = [%{captured: [6, 1], moves: [[4, 1], [7, 1]]}]
 
     res = RoomServer.count_total_piece(state,capture)
 #    Battle.Service.BattleService.RoomSupervisorTest.init_game()
 #    66cd8f9d81e4b8e68e599c19
 #    66cd8f9d81e4b8e68e599c18
-    IO.inspect(res)
+    assert res == "11"
+  end
+
+  test "record time step" do
+    game_id = "11111"
+    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
+    {:ok, contest_id} =
+      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
+
+      RoomSupervisor.query(nil,"123",game_id)
+      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
+
+      RoomSupervisor.query(nil,"456",game_id)
+      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "456", contest_id)
+
+      #违规会结束游戏
+      RoomSupervisor.query(nil,"123",game_id)
+      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
+
+      {:ok,battle_info} = Battle.Mongo.BattleInfo.get_battle_by_game_id(game_id)
+      Battle.Mongo.BattleInfo.remove_battle(game_id)
+      assert battle_info.steps == 2
+
+  end
+
+  test "overtime" do
+    game_id = "11112"
+    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
+    {:ok, contest_id} =
+      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
+    [{pid,_}] = Registry.lookup(Battle.RoomRegistry, game_id)
+    RoomServer.time_counter(pid)
+
   end
 
 end

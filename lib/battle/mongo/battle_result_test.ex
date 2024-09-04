@@ -52,9 +52,19 @@ defmodule Battle.Mongo.BattleResultTest do
       user_id = info.user_id
       git_url = info.git_url
       tag = info.tag
-      BattleStatistics.submit_increment()
-      BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
-      UserAi.update_git(user_id, git_url, tag)
+      {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
+      if user_info.git_url == nil do
+        BattleStatistics.user_increment()
+        BattleStatistics.submit_increment()
+        BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
+        UserAi.update_git(user_id, git_url, tag)
+      else
+        BattleStatistics.submit_increment()
+        BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
+        UserAi.update_git(user_id, git_url, tag)
+      end
+
+
     end
     __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_cost_2: time_costs, memory_cost_2: memory_costs, early_hand: early_hand, total_step_2: total_steps, code: code})
   end
@@ -95,13 +105,6 @@ defmodule Battle.Mongo.BattleResultTest do
     end
   end
 
-  def get_battle_results() do
-    case pquery(%{}) do
-      [] -> {:error,"empty battle"}
-      res ->
-        {:ok, res |> Enum.map(&__MODULE__.to_raw/1) |> Enum.map(fn message ->  [message.user_id, message.winner] end)}
-    end
-  end
 
   def get_battle_results_within_24_hour() do
     time_query = Battle.Utils.GetTime24.get_time()
@@ -113,10 +116,6 @@ defmodule Battle.Mongo.BattleResultTest do
     end
   end
 
-  def count_battle() do
-    {:ok, count} = __MODULE__.pcount(%{})
-    count
-  end
 
   def get_newest_time_by_user_id(user_id) do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
@@ -138,4 +137,5 @@ defmodule Battle.Mongo.BattleResultTest do
       _ -> {:ok,0}
     end
   end
+
 end
