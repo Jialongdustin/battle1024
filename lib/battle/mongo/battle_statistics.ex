@@ -13,7 +13,7 @@ defmodule Battle.Mongo.BattleStatistics do
   field :submit_count, :integer, required: true
   field :average_step, :float, required: true
   field :average_time_cost, :float, required: true
-  field :last_submit_time, :datetime, required: true
+  field :last_submit_time, :datetime, required: false
 
   def query_statistics_info() do
     case __MODULE__.pquery(%{}) do
@@ -40,8 +40,7 @@ defmodule Battle.Mongo.BattleStatistics do
     info = %{user_count: 0,
       submit_count: 0,
       average_step: 0,
-      average_time_cost: 0,
-      last_submit_time: nil
+      average_time_cost: 0
     }
     __MODULE__.psave(info)
   end
