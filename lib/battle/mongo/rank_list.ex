@@ -39,7 +39,7 @@ defmodule Battle.Mongo.RankList do
 
   def get_rank_by_user_id(user_id) do
     {:ok, user_info} = User.query_user(user_id)
-    case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+    case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       [] ->
         case UserAi.get_newest_ai_by_userId(user_id) do
           {:error, _} ->

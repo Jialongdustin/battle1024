@@ -27,15 +27,22 @@ defmodule Battle.Mongo.User do
    end
 
 
-  def query_user(account) do
+  def query_user_by_account(account) do
     case __MODULE__.pquery2(%{account: account},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[account: 1]]}) do
       [] -> {:error, "user_id error"}
       res -> {:ok, res |> Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
+  def query_user(user_id) do
+    case __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+      [] -> {:error, "user_id error"}
+      res -> {:ok, res |> Enum.map(fn message -> message|> __MODULE__.to_raw() end) |> List.first()}
+    end
+  end
+
   def update_avatar(user_id, avatar) do
-    info = __MODULE__.pquery2(%{user_id: user_id},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]})
+    info = __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]})
         |>  Enum.map(fn message -> message|> __MODULE__.to_raw() end)
         |> List.first()
     __MODULE__.pupdate(%{user_id: user_id}, %{info | avatar: avatar})
