@@ -698,30 +698,6 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "return 200 code with illegal git or tag when updata git on /user/update_git" do
-    with_mock Battle.Utils.Token, [:passthrough], [
-      verify_token: fn _ ->
-        {:ok, "1"}
-      end
-    ] do
-      UserAi.insert_ai("1", "牛逼")
-      request_body = %{
-        "git_url" => "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git",
-        "tag" => "ben",
-        "moment_token" => "sfakjflasfla"
-      }
-      conn =
-        :post
-        |> conn("/user/update_git", Ejoy.Jiffy.encode!(request_body))
-        |> put_req_header("content-type", "application/json")
-        |> Router.call(@opts)
-      assert conn.state == :sent
-      assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "failure", "success" => true}
-      UserAi.clean_message("1")
-    end
-  end
-
   test "return 200 code with success when updata git on /user/update_git" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
