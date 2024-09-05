@@ -19,6 +19,7 @@ defmodule Battle.Application do
       Battle.Service.BattleService.RoomSupervisor,
       Battle.Service.BattleService.RoomSupervisorTest,
       {Battle.Service.BattleService.ThreadPoolTest, []},
+      {Battle.Service.BattleService.Tournament, []}
       # Starts a worker by calling: Battle.Worker.start_link(arg)
       # {Battle.Worker, arg}
     ]

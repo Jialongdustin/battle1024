@@ -15,7 +15,7 @@ defmodule Battle.Service.WebService.Kun do
   def start_build() do
     case UserAi.get_all_gits() do
       {:error, message} ->
-        {:error, "build failed"}
+        {:error, "no git submit success"}
       {:ok, gits} ->
         gits
         |> Enum.map(fn info -> change_config(info) end)
@@ -38,7 +38,7 @@ defmodule Battle.Service.WebService.Kun do
 
       {:error, reason} ->
         {:error, reason}
-      
+
       _ ->
         change_config(info)
     end

@@ -12,7 +12,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def init() do
+  def init(_args) do
     :ets.new(:services_info, [:named_table, :public, read_concurrency: true])
     Enum.each(@service_groups, fn group_name ->
       Enum.each(Map.keys(@appNames), fn app_name ->
