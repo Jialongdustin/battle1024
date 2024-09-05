@@ -58,14 +58,19 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
+      UserAi.insert_ai("111","wawawa")
+      UserAi.insert_ai("222","wawawa")
       BattleResult.save_battle_result(["111", "222"], "333", "111", [11, 22], ["11","22"], "111", [20, 30])
       conn =
         :get
         |> conn("/user/all", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
+      BattleResult.remove_battle("111")
+      UserAi.clean_message("111")
+      UserAi.clean_message("222")
+
       assert conn.state == :sent
       assert conn.status == 200
-      BattleResult.remove_battle("111")
     end
   end
 

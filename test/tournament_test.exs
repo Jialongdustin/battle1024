@@ -15,4 +15,5 @@ defmodule BattleTest.TournamentTest do
       assert length(ThreadPool.get_state().workers) == 2
     end
   end
+
 end

@@ -52,34 +52,34 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
     end
   end
 
-#  def movement(moves, user_id, game_id) do
-#    case Registry.lookup(Battle.RoomRegistry, game_id) do
-#      [{pid, _}] ->
-#        case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
-#          {:ok, success_detail} ->
-#            RoomServer.start_countdown(pid)
-#            RoomServer.record_time_step(pid, user_id)
-#            if success_detail.winner do
-#              RoomServer.terminate_game(pid)
-#            end
-#            case :ets.lookup(:pid_info, game_id) do
-#              [] -> # 对方没有查询
-#                {:ok, success_detail}
-#              [{_, dest}] -> # 对方查询棋盘状态
-#                :ets.delete(:pid_info, game_id)
-#                send(dest, {:query, success_detail})
-#                if success_detail.winner == nil do
-#                  RoomServer.start_time_step(pid)
-#                  RoomServer.start_countdown(pid)
-#                end
-#                {:ok, success_detail}
-#            end
-#          {:error, error_detail} ->
-#            RoomServer.terminate_game(pid)
-#            {:error, error_detail}
-#        end
-#      [] ->
-#        {:error, "room not found"}
-#      end
-#  end
+  def movement(moves, user_id, game_id) do
+    case Registry.lookup(Battle.RoomRegistry, game_id) do
+      [{pid, _}] ->
+        case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
+          {:ok, success_detail} ->
+            RoomServer.start_countdown(pid)
+            RoomServer.record_time_step(pid, user_id)
+            if success_detail.winner do
+              RoomServer.terminate_game(pid)
+            end
+            case :ets.lookup(:pid_info, game_id) do
+              [] -> # 对方没有查询
+                {:ok, success_detail}
+              [{_, dest}] -> # 对方查询棋盘状态
+                :ets.delete(:pid_info, game_id)
+                send(dest, {:query, success_detail})
+                if success_detail.winner == nil do
+                  RoomServer.start_time_step(pid)
+                  RoomServer.start_countdown(pid)
+                end
+                {:ok, success_detail}
+            end
+          {:error, error_detail} ->
+            RoomServer.terminate_game(pid)
+            {:error, error_detail}
+        end
+      [] ->
+        {:error, "room not found"}
+      end
+  end
 end

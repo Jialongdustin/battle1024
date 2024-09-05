@@ -6,6 +6,7 @@ defmodule BattleResultTest do
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.UserAi
 
   test "get battle in 24 hours" do
     BattleResult.save_battle_result(["1","2"],"1","1",[11,22],["11","22"],"1",[20,30])
@@ -28,11 +29,16 @@ defmodule BattleResultTest do
   end
 
   test "get_battle_by user id" do
+    UserAi.insert_ai("1","hahaha")
+    UserAi.insert_ai("2","wawawa")
     Battle.Mongo.BattleResult.save_battle_result(["1","2"],"1","1",[11,22],["11","22"],"1",[20,30])
     winner = "1"
 
     {:ok,user_info} = BattleResult.get_battle_result_by_user_id(winner)
     BattleResult.remove_battle(winner)
+    UserAi.clean_message("1")
+    UserAi.clean_message("2")
     assert List.first(user_info).self.winner == winner
   end
+
 end
