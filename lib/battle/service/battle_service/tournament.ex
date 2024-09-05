@@ -23,7 +23,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   defp schedule_tournament do
     now = DateTime.utc_now()
-    noon = "#{Date.to_string(now)} 07:05:00"
+    noon = "#{Date.to_string(now)} 04:00:00"
     {:ok, twelve_noon, _offset} = DateTime.from_iso8601("#{noon}Z")
     now_ms = DateTime.to_unix(now, :millisecond)
     twelve_noon_ms = DateTime.to_unix(twelve_noon, :millisecond)
@@ -41,7 +41,7 @@ defmodule Battle.Service.BattleService.Tournament do
     end
   end
 
-  defp initiate_tournament_logic() do
+  def initiate_tournament_logic() do
     IO.inspect("start tournament")
     case Kun.start_build() do
       {:error, reason} ->
