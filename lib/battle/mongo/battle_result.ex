@@ -54,7 +54,7 @@ defmodule Battle.Mongo.BattleResult do
 
                    self = %{
                      user_id_self: self_id,
-                     ai_name_self: UserAi.get_ai_name(self_id),
+                     ai_name_self: self_ai_name,
                      time_cost_self: Enum.at(battle.time_cost_2, self_index),
                      total_step_self: Enum.at(battle.total_step_2, self_index),
                      memory_cost_self: Enum.at(battle.memory_cost_2, self_index),
