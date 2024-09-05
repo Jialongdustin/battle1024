@@ -23,7 +23,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   defp schedule_tournament do
     now = DateTime.utc_now()
-    noon = "#{Date.to_string(now)} 06:45:00"
+    noon = "#{Date.to_string(now)} 06:53:00"
     {:ok, twelve_noon, _offset} = DateTime.from_iso8601("#{noon}Z")
     now_ms = DateTime.to_unix(now, :millisecond)
     twelve_noon_ms = DateTime.to_unix(twelve_noon, :millisecond)
