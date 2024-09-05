@@ -22,18 +22,7 @@ defmodule Battle.Mongo.BattleStatistics do
     end
   end
 
-  def update_statistics_info(user_count, submit_count, average_step,average_time_cost) do
-    {:ok, info} = query_statistics_info()
-    update_time = Battle.Mongo.UserAi.get_newest_submit_time()
-    info = %{ info |
-      user_count: user_count,
-      submit_count: submit_count,
-      average_step: average_step,
-      average_time_cost: average_time_cost,
-      last_submit_time: update_time
-    }
-    __MODULE__.pupdate(%{_id: info._id}, info)
-  end
+
 
   # 这里初始化就往db插一条数据，方便后续拿数据计算，项目启动后只需要调用一次
   def save_init() do

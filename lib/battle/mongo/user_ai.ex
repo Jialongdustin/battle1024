@@ -16,19 +16,12 @@ defmodule Battle.Mongo.UserAi do
   field :create_time, :datetime, required: false
 
   def get_newest_ai_by_userId(user_id)do
-    case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [create_time: -1], 1) do
+    case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
       [] -> {:error, "Battle.UserAi error"}
       res -> {:ok, res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()}
     end
   end
 
-  def get_ai_list_by_userId(user_id) do
-    case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-      [] -> {:error, "Battle.UserAi error"}
-      res -> {:ok, res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)}
-    end
-
-  end
 
   def get_all_gits() do
     case __MODULE__.pquery(%{}) do
@@ -37,19 +30,7 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-  def count_submit() do
-    case __MODULE__.pcount(%{}) do
-      {:ok, cnt} -> cnt
-      _ -> 0
-    end
-  end
 
-  def count_user(user_id) do
-    case __MODULE__.pcount(%{user_id: user_id}) do
-      {:ok, cnt} -> {:ok, cnt}
-      _ -> {:ok,0}
-    end
-  end
 
   def get_newest_submit_time() do
     case __MODULE__.pquery_sort_limit(%{},[create_time: -1],1) do

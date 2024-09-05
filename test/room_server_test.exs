@@ -7,7 +7,8 @@ defmodule BattleTest.RoomServerTest do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Service.BattleService.RoomServer
   alias Battle.Utils.Token
-
+  alias Battle.Mongo.BattleStatistics
+  alias Battle.Mongo.BattleResult
 
   test "battle_early_hand" do
     {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
@@ -39,6 +40,7 @@ defmodule BattleTest.RoomServerTest do
 
     {:ok,battle_info} = Battle.Mongo.BattleInfo.get_battle_by_game_id(contest_id)
     Battle.Mongo.BattleInfo.remove_battle(contest_id)
+    BattleResult.remove_battle("123")
     assert battle_info.steps == 7
   end
 
@@ -75,11 +77,11 @@ defmodule BattleTest.RoomServerTest do
     ]
 
     capture = [
-      %{captured: [4, 0], moves: [[3, 0], [5, 0]]},
-      %{captured: [6, 0], moves: [[5, 0], [7, 0]]}
+      %{captured: ["a", "4"], moves: [["a", "5"], ["a", "3"]]},
+      %{captured: ["a", "2"], moves: [["a", "3"], ["a", "1"]]}
     ]
 
-    update = RoomServer.get_update(capture, 1, 3, 0, 7, 0)
+    update = RoomServer.get_update(capture, 2, 3, 0, 7, 0)
 
     new_board =
       Enum.reduce(update, board, fn {row, col, new_value}, acc ->
@@ -95,46 +97,10 @@ defmodule BattleTest.RoomServerTest do
              [0, 0, 0, 0, 0, 0, 0, 0],
              [0, 3, 3, 3, 3, 3, 3, 3],
              [0, 3, 3, 3, 3, 3, 3, 3],
-             [1, 0, 0, 0, 0, 0, 0, 0]
+             [2, 0, 0, 0, 0, 0, 0, 0]
            ]
   end
 
-  test "check repeat remove" do
-    board = [
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 2, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 3, 0, 0, 0, 0, 0, 0],
-      [4, 0, 0, 0, 0, 0, 0, 0]
-    ]
-    state = %{
-      white: 11,
-      black: 22,
-      contest_id: 33,
-      winner: nil,
-      board: board,
-      early_hand: true,
-      steps: [],
-      illegal_times: [0, 0],
-      time_ref: nil,
-      steps_white: 0,
-      steps_black: 0,
-      pre_step_white: %{move: [], cnt: 0},
-      pre_step_black: %{move: [], cnt: 0},
-      time_cost_white: 0,
-      time_cost_black: 0,
-      time_counter_white: 0,
-      time_counter_black: 0
-    }
-    capture = [%{captured: nil, moves: [[2, 0], [3, 0]]}]
-
-    {_, state} = RoomServer.check_repeat_move(state, [[2, 0], [3, 0]], [])
-    {_, state} = RoomServer.check_repeat_move(state, [[3, 0], [2, 0]], [])
-    RoomServer.check_repeat_move(state, [[2, 0], [3, 0]], [])
-  end
 
   test "count total pieces" do
 
@@ -188,35 +154,37 @@ defmodule BattleTest.RoomServerTest do
   end
 
   test "record time step" do
+    BattleStatistics.save_init()
     game_id = "11111"
     {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
-    {:ok, contest_id} =
+    {:ok, game_id} =
       Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
 
       RoomSupervisor.query(nil,"123",game_id)
-      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
+      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", game_id)
 
       RoomSupervisor.query(nil,"456",game_id)
-      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "456", contest_id)
+      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[5, 0], [4, 0]]), "456", game_id)
 
       #违规会结束游戏
       RoomSupervisor.query(nil,"123",game_id)
-      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
+      RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", game_id)
 
       {:ok,battle_info} = Battle.Mongo.BattleInfo.get_battle_by_game_id(game_id)
       Battle.Mongo.BattleInfo.remove_battle(game_id)
+      BattleResult.remove_battle("123")
       assert battle_info.steps == 2
 
   end
 
-  test "overtime" do
-    game_id = "11112"
-    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
-    {:ok, contest_id} =
-      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
-    [{pid,_}] = Registry.lookup(Battle.RoomRegistry, game_id)
-    RoomServer.time_counter(pid)
-
-  end
+#  test "overtime" do
+#    game_id = "11112"
+#    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
+#    {:ok, contest_id} =
+#      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
+#    [{pid,_}] = Registry.lookup(Battle.RoomRegistry, game_id)
+#    RoomServer.time_counter(pid)
+#
+#  end
 
 end

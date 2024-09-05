@@ -14,7 +14,6 @@ defmodule UtilsTest.ConvertTest do
 
   test "convert_i_to_s" do
     moves = [[0, 3], [5, 3]]
-    BattleStatistics.submit_increment()
     assert Convert.convert_integer_into_string(moves) == [["d", "8"], ["d", "3"]]
   end
 

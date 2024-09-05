@@ -18,8 +18,8 @@ defmodule Battle.Mongo.BattleResult do
   field :total_step_2, {:list, :integer}, required: true
   field :date, :datetime, required: true
 
-#  Battle.Mongo.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
 
+  #  Battle.Mongo.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
 
   def save_battle_result(users, game_id, winner, time_costs, memory_costs, early_hand, total_steps) do
     info = %{
@@ -103,6 +103,6 @@ defmodule Battle.Mongo.BattleResult do
   end
 
   def remove_battle(user_id) do
-    __MODULE__.pdelete(%{user_id: user_id})
+    __MODULE__.pdelete(%{user_id_2: user_id},false)
   end
 end

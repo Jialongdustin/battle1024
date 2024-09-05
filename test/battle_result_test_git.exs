@@ -20,6 +20,7 @@ defmodule BattleResultTestGit do
   test "get battle res" do
     BattleResultTest.save_battle_result("2","aaa","niubi","c.com","main")
     {:ok,code} = BattleResultTest.get_result_by_user_id("2")
+    BattleResultTest.remove_all_battle("2")
     assert code == 2001
   end
 
@@ -28,6 +29,7 @@ defmodule BattleResultTestGit do
     BattleResultTest.save_battle_result("2","aaa","niubi","c.com","main")
     BattleResultTest.update_battle_result("aaa","10","10",[10,20],["20","30"],[10,11])
     {:ok,after_count} = BattleResultTest.count_submit("2")
+    BattleResultTest.remove_all_battle("2")
     assert after_count == count+1
   end
 

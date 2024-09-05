@@ -12,7 +12,8 @@ defmodule BattleTest.UserTest do
     user_name = "ljl"
     User.save_user(user_id,account,user_name)
     {:ok,res} = User.query_user_by_account(account)
-    assert res.user_id == user_id && user_name == user_name
+    User.remove_user(user_id)
+    assert res.user_id == user_id && res.user_name == user_name
   end
 
   test "query user name" do
