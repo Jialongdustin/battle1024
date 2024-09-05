@@ -3,6 +3,8 @@ defmodule Battle.Service.BattleService.Tournament do
 
   alias Battle.Service.BattleService.ThreadPool
   alias Battle.Service.WebService.Kun
+  alias Battle.Mongo.BattleResult
+  alias Battle.Service.WebService.RankList
 
   def start_link(_args) do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -53,6 +55,7 @@ defmodule Battle.Service.BattleService.Tournament do
             Map.put(acc, user_id, package_name)
           end)
         user_ids = Map.keys(players)
+        games = length(user_ids) * (length(user_ids) - 1)
         if length(user_ids) > 1 do
           Enum.each(user_ids, fn user_id1 ->
             Enum.each(user_ids -- [user_id1], fn user_id2 ->
@@ -61,7 +64,19 @@ defmodule Battle.Service.BattleService.Tournament do
             end)
           end)
         end
+        Task.async(fn -> update_win_rate(games) end)
         {:ok, "start tournament"}
+    end
+  end
+
+  defp update_win_rate(games) do
+    case length(BattleResult.get_battle_results_within_24_hour()) == games do
+      true ->
+        {:ok, result} = RankList.get_battle_info()
+        RankList.insert_win_rate(result)
+      false ->
+        :timer.sleep(30_000)
+        update_win_rate(games)
     end
   end
 end

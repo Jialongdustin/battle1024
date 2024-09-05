@@ -25,18 +25,19 @@ defmodule Battle.Service.WebService.RankList do
             wins = Map.get(win_counts, user_id, 0)
             win_rate = wins / total_games
             case UserAi.get_newest_ai_by_userId(user_id) do
-              {:ok,user_info}  ->
+              {:ok, user_info}  ->
                 %{user_id: user_id, rate: win_rate, ai_name: user_info.ai_name}
-              {:error,_} ->
+              {:error, _} ->
                 %{user_id: user_id, rate: win_rate, ai_name: "not register yet"}
             end
           end)
-          {:ok,win_rates}
+          {:ok, win_rates}
+
       {:error, reason} ->
         {:error, []}
     end
   end
   def insert_win_rate(user_infos) do
-    Enum.map(user_infos, fn user_info -> RankList.save_rank(user_info.user_id,user_info.ai_name,user_info.rate) end)
+    Enum.map(user_infos, fn user_info -> RankList.save_rank(user_info.user_id, user_info.ai_name, user_info.rate) end)
   end
 end

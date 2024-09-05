@@ -90,7 +90,7 @@ defmodule Battle.Mongo.BattleResult do
   def get_battle_results_within_24_hour() do
     time_query = Battle.Utils.GetTime24.get_time()
     case __MODULE__.pquery(time_query) do
-      nil -> {:error, "empty rank list" }
+      [] -> {:error, "empty rank list" }
       res ->{:ok, res |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
       end)}
