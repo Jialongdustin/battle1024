@@ -7,18 +7,23 @@ defmodule RankListTest do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Mongo.BattleResult
   alias Battle.Service.WebService.RankList
+  alias Battle.Mongo.User
 
 
   test "get rank list" do
-    Battle.Mongo.RankList.save_rank("aaa","jahaja",1)
+    Battle.Mongo.RankList.save_rank("aaa","jahaja",1.0)
     Battle.Mongo.RankList.save_rank("acac","haha",0.2)
+    User.save_user("aaa","a3","a33")
+    User.save_user("acac","a2c2","a323")
     {:ok,rank_info} = Battle.Mongo.RankList.get_rank_list(0,2)
     rank_rate = Enum.reduce(rank_info,[],fn message,acc ->
     acc++[message.rate]
     end)
+    User.remove_user("aaa")
+    User.remove_user("acac")
     Battle.Mongo.RankList.remove_rank("aaa")
     Battle.Mongo.RankList.remove_rank("acac")
-    assert Enum.all?([1,0.2],fn user_info -> user_info in rank_rate end)
+    assert Enum.all?([1.0,0.2],fn user_info -> user_info in rank_rate end)
   end
 
   test "rank self without game" do

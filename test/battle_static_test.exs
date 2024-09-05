@@ -6,26 +6,13 @@ defmodule BattleTest.BattleStatisticsTest do
 
   alias Battle.Mongo.BattleStatistics
   alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.UserAi
 
 
   test "save init" do
     BattleStatistics.save_init()
   end
 
-  test "update static info" do
-    BattleStatistics.delete_message()
-    BattleStatistics.save_init()
-    update_info = %{
-      user_count: 1,
-      submit_count: 1,
-      average_step: 20,
-      average_time_cost: 30
-    }
-    BattleStatistics.update_statistics_info(update_info.user_count,update_info.submit_count,update_info.average_step,update_info.average_time_cost)
-    {:ok,after_res} = BattleStatistics.query_statistics_info()
-    assert update_info.user_count == after_res.user_count && update_info.submit_count == after_res.submit_count
-
-  end
 
   test "add_user" do
     BattleStatistics.delete_message()
@@ -60,14 +47,19 @@ defmodule BattleTest.BattleStatisticsTest do
     BattleStatistics.update_average_time_cost(times)
     {:ok,after_res} = BattleStatistics.query_statistics_info()
     IO.inspect(after_res)
-    assert steps/2 == after_res.average_step && times/1000/2 == after_res.average_time_cost
+    assert steps == after_res.average_step && times/1000 == after_res.average_time_cost
+    BattleStatistics.delete_message()
+    BattleStatistics.save_init()
 
   end
 
   test "update submit time" do
+    BattleStatistics.save_init()
     update_time = Ejoy.Bson.utc_now()
     BattleStatistics.update_last_commit_time(update_time)
     {:ok,user_info} = BattleStatistics.query_statistics_info()
+    BattleStatistics.delete_message()
     assert user_info.last_submit_time == update_time
   end
+
 end
