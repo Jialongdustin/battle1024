@@ -84,7 +84,7 @@ defmodule Battle.Mongo.RankList do
           rate: List.first(res).rate,
           ai_name: user_info_ai.ai_name,
           last_submit_date: user_info_ai.create_time.ms,
-          count: cnt,
+          submit_count: cnt,
           user_name: user_info.user_name,
           rank: rank
         }
