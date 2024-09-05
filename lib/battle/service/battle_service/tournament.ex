@@ -70,11 +70,18 @@ defmodule Battle.Service.BattleService.Tournament do
   end
 
   defp update_win_rate(games) do
-    case length(BattleResult.get_battle_results_within_24_hour()) == games do
-      true ->
-        {:ok, result} = RankList.get_battle_info()
-        RankList.insert_win_rate(result)
-      false ->
+    case BattleResult.get_battle_results_within_24_hour() do
+      {:ok, info} ->
+        case length(info) == games do
+          true ->
+            {:ok, result} = RankList.get_battle_info()
+            RankList.insert_win_rate(result)
+          false ->
+            :timer.sleep(3_000)
+            update_win_rate(games)
+        end
+
+      {:error, _} ->
         :timer.sleep(30_000)
         update_win_rate(games)
     end

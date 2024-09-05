@@ -2,6 +2,8 @@ defmodule Battle.Mongo.BattleResult do
   use Ejoy.Db
   require Logger
 
+  alias Battle.Mongo.UserAi
+
   @db "battle"
   @collection "battle_result"
   @indexes [
@@ -41,8 +43,8 @@ defmodule Battle.Mongo.BattleResult do
       res -> battle_info = res |> Enum.map(&__MODULE__.to_raw/1)
              self_and_opponent = Enum.map(battle_info, fn battle ->
                self_id = user_id
+               {:ok, self_ai_name} = UserAi.get_ai_name(self_id)
                user_ids = battle.user_id_2
-
                case Enum.find_index(user_ids, fn id -> id == self_id end) do
                  nil ->
                    # 如果找不到 self_id, 返回错误
@@ -52,6 +54,7 @@ defmodule Battle.Mongo.BattleResult do
 
                    self = %{
                      user_id_self: self_id,
+                     ai_name_self: UserAi.get_ai_name(self_id),
                      time_cost_self: Enum.at(battle.time_cost_2, self_index),
                      total_step_self: Enum.at(battle.total_step_2, self_index),
                      memory_cost_self: Enum.at(battle.memory_cost_2, self_index),
@@ -61,9 +64,10 @@ defmodule Battle.Mongo.BattleResult do
                    }
 
                    opponent_id = Enum.at(user_ids, opponent_index)
-
+                   {:ok, opponent_ai_name} = UserAi.get_ai_name(opponent_id)
                    opponent = %{
                      user_id_opponent: opponent_id,
+                     ai_name_opponent: opponent_ai_name,
                      time_cost_opponent: Enum.at(battle.time_cost_2, opponent_index),
                      total_step_opponent: Enum.at(battle.total_step_2, opponent_index),
                      memory_cost_opponent: Enum.at(battle.memory_cost_2, opponent_index),
@@ -83,7 +87,7 @@ defmodule Battle.Mongo.BattleResult do
     case pquery(%{}) do
       [] -> {:error, "empty battle"}
       res ->
-        {:ok,res |> Enum.map(&__MODULE__.to_raw/1)|>Enum.map(fn message ->  [message.user_id_2,message.winner] end)}
+        {:ok, res |> Enum.map(&__MODULE__.to_raw/1)|>Enum.map(fn message ->  [message.user_id_2,message.winner] end)}
     end
   end
 
