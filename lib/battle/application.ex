@@ -16,10 +16,9 @@ defmodule Battle.Application do
         type: :supervisor
       },
       {Registry, keys: :unique, name: Battle.RoomRegistry},
-      {Battle.Service.BattleService.ConnectionStore,%{}},
       Battle.Service.BattleService.RoomSupervisor,
       Battle.Service.BattleService.RoomSupervisorTest,
-      {Battle.Service.BattleService.ThreadPoolTest, [10]}
+      {Battle.Service.BattleService.ThreadPoolTest, []},
       # Starts a worker by calling: Battle.Worker.start_link(arg)
       # {Battle.Worker, arg}
     ]

@@ -71,7 +71,7 @@ defmodule Battle.Mongo.RankList do
 
       res ->
         {:ok, user_info_ai} = UserAi.get_newest_ai_by_userId(user_id)
-        {:ok, cnt} = UserAi.count_user(user_id)
+        {:ok, cnt} = BattleResultTest.count_submit(user_id)
         query = %{
           rate: %{
             "$gte": List.first(res).rate

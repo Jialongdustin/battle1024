@@ -32,8 +32,8 @@ defmodule Battle.Mongo.UserAi do
 
   def get_all_gits() do
     case __MODULE__.pquery(%{}) do
-      [] ->{:error, "no user_info"}
-      res ->{:ok, res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url, tag: message.tag} end)}
+      [] -> {:error, "no user_info"}
+      res ->{:ok, res|> Enum.filter(fn message -> message.git_url != nil and message.tag != nil end) |> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url, tag: message.tag} end)}
     end
   end
 

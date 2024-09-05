@@ -139,7 +139,7 @@ defmodule Battle.Mongo.BattleResultTest do
     info = %{user_id: user_id, code: 2000}
     case __MODULE__.pcount(info) do
       {:ok, cnt} -> {:ok, cnt}
-      _ -> {:ok,0}
+      _ -> {:ok, 0}
     end
   end
 

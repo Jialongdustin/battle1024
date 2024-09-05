@@ -17,11 +17,11 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   # send(Battle.Service.BattleService.ThreadPoolTest, {game_id, "battle-test1", "plat1024-test1", "battle-player-python"})
   # [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
   # RoomServer.get_state(pid)
-  def start_link(size) do
-    GenServer.start_link(__MODULE__, size, name: __MODULE__)
+  def start_link(_args) do
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
-  def init(size) do
+  def init() do
     :ets.new(:services_info_test, [:named_table, :public, read_concurrency: true])
     Enum.each(@service_groups, fn group_name ->
       Enum.each(Map.keys(@appNames), fn app_name ->
@@ -33,7 +33,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         end
       end)
     end)
-    {:ok, %{workers: [], size: size, queue: :queue.new(), busy: %{}}}
+    {:ok, %{workers: [], queue: :queue.new(), busy: %{}}}
   end
 
   def add_task(task) do

@@ -103,6 +103,6 @@ defmodule Battle.Mongo.BattleResult do
   end
 
   def remove_battle(user_id) do
-    __MODULE__.pdelete(%{user_id: user_id})
+    __MODULE__.pdelete(%{user_id_2: user_id})
   end
 end

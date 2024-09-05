@@ -6,35 +6,11 @@ defmodule Battle.Service.WebService.Kun do
   @status_success 4
   @productKey "plat1024"
   @build_config_name "AI-player"
-  @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5"]
-  @service_groups_test ["battle-test1", "battle-test2", "battle-test3", "battle-test4", "battle-test5"]
-  @appNames ["battle-player-python", "battle-player-java"]
 
   alias ElixirSense.Log
   alias Battle.Mongo.UserAi
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
-
-
-  def list_envs() do
-    path = "/api/env/#{@query_namespace}/envs"
-    %{"code" => 0, "data" => %{"envs" => envs}} = send_post(path, %{})
-    envs
-  end
-
-  def get_instances(ns, apps) do
-    path = "/api/env/#{ns}/instances"
-    %{"code" => 0, "data" => %{"instances" => instances}} = send_post(path, %{apps: apps})
-    instances
-  end
-
-  # Kun.get_build_tasks()
-  def get_build_tasks() do
-    path = "/api/env/#{@query_namespace}/buildTasks"
-    %{"code" => 0, "data" => %{"buildTasks" => buildtasks}} = send_post(path, %{name: @build_config_name, currentPage: 1, pageSize: 5})
-    # Enum.map(buildtasks, fn task -> {id: task.id, status: task.status}) 1 错误, 2 挂起中, 3 运行中, 4 完成
-    buildtasks
-  end
 
   def start_build() do
     case UserAi.get_all_gits() do
@@ -59,27 +35,29 @@ defmodule Battle.Service.WebService.Kun do
         package_name = task["name"]
         build_result_check(package_id)
         %{user_id: user_id, package_name: package_name}
+
       {:error, reason} ->
         {:error, reason}
+      
       _ ->
         change_config(info)
     end
   end
 
-  def build_package(info) do
-    tag = info.tag
-    user_id = info.user_id
-    build_path = "/api/env/#{@query_namespace}/buildTask"
-    case send_put(build_path, %{name: @build_config_name, branch: tag, userId: @userId, method: 0}) do
-      %{"code" => 0, "data" => %{"task" => task}} ->
-        package_id = task["id"]
-        package_name = task["name"]
-        build_result_check(package_id)
-        %{user_id: user_id, package_name: package_name}
-      _ ->
-        build_package(info)
-    end
-  end
+  # def build_package(info) do
+  #   tag = info.tag
+  #   user_id = info.user_id
+  #   build_path = "/api/env/#{@query_namespace}/buildTask"
+  #   case send_put(build_path, %{name: @build_config_name, branch: tag, userId: @userId, method: 0}) do
+  #     %{"code" => 0, "data" => %{"task" => task}} ->
+  #       package_id = task["id"]
+  #       package_name = task["name"]
+  #       build_result_check(package_id)
+  #       %{user_id: user_id, package_name: package_name}
+  #     _ ->
+  #       build_package(info)
+  #   end
+  # end
 
   # Kun.build_result_check(12024311)
   def build_result_check(package_id) do
@@ -99,28 +77,28 @@ defmodule Battle.Service.WebService.Kun do
     task["status"]
   end
 
-  # Kun.create_service_group()
-  def create_service_group(services) do
-    # package_msgs = start_build()
-    id = UUID.uuid4()
-    services_name = "battle-players#{id}"
-    services_key = "players#{id}"
-    groups = [
-      %{
-        "name": services_name,
-        "key": services_key,
-        "schdule": "",
-        "services": services
-      }
-    ]
-    content = %{groups: groups}
-    path = "/api/env/#{@query_namespace}/service/create"
-    case send_post(path, content) do
-      %{"code" => 0, "data" => data} ->
-        data
-    end
-    {:ok, %{name: services_name, key: services_key}}
-  end
+  # # Kun.create_service_group()
+  # def create_service_group(services) do
+  #   # package_msgs = start_build()
+  #   id = UUID.uuid4()
+  #   services_name = "battle-players#{id}"
+  #   services_key = "players#{id}"
+  #   groups = [
+  #     %{
+  #       "name": services_name,
+  #       "key": services_key,
+  #       "schdule": "",
+  #       "services": services
+  #     }
+  #   ]
+  #   content = %{groups: groups}
+  #   path = "/api/env/#{@query_namespace}/service/create"
+  #   case send_post(path, content) do
+  #     %{"code" => 0, "data" => data} ->
+  #       data
+  #   end
+  #   {:ok, %{name: services_name, key: services_key}}
+  # end
 
   # Kun.update_service_group()
   def update_service_group(services, groupName, groupKey) do
@@ -189,45 +167,6 @@ defmodule Battle.Service.WebService.Kun do
       _ ->
         :error
     end
-  end
-
-   # Kun.create_uninstall_task_test()
-  def create_uninstall_task_test() do
-    path = "/api/env/#{@query_namespace}/createUninstallTask"
-    content = %{
-      "services": [
-        %{
-          "serviceGroup": "plat1024-players1",
-          "service": "battle-player-python",
-          "deleteExclusivePvc": true
-        },
-        %{
-          "serviceGroup": "plat1024-players1",
-          "service": "battle-player-lua",
-          "deleteExclusivePvc": true
-        }
-      ],
-      "userId": @userId
-    }
-    case send_post(path, content) do
-      %{"code" => 0, "data" => %{"task" => task}} ->
-        task
-        # {task["env"]["config_cpu"], task["env"]["config_mem"]}
-      _ ->
-        :error
-    end
- end
-
-  # Kun.get_idle_service()
-  def get_idle_service(flag \\ false) do
-    groups = if flag, do: @service_groups_test, else: @service_groups
-    Enum.flat_map(groups, fn groupName ->
-      Enum.filter(@appNames, fn appName ->
-        get_service_stage(groupName, appName) == "idle"
-      end)
-      |> Enum.map(fn appName -> {groupName, appName} end)
-    end)
-    |> List.first()
   end
 
   # Kun.get_service_stage(["battle-players1", "battle-players2"], "battle-player-python")
