@@ -132,6 +132,8 @@ defmodule BattleTest.RouterTest do
       assert conn.state == :sent
       assert conn.status == 200
       RankList.remove_rank("1")
+      UserAi.clean_message("1")
+      User.remove_user("1")
     end
   end
 

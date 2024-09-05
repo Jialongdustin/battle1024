@@ -11,6 +11,8 @@ defmodule BattleTest.RoomServerTest do
   alias Battle.Mongo.BattleResult
 
   test "battle_early_hand" do
+    BattleStatistics.delete_message()
+    BattleStatistics.save_init()
     {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
@@ -147,13 +149,11 @@ defmodule BattleTest.RoomServerTest do
     capture = [%{captured: [6, 1], moves: [[4, 1], [7, 1]]}]
 
     res = RoomServer.count_total_piece(state,capture)
-#    Battle.Service.BattleService.RoomSupervisorTest.init_game()
-#    66cd8f9d81e4b8e68e599c19
-#    66cd8f9d81e4b8e68e599c18
     assert res == "11"
   end
 
   test "record time step" do
+    BattleStatistics.delete_message()
     BattleStatistics.save_init()
     game_id = "11111"
     {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
@@ -176,15 +176,5 @@ defmodule BattleTest.RoomServerTest do
       assert battle_info.steps == 2
 
   end
-
-#  test "overtime" do
-#    game_id = "11112"
-#    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
-#    {:ok, contest_id} =
-#      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
-#    [{pid,_}] = Registry.lookup(Battle.RoomRegistry, game_id)
-#    RoomServer.time_counter(pid)
-#
-#  end
 
 end

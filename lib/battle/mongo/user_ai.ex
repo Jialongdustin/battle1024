@@ -22,22 +22,10 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-
   def get_all_gits() do
     case __MODULE__.pquery(%{}) do
       [] ->{:error, "no user_info"}
       res ->{:ok, res|> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url, tag: message.tag} end)}
-    end
-  end
-
-
-
-  def get_newest_submit_time() do
-    case __MODULE__.pquery_sort_limit(%{},[create_time: -1],1) do
-      [] ->{:error,"Battle.UserAi error"}
-      res ->
-        newest_info = res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end)|> List.first()
-        newest_info.create_time
     end
   end
 
