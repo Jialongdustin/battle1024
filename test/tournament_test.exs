@@ -82,6 +82,7 @@ defmodule BattleTest.TournamentTest do
         end
       ] do
           result = Tournament.update_win_rate(games)
+          Battle.Mongo.RankList.remove_rank("111")
           assert length(result) == 1
       end
     end

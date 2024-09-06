@@ -7,6 +7,7 @@ defmodule BattleTest.WebService.RankListTest do
   alias Battle.Utils.Token
   alias Battle.Mongo.User
   alias Battle.Mongo.UserAi
+  alias BattleTest.WebService.RankListTest
 
   test "calculate win rate" do
     UserAi.insert_ai("1","hahaha")
@@ -94,6 +95,10 @@ defmodule BattleTest.WebService.RankListTest do
     User.save_user("123","321321","liuliuliu")
     User.save_user("456","131313","liuliuliu")
     User.save_user("2","121212","liuliuliu")
+    UserAi.insert_ai("1","hahaha")
+    UserAi.insert_ai("123","Biu biu biu~~!!")
+    UserAi.insert_ai("456","Biu")
+    UserAi.insert_ai("2","wawawawa")
 
     calculate_win_rate = [
       %{user_id: "1", rate: 1.0, ai_name: "hahaha", avatar: nil},
@@ -110,9 +115,17 @@ defmodule BattleTest.WebService.RankListTest do
     Battle.Mongo.RankList.remove_rank("2")
 
     User.remove_user("1")
+    UserAi.clean_message("1")
+    Battle.Mongo.RankList.remove_rank("1")
     User.remove_user("123")
+    UserAi.clean_message("123")
+    Battle.Mongo.RankList.remove_rank("123")
     User.remove_user("456")
+    UserAi.clean_message("456")
+    Battle.Mongo.RankList.remove_rank("456")
     User.remove_user("2")
+    UserAi.clean_message("2")
+    Battle.Mongo.RankList.remove_rank("2")
 
     assert detail == calculate_win_rate
   end
