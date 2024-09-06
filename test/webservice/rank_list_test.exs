@@ -79,7 +79,7 @@ defmodule BattleTest.WebService.RankListTest do
     # 模拟函数返回一个正确的列表
     with_mock Battle.Mongo.BattleResult, [:passthrough],
               get_battle_results_within_24_hour: fn ->
-                {:error,"not found"}
+                {:error, "not found"}
               end
       do
       {:error, reason} = Battle.Service.WebService.RankList.get_battle_info()
@@ -104,7 +104,10 @@ defmodule BattleTest.WebService.RankListTest do
 
     Battle.Service.WebService.RankList.insert_win_rate(calculate_win_rate)
     {:ok, detail} = Battle.Mongo.RankList.get_rank_list(0, 4)
-    Enum.map(detail,fn message -> Battle.Mongo.RankList.remove_rank(message.user_id) end)
+    Battle.Mongo.RankList.remove_rank("1")
+    Battle.Mongo.RankList.remove_rank("123")
+    Battle.Mongo.RankList.remove_rank("456")
+    Battle.Mongo.RankList.remove_rank("2")
 
     User.remove_user("1")
     User.remove_user("123")
@@ -114,4 +117,3 @@ defmodule BattleTest.WebService.RankListTest do
     assert detail == calculate_win_rate
   end
 end
-

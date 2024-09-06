@@ -134,11 +134,11 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/user/ranking_list")
         |> Router.call(@opts)
-      assert conn.state == :sent
-      assert conn.status == 200
       RankList.remove_rank("1")
       UserAi.clean_message("1")
       User.remove_user("1")
+      assert conn.state == :sent
+      assert conn.status == 200
     end
   end
 
@@ -154,10 +154,10 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
-      assert conn.state == :sent
-      assert conn.status == 200
       User.remove_user("1")
       UserAi.clean_message("1")
+      assert conn.state == :sent
+      assert conn.status == 200
     end
   end
 
@@ -204,10 +204,10 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
         |> Router.call(@opts)
-      assert conn.state == :sent
-      assert conn.status == 200
       RankList.remove_rank("111")
       User.remove_user("111")
+      assert conn.state == :sent
+      assert conn.status == 200
     end
   end
 
@@ -223,11 +223,11 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
         |> Router.call(@opts)
+      User.remove_user("111")
+      UserAi.clean_message("111")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => [], "success" => true}
-      User.remove_user("111")
-      UserAi.clean_message("111")
     end
   end
 
@@ -268,7 +268,6 @@ defmodule BattleTest.RouterTest do
         {:ok, ""}
       end
     ] do
-      BattleStatistics.delete_message()
       query_params = %{
         "moment_token" => "sfakjflasfla"
       }
@@ -298,9 +297,9 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      BattleStatistics.delete_message()
       assert conn.state == :sent
       assert conn.status == 200
-      BattleStatistics.delete_message()
     end
   end
 
@@ -357,9 +356,9 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/update_avatar", json_data)
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
+      User.remove_user("111")
       assert conn.state == :sent
       assert conn.status == 200
-      User.remove_user("111")
     end
   end
 
@@ -377,9 +376,9 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/update_avatar", json_data)
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
+      User.remove_user("111")
       assert conn.state == :sent
       assert conn.status == 302
-      User.remove_user("111")
     end
   end
 
@@ -397,10 +396,10 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/update_avatar", json_data)
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
+      User.remove_user("111")
       assert conn.state == :sent
       assert conn.status == 500
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
-      User.remove_user("111")
     end
   end
 
@@ -419,9 +418,9 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      User.remove_user("111")
       assert conn.state == :sent
       assert conn.status == 200
-      User.remove_user("111")
     end
   end
 
@@ -440,10 +439,10 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      User.remove_user("111")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 2006, "data" => "user_id error", "success" => false}
-      User.remove_user("111")
     end
   end
 
@@ -502,9 +501,9 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      BattleInfo.remove_battle("10002")
       assert conn.state == :sent
       assert conn.status == 200
-      BattleInfo.remove_battle("10002")
     end
   end
 
@@ -524,10 +523,10 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      BattleInfo.remove_battle("10002")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "game not exists", "success" => true}
-      BattleInfo.remove_battle("10002")
     end
   end
 
@@ -547,9 +546,9 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      BattleInfo.remove_battle("10002")
       assert conn.state == :sent
       assert conn.status == 302
-      BattleInfo.remove_battle("10002")
     end
   end
 
@@ -569,10 +568,10 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn(url_with_query)
         |> Router.call(@opts)
+      BattleInfo.remove_battle("10002")
       assert conn.state == :sent
       assert conn.status == 500
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"error" => "Internal Server Error"}
-      BattleInfo.remove_battle("10002")
     end
   end
 
@@ -591,6 +590,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/create_ai", Ejoy.Jiffy.encode!(request_body))
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
+      UserAi.clean_message("1")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "ok", "success" => true}
@@ -655,10 +655,11 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/submit_git", Ejoy.Jiffy.encode!(request_body))
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
+      UserAi.clean_message("1")
+      BattleResultTest.remove_all_battle("1")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "ok", "success" => true}
-      UserAi.clean_message("1")
     end
   end
 
@@ -722,10 +723,11 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/update_git", Ejoy.Jiffy.encode!(request_body))
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
+      BattleResultTest.remove_all_battle("1")
+      UserAi.clean_message("1")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "ok", "success" => true}
-      UserAi.clean_message("1")
     end
   end
 
@@ -783,10 +785,10 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
         |> Router.call(@opts)
+      BattleResultTest.remove_all_battle("111")
       assert conn.state == :sent
       assert conn.status == 200
       assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "processing", "success" => true}
-      BattleResultTest.remove_all_battle("111")
     end
   end
 
@@ -806,12 +808,12 @@ defmodule BattleTest.RouterTest do
         :get
         |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
         |> Router.call(@opts)
-      assert conn.state == :sent
-      assert conn.status == 200
-      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "success", "success" => true}
       BattleResultTest.remove_all_battle("111")
       UserAi.clean_message("111")
       BattleStatistics.delete_message()
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body) == %{"code" => 200, "data" => "success", "success" => true}
     end
   end
 

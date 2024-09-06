@@ -11,26 +11,26 @@ defmodule RankListTest do
 
 
   test "get rank list" do
-    Battle.Mongo.RankList.save_rank("aaa","jahaja",1.0)
-    Battle.Mongo.RankList.save_rank("acac","haha",0.2)
-    User.save_user("aaa","a3","a33")
-    User.save_user("acac","a2c2","a323")
-    {:ok,rank_info} = Battle.Mongo.RankList.get_rank_list(0,2)
-    rank_rate = Enum.reduce(rank_info,[],fn message,acc ->
+    Battle.Mongo.RankList.save_rank("aaa","jahaja", 1.0)
+    Battle.Mongo.RankList.save_rank("acac","haha", 0.2)
+    User.save_user("aaa","a3", "a33")
+    User.save_user("acac","a2c2", "a323")
+    {:ok, rank_info} = Battle.Mongo.RankList.get_rank_list(0, 2)
+    rank_rate = Enum.reduce(rank_info, [], fn message, acc ->
     acc++[message.rate]
     end)
     User.remove_user("aaa")
     User.remove_user("acac")
     Battle.Mongo.RankList.remove_rank("aaa")
     Battle.Mongo.RankList.remove_rank("acac")
-    assert Enum.all?([1.0,0.2],fn user_info -> user_info in rank_rate end)
+    assert Enum.all?([1.0, 0.2], fn user_info -> user_info in rank_rate end)
   end
 
   test "rank self without game" do
     user_id = "acac"
     ai_name = "jajaja"
-    Battle.Mongo.User.save_user(user_id,"12312","niu")
-    Battle.Mongo.UserAi.insert_ai(user_id,ai_name)
+    Battle.Mongo.User.save_user(user_id, "12312", "niu")
+    Battle.Mongo.UserAi.insert_ai(user_id, ai_name)
     {:error, single_info} = Battle.Mongo.RankList.get_rank_by_user_id(user_id)
     Battle.Mongo.User.remove_user(user_id)
     Battle.Mongo.UserAi.clean_message(user_id)
