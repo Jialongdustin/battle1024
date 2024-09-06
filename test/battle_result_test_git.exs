@@ -33,5 +33,10 @@ defmodule BattleResultTestGit do
     assert after_count == count+1
   end
 
+  test "count 0" do
+    {:ok,res} = BattleResultTest.count_submit("123123")
+    IO.inspect(res)
+  end
+
 
 end
