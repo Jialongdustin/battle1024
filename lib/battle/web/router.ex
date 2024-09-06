@@ -508,7 +508,7 @@ defmodule Battle.Web.Router do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = user_info.user_id
-    game_id = user_info.ext.account_id
+    game_id = user_info.ext.game_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisorTest.query(self(), user_id, game_id) do
@@ -545,7 +545,7 @@ defmodule Battle.Web.Router do
     moves = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = user_info.user_id
-    game_id = user_info.ext.account_id
+    game_id = user_info.ext.game_id
 
     case RoomSupervisorTest.movement(moves, user_id, game_id) do
       {:ok, response} ->
@@ -569,7 +569,7 @@ defmodule Battle.Web.Router do
     token = conn.params["token"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = user_info.user_id
-    game_id = user_info.ext.account_id
+    game_id = user_info.ext.game_id
 
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisor.query(self(), user_id, game_id) do
@@ -605,7 +605,7 @@ defmodule Battle.Web.Router do
     move = conn.params["move"]
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = user_info.user_id
-    game_id = user_info.ext.account_id
+    game_id = user_info.ext.game_id
     # 处理棋步
     case RoomSupervisor.movement(move, user_id, game_id) do
       {:ok, response} ->
