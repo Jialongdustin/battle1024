@@ -23,7 +23,7 @@ defmodule Battle.Service.BattleService.Tournament do
     {:noreply, state}
   end
 
-  defp schedule_tournament do
+  def schedule_tournament do
     now = DateTime.utc_now()
     noon = "#{Date.to_string(now)} 04:00:00"
     {:ok, twelve_noon, _offset} = DateTime.from_iso8601("#{noon}Z")
@@ -69,7 +69,7 @@ defmodule Battle.Service.BattleService.Tournament do
     end
   end
 
-  defp update_win_rate(games) do
+  def update_win_rate(games) do
     case BattleResult.get_battle_results_within_24_hour() do
       {:ok, info} ->
         case length(info) == games do

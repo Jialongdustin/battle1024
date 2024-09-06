@@ -52,7 +52,4 @@ defmodule BattleTest.AuthTest do
       assert error_info == 10040
     end
   end
-
-  Battle.Service.WebService.Auth.verify_code("AQZQMTEzODdHqdz1EzRG0mzK2wu5Fl2m8XrzPR0o2WZm19adL2aMyXGtXTbcDqTau2FlHGOlf6zh57aA")
-
 end

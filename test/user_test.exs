@@ -21,7 +21,8 @@ defmodule BattleTest.UserTest do
     account = "woccow"
     user_name = "ljljl"
     User.save_user(user_id,account,user_name)
-    {:ok,db_user_name} = User.get_user_name(user_id)
+    {:ok, db_user_name} = User.get_user_name(user_id)
+    User.remove_user(user_id)
     assert db_user_name == user_name
   end
 
