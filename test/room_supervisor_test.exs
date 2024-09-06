@@ -36,7 +36,7 @@ defmodule BattleTest.RoomSupervisorTest do
 
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: user_id_2, ext: %{account_id: game_id}}}
+        {:ok, %{user_id: user_id_2, ext: %{game_id: game_id}}}
       end
     ] do
       black_task = Task.async(fn ->
@@ -62,7 +62,7 @@ defmodule BattleTest.RoomSupervisorTest do
     # 模拟白子用户的行为
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: user_id_1, ext: %{account_id: game_id}}}
+        {:ok, %{user_id: user_id_1, ext: %{game_id: game_id}}}
       end
     ] do
       request_body = %{"token" => "aslkfgasg"}

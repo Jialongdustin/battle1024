@@ -994,7 +994,7 @@ defmodule BattleTest.RouterTest do
     {:ok, info} = RoomSupervisorTest.init_game()
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: info.game_id}}}
+        {:ok, %{user_id: "10", ext: %{game_id: info.game_id}}}
       end
     ] do
       request_body = %{"token" => info.token_white}
@@ -1012,7 +1012,7 @@ defmodule BattleTest.RouterTest do
   test "return 404 with token info when black query test game on /test/query" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "24", ext: %{account_id: "111"}}}
+        {:ok, %{user_id: "24", ext: %{game_id: "111"}}}
       end
     ] do
       request_body = %{"token" => "abcsdaslfg"}
@@ -1031,7 +1031,7 @@ defmodule BattleTest.RouterTest do
     {:ok, info} = RoomSupervisorTest.init_game()
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: info.game_id}}}
+        {:ok, %{user_id: "10", ext: %{game_id: info.game_id}}}
       end
     ] do
       request_body = %{"token" => info.token_white, "move" => [["a", "6"], ["a", "5"]]}
@@ -1050,7 +1050,7 @@ defmodule BattleTest.RouterTest do
     {:ok, info} = RoomSupervisorTest.init_game()
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: info.game_id}}}
+        {:ok, %{user_id: "10", ext: %{game_id: info.game_id}}}
       end
     ] do
       request_body = %{"token" => info.token_white, "move" => [["a", "3"], ["a", "4"]]}
@@ -1070,7 +1070,7 @@ defmodule BattleTest.RouterTest do
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, "saklgaks")
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: "saklgaks"}}}
+        {:ok, %{user_id: "10", ext: %{game_id: "saklgaks"}}}
       end
     ] do
       request_body = %{"token" => "aslkfgasg"}
@@ -1089,7 +1089,7 @@ defmodule BattleTest.RouterTest do
   test "return 404 with game info when white query formal game on /play/query" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: "saklgaks"}}}
+        {:ok, %{user_id: "10", ext: %{game_id: "saklgaks"}}}
       end
     ] do
       request_body = %{"token" => "aslkfgasg"}
@@ -1109,7 +1109,7 @@ defmodule BattleTest.RouterTest do
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, "saklgaks")
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: "saklgaks"}}}
+        {:ok, %{user_id: "10", ext: %{game_id: "saklgaks"}}}
       end
     ] do
       RoomServer.start_time_step(pid)
@@ -1131,7 +1131,7 @@ defmodule BattleTest.RouterTest do
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, "saklgaks")
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
-        {:ok, %{user_id: "10", ext: %{account_id: "666"}}}
+        {:ok, %{user_id: "10", ext: %{game_id: "666"}}}
       end
     ] do
       RoomServer.start_time_step(pid)
