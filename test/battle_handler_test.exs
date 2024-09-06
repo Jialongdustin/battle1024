@@ -65,7 +65,6 @@ defmodule BattleTest.BattleHandlerTest do
 
   test "dfs normal" do
     move_list = BattleHandler.dfs(@board,2,0,"white",8,8)
-    IO.inspect(move_list)
     assert  [[[2, 0]]] == move_list
   end
 

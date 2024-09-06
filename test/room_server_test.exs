@@ -13,7 +13,6 @@ defmodule BattleTest.RoomServerTest do
   test "battle_early_hand" do
     BattleStatistics.delete_message()
     BattleStatistics.save_init()
-    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
     #    Logger.configure(level: :none)
     {:ok, contest_id} =
       Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", "11", "groupName", "groupKey", "appName")
@@ -156,7 +155,6 @@ defmodule BattleTest.RoomServerTest do
     BattleStatistics.delete_message()
     BattleStatistics.save_init()
     game_id = "11111"
-    {:ok, pool} = Battle.Service.BattleService.ThreadPool.start_link(10)  # 启动一个大小为10的线程池
     {:ok, game_id} =
       Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", game_id, "groupName", "groupKey", "appName")
 

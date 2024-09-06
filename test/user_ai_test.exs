@@ -27,10 +27,10 @@ defmodule Mongo.UserAi do
     tag_2 = "main"
 
     UserAi.insert_ai(user_id,ai_name)
-    UserAi.update_git(user_id,tag,git_url)
+    UserAi.update_git(user_id,git_url,tag)
 
     UserAi.insert_ai(user_id_2,ai_name_2)
-    UserAi.update_git(user_id_2,tag_2,git_url_2)
+    UserAi.update_git(user_id_2,git_url_2,tag_2)
 
     {:ok,user_info} = UserAi.get_all_gits()
 
@@ -59,8 +59,9 @@ defmodule Mongo.UserAi do
     tag = "1.0"
 
     UserAi.insert_ai(user_id,ai_name)
-    UserAi.update_git(user_id,tag,git_url)
+    UserAi.update_git(user_id,git_url,tag)
     {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
+    IO.inspect(user_info)
     UserAi.clean_message(user_id)
     assert user_info.user_id == user_id && user_info.git_url == git_url && user_info.tag == tag
 

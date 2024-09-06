@@ -96,4 +96,5 @@ defmodule BattleTest.TournamentTest do
       :timer.sleep(50)
     end
   end
+
 end

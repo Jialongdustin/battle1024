@@ -37,6 +37,7 @@ defmodule Battle.Service.WebService.RankList do
         {:error, []}
     end
   end
+
   def insert_win_rate(user_infos) do
     Enum.map(user_infos, fn user_info -> RankList.save_rank(user_info.user_id, user_info.ai_name, user_info.rate) end)
   end
