@@ -146,9 +146,9 @@ defmodule Battle.Service.BattleService.RoomServer do
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     else
       # 每一局的信息
-      BattleStatistics.update_average_step(state.steps_white + state.steps_black)
-      BattleStatistics.update_average_time_cost(state.time_cost_white + state.time_cost_black)
-      BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
+      # BattleStatistics.update_average_step(state.steps_white + state.steps_black)
+      # BattleStatistics.update_average_time_cost(state.time_cost_white + state.time_cost_black)
+      # BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
       BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     end

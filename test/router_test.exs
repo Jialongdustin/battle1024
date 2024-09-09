@@ -90,7 +90,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "/user/all, return 302 when token is invalid" do
+  test "/user/all, return 401 when token is invalid" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -101,7 +101,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/all", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -161,7 +161,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "/user/ranking_list, return 302 when token is invalid" do
+  test "/user/ranking_list, return 401 when token is invalid" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -172,7 +172,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/ranking_list", %{"moment_token" => "asgkasgag"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -231,7 +231,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "GET /game/ranking_list with pagination, return 302 when token is invalid" do
+  test "GET /game/ranking_list with pagination, return 401 when token is invalid" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -242,7 +242,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/game/ranking_list", %{"page" => "0", "limit" => "2", "moment_token" => "dummy_token"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -303,7 +303,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test " /game/statistic_info, return 302 when token is invalid " do
+  test " /game/statistic_info, return 401 when token is invalid " do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -318,7 +318,7 @@ defmodule BattleTest.RouterTest do
         |> conn(url_with_query)
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -362,7 +362,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "/user/update_avatar, return 302 when token is invalid" do
+  test "/user/update_avatar, return 401 when token is invalid" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -378,7 +378,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       User.remove_user("111")
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -446,7 +446,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test " /user/get_avatar, return 302 when token is invalid" do
+  test " /user/get_avatar, return 401 when token is invalid" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -461,7 +461,7 @@ defmodule BattleTest.RouterTest do
         |> conn(url_with_query)
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -530,7 +530,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test " /game/detail, return 302 when token is invalid" do
+  test " /game/detail, return 401 when token is invalid" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "token invalid"}
@@ -548,7 +548,7 @@ defmodule BattleTest.RouterTest do
         |> Router.call(@opts)
       BattleInfo.remove_battle("10002")
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -613,7 +613,7 @@ defmodule BattleTest.RouterTest do
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -663,7 +663,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "return 302 code with invalid token on /user/submit_git" do
+  test "return 401 code with invalid token on /user/submit_git" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -680,7 +680,7 @@ defmodule BattleTest.RouterTest do
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -731,7 +731,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "return 302 code with invalid token when updata git on /user/update_git" do
+  test "return 401 code with invalid token when updata git on /user/update_git" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -748,7 +748,7 @@ defmodule BattleTest.RouterTest do
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -839,7 +839,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "return 302 when token invalid on /user/check_update" do
+  test "return 401 when token invalid on /user/check_update" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -850,7 +850,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/user/check_update", %{"moment_token" => "sfakjflasfla"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -907,7 +907,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "return 302 when token invalid on /test/all" do
+  test "return 401 when token invalid on /test/all" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -918,7 +918,7 @@ defmodule BattleTest.RouterTest do
         |> conn("/test/all", %{"moment_token" => "sgkjaags"})
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 
@@ -956,7 +956,7 @@ defmodule BattleTest.RouterTest do
     end
   end
 
-  test "return 302 with invalid token when create test game on /user/create_test" do
+  test "return 401 with invalid token when create test game on /user/create_test" do
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token: fn _ ->
         {:error, "invalid token"}
@@ -969,7 +969,7 @@ defmodule BattleTest.RouterTest do
         |> put_req_header("content-type", "application/json")
         |> Router.call(@opts)
       assert conn.state == :sent
-      assert conn.status == 302
+      assert conn.status == 401
     end
   end
 

@@ -83,7 +83,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -114,7 +114,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location",  @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -149,7 +149,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -192,7 +192,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -219,7 +219,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -254,7 +254,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -293,7 +293,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -322,7 +322,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -355,7 +355,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
       _ ->
         Logger.error("Unexpected result from verify_code")
@@ -397,7 +397,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -429,7 +429,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -462,7 +462,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
@@ -490,7 +490,7 @@ defmodule Battle.Web.Router do
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
         conn
         |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(302, "")
+        |> Conn.send_resp(401, "")
         |> Conn.halt()
 
       _ ->
