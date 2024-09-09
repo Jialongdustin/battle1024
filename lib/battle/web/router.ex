@@ -478,6 +478,7 @@ defmodule Battle.Web.Router do
   # 创建测试比赛
   json_rpc "/user/create_test", "schema/user/create_test" do
     token = conn.params["moment_token"]
+    white = conn.params["white"]
     case Token.verify_token(token) do
       {:ok, _} ->
         # 初始化测试对局, 返回黑棋和白棋的token
