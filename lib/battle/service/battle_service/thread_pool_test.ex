@@ -112,7 +112,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   defp reuse_group_for_task({git, tag, game_id}, {groupName, groupKey, appName}) do
-    package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
+    RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName)
+    package_name = Kun.change_config(%{user_id: "1024", git_url: git, tag: tag})[:package_name]
     update_services(groupName, groupKey, appName, game_id)
     [
       %{
@@ -126,12 +127,11 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         "appConfBuildName": package_name
       },
     ] |> Kun.create_deploy_task()
-    RoomSupervisor.init_game(10, 24, game_id, groupName, groupKey, appName)
   end
 
   # players建立user_id和每个用户的构建包的映射
   defp execute_task({git, tag, game_id}, {groupName, appName}) do
-    case Kun.change_config(%{user_id: 1024, git_url: git, tag: tag}) do
+    case Kun.change_config(%{user_id: "1024", git_url: git, tag: tag}) do
       {:error, reason} ->
         BattleResultTest.update_battle_result_failed(game_id)
       %{package_name: package_name, user_id: _} ->
