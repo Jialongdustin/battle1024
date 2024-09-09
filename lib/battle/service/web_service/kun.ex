@@ -28,7 +28,7 @@ defmodule Battle.Service.WebService.Kun do
     git_url = info.git_url
     tag = info.tag
     path = "/api/v2/product/#{@productKey}/buildConfig/#{@build_config_name}"
-    case send_put(path, %{autoBuild: true, gitRefsType: 0, gitUrl: git_url, refs: tag}) do
+    case Battle.Service.WebService.Kun.send_put(path, %{autoBuild: true, gitRefsType: 0, gitUrl: git_url, refs: tag}) do
       %{"code" => 0, "data" => %{"task" => task}} ->
         # build_package(info)
         package_id = task["id"]
@@ -61,8 +61,8 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.build_result_check(12024311)
   def build_result_check(package_id) do
-    :timer.sleep(20_000)
-    case get_build_result(package_id) do
+    :timer.sleep(2_000)
+    case Battle.Service.WebService.Kun.get_build_result(package_id) do
       @status_success ->
         :ok
       _ ->
@@ -73,7 +73,7 @@ defmodule Battle.Service.WebService.Kun do
   # Kun.get_build_result(10179621)
   def get_build_result(package_id) do
     path = "/api/env/#{@query_namespace}/buildTask?id=#{package_id}"
-    %{"code" => 0, "data" => %{"task" => task}} = send_get(path, %{})
+    %{"code" => 0, "data" => %{"task" => task}} = Battle.Service.WebService.Kun.send_get(path, %{})
     task["status"]
   end
 
@@ -111,7 +111,7 @@ defmodule Battle.Service.WebService.Kun do
         "services": services
       }
     ]
-    case send_post(path, %{groups: groups}) do
+    case Battle.Service.WebService.Kun.send_post(path, %{groups: groups}) do
       %{"code" => 0, "data" => data} ->
         data
       _ ->
@@ -126,11 +126,11 @@ defmodule Battle.Service.WebService.Kun do
       "services": services,
       "userId": @userId
     }
-    case send_post(path, content) do
+    case Battle.Service.WebService.Kun.send_post(path, content) do
       %{"code" => 0, "data" => %{"task" => task}} ->
         id = task["ID"]
-        :timer.sleep(10_000)
-        get_deploy_result(id)
+        :timer.sleep(5_000)
+        Battle.Service.WebService.Kun.get_deploy_result(id)
       _ ->
         create_deploy_task(services)
     end
@@ -139,7 +139,7 @@ defmodule Battle.Service.WebService.Kun do
   # Kun.get_deploy_result(11464803)
   def get_deploy_result(id) do
     path = "/api/env/#{@query_namespace}/task?id=#{id}"
-    case send_get(path, %{}) do
+    case Battle.Service.WebService.Kun.send_get(path, %{}) do
       %{"code" => 0, "data" => %{"task" => %{"services" => services}}} ->
         case Enum.all?(services, fn service -> service["status"] == "ready" end) do
           true ->
@@ -160,32 +160,31 @@ defmodule Battle.Service.WebService.Kun do
       "services": services,
       "userId": @userId
     }
-    case send_post(path, content) do
+    case Battle.Service.WebService.Kun.send_post(path, content) do
       %{"code" => 0, "data" => %{"task" => task}} ->
         task
-        {task["env"]["config_cpu"], task["env"]["config_mem"]}
       _ ->
         :error
     end
   end
 
-  # Kun.get_service_stage(["battle-players1", "battle-players2"], "battle-player-python")
-  def get_service_stage(groupName, appName) do
-    path = "/api/env/#{@query_namespace}/services"
-    content = %{
-      currentPage: 1,
-      pageSize: 1,
-      servicesGroups: [groupName],
-      apps: [appName]
-    }
-    case send_post(path, content) do
-      %{"code" => 0, "data" => %{"services" => services}} ->
-        # List.first(services)["stage"]
-        services
-      _ ->
-        {:error, "something wrong"}
-    end
-  end
+  # # Kun.get_service_stage(["battle-players1", "battle-players2"], "battle-player-python")
+  # def get_service_stage(groupName, appName) do
+  #   path = "/api/env/#{@query_namespace}/services"
+  #   content = %{
+  #     currentPage: 1,
+  #     pageSize: 1,
+  #     servicesGroups: [groupName],
+  #     apps: [appName]
+  #   }
+  #   case send_post(path, content) do
+  #     %{"code" => 0, "data" => %{"services" => services}} ->
+  #       # List.first(services)["stage"]
+  #       services
+  #     _ ->
+  #       {:error, "something wrong"}
+  #   end
+  # end
 
   def send_post(path, params) do
     {:ok, resp} = Ejoy.HttpRPC.application_json_post(@kun_api_url <> path,

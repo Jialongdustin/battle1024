@@ -514,12 +514,10 @@ defmodule Battle.Web.Router do
     case RoomSupervisorTest.query(self(), user_id, game_id) do
       {:ok, detail} ->
         body = Ejoy.Jiffy.encode!(detail)
-
         conn
         |> Conn.put_resp_content_type("application/json")
         |> Conn.send_resp(200, body)
         |> Conn.halt()
-
       {:error, _} ->
         receive do
           {:query, detail} ->

@@ -21,7 +21,7 @@ defmodule BattleTest.TokenTest do
   end
 
   test "ejoy token" do
-    {:ok,token,token_info} = Ejoy.MomentToken.new_token_info(1,1,"123123",%{game_id: "1111"})
-    {:ok,db_info} = Ejoy.MomentToken.Service.auth_token(token)
+    {:ok, token,token_info} = Ejoy.MomentToken.new_token_info(1,1,"123123",%{game_id: "1111"})
+    {:ok, db_info} = Ejoy.MomentToken.Service.auth_token(token)
   end
 end

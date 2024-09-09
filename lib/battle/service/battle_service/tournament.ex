@@ -4,6 +4,7 @@ defmodule Battle.Service.BattleService.Tournament do
   alias Battle.Service.BattleService.ThreadPool
   alias Battle.Service.WebService.Kun
   alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.GameTime
   alias Battle.Service.WebService.RankList
 
   def start_link(_args) do
@@ -45,6 +46,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   def initiate_tournament_logic() do
     IO.inspect("start tournament")
+    GameTime.start_record()
     case Kun.start_build() do
       {:error, reason} ->
         {:error, reason}
@@ -55,6 +57,7 @@ defmodule Battle.Service.BattleService.Tournament do
             Map.put(acc, user_id, package_name)
           end)
         user_ids = Map.keys(players)
+        IO.inspect("there are #{length(user_ids)} players now")
         games = length(user_ids) * (length(user_ids) - 1)
         if length(user_ids) > 1 do
           Enum.each(user_ids, fn user_id1 ->
@@ -76,6 +79,7 @@ defmodule Battle.Service.BattleService.Tournament do
           true ->
             {:ok, result} = RankList.get_battle_info()
             RankList.insert_win_rate(result)
+            GameTime.end_record()
           false ->
             :timer.sleep(3_000)
             update_win_rate(games)

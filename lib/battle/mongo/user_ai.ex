@@ -50,7 +50,7 @@ defmodule Battle.Mongo.UserAi do
   def update_git(user_id, url, tag) do
       {:ok, user_info} = get_newest_ai_by_userId(user_id)
       bson_id = user_info._id
-      __MODULE__.pupdate(%{_id: bson_id},%{user_info | git_url: url, tag: tag})
+      __MODULE__.pupdate(%{_id: bson_id}, %{user_info | git_url: url, tag: tag})
   end
 
   def clean_message(user_id) do

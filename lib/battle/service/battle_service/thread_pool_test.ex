@@ -40,6 +40,14 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
     GenServer.cast(__MODULE__, {:add_task, task})
   end
 
+  def get_state() do
+    GenServer.call(__MODULE__, :get_state)
+  end
+
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
+  end
+
   def handle_cast({:add_task, task}, state) do
     case get_first_and_pop() do
       {:ok, service} ->
@@ -157,8 +165,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   defp update_services(groupName, groupKey, appName, game_id) do
-    update_service(appName, 10, game_id, true) ++
-    update_service(Map.get(@appNames, appName), 24, game_id, false)
+    update_service(appName, "10", game_id, true) ++
+    update_service(Map.get(@appNames, appName), "24", game_id, false)
     |> Kun.update_service_group(groupName, groupKey)
   end
 
