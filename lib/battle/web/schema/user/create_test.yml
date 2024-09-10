@@ -4,12 +4,12 @@ request:
   properties:
     moment_token:
       type: string
-  required: [moment_token]
+    white:
+      type: boolean
+  required: [moment_token, white]
 
 response:
   type: object
   properties:
-    token_white:
-      type: string
-    token_black:
+    token:
       type: string
