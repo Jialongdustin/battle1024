@@ -4,6 +4,7 @@ defmodule Battle.Service.WebService.Kun do
   @query_namespace "plat1024-platformbattle"
   @userId "453574"
   @status_success 4
+  @status_failure 1
   @productKey "plat1024"
   @build_config_name "AI-player"
 
@@ -33,8 +34,12 @@ defmodule Battle.Service.WebService.Kun do
         # build_package(info)
         package_id = task["id"]
         package_name = task["name"]
-        build_result_check(package_id)
-        %{user_id: user_id, package_name: package_name}
+        case build_result_check(package_id) do
+          :ok ->
+            %{user_id: user_id, package_name: package_name}
+          :error ->
+            {:error, "build failed"}
+        end
 
       {:error, reason} ->
         {:error, reason}
@@ -65,6 +70,8 @@ defmodule Battle.Service.WebService.Kun do
     case Battle.Service.WebService.Kun.get_build_result(package_id) do
       @status_success ->
         :ok
+      @status_failure ->
+        :error
       _ ->
         build_result_check(package_id)
     end

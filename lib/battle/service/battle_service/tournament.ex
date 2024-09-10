@@ -79,7 +79,7 @@ defmodule Battle.Service.BattleService.Tournament do
           true ->
             {:ok, result} = RankList.get_battle_info()
             RankList.insert_win_rate(result)
-            GameTime.end_record()
+            GameTime.end_record(games)
           false ->
             :timer.sleep(3_000)
             update_win_rate(games)

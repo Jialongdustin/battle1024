@@ -133,7 +133,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   defp execute_task({git, tag, game_id}, {groupName, appName}) do
     case Kun.change_config(%{user_id: "1024", git_url: git, tag: tag}) do
       {:error, reason} ->
-        BattleResultTest.update_battle_result_failed(game_id)
+        BattleResultTest.update_battle_result_failed(game_id, reason)
       %{package_name: package_name, user_id: _} ->
         groupKey =
           Regex.run(~r/test\d+/, groupName)

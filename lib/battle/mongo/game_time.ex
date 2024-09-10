@@ -12,6 +12,7 @@ defmodule Battle.Mongo.GameTime do
   field :end_time, :string, required: false
   field :game_time, :string, required: false
   field :day_time, :string, required: false
+  field :users, :integer, required: false
 
   def start_record() do
     info = %{
@@ -21,7 +22,7 @@ defmodule Battle.Mongo.GameTime do
     __MODULE__.psave(info)
   end
 
-  def end_record() do
+  def end_record(games) do
     today = Date.utc_today() |> Date.to_string()
     case __MODULE__.pquery(%{day_time: today}) do
       [] ->
@@ -31,14 +32,14 @@ defmodule Battle.Mongo.GameTime do
         end_time = DateTime.utc_now()
         game_time = DateTime.diff(begin_time, end_time)
         bson_id = info._id
-        __MODULE__.pupdate(%{_id: bson_id}, %{info | end_time: end_time |> DateTime.to_string(), game_time: "#{game_time}s"})
+        __MODULE__.pupdate(%{_id: bson_id}, %{info | end_time: end_time |> DateTime.to_string(), game_time: "#{game_time}s", users: games})
       res ->
         info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()
         {:ok, begin_time, _} = DateTime.from_iso8601(info.begin_time)
         end_time = DateTime.utc_now()
         game_time = DateTime.diff(end_time, begin_time)
         bson_id = info._id
-        __MODULE__.pupdate(%{_id: bson_id}, %{info | end_time: end_time |> DateTime.to_string(), game_time: "#{game_time}s"})
+        __MODULE__.pupdate(%{_id: bson_id}, %{info | end_time: end_time |> DateTime.to_string(), game_time: "#{game_time}s", users: games})
     end
   end
 end

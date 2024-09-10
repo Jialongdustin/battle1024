@@ -9,6 +9,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Mongo.BattleResultTest
   alias Battle.Mongo.UserAi
   alias Battle.Utils.Convert
+  alias Battle.Service.BattleService.RoomSupervisorTest
 
   @timeout 3000
   @timeout_test 120_000
@@ -96,7 +97,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def terminate_game_test(pid) do
-    GenServer.stop(pid)
+    GenServer.call(pid, :terminate_game_test)
   end
 
   def time_counter(pid) do
@@ -152,6 +153,11 @@ defmodule Battle.Service.BattleService.RoomServer do
       BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     end
+    {:stop, :normal, :ok, state}
+  end
+
+  def handle_call(:terminate_game_test, _from, state) do
+    RoomSupervisorTest.end_ai_service(state.group_key, state.app_name)
     {:stop, :normal, :ok, state}
   end
 

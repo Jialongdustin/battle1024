@@ -379,6 +379,8 @@ defmodule Battle.Web.Router do
                 %{"code" => 200, "data" => "processing", "success" => true}
               2002 ->
                 %{"code" => 200, "data" => "failure", "success" => true}
+              2003 ->
+                %{"code" => 200, "data" => "failure", "success" => true}
               2000 ->
                 %{"code" => 200, "data" => "success", "success" => true}
             end
@@ -480,13 +482,20 @@ defmodule Battle.Web.Router do
     token = conn.params["moment_token"]
     white = conn.params["white"]
     case Token.verify_token(token) do
-      {:ok, _} ->
+      {:ok, user_id} ->
         # 初始化测试对局, 返回黑棋和白棋的token
-        {:ok, info} = RoomSupervisorTest.init_game()
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => info, "success" => true}))
-        |> Conn.halt()
+        case RoomSupervisorTest.init_game(user_id, white) do
+          {:ok, info} ->
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => info, "success" => true}))
+            |> Conn.halt()
+          {:error, _} ->
+            conn
+            |> Conn.put_resp_content_type("application/json")
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => "failure", "success" => false}))
+            |> Conn.halt()
+        end
 
       {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
         conn
