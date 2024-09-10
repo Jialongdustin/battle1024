@@ -25,13 +25,30 @@ defmodule Battle.Service.WebService.RankList do
             wins = Map.get(win_counts, user_id, 0)
             win_rate = wins / total_games
             case UserAi.get_newest_ai_by_userId(user_id) do
-              {:ok, user_info}  ->
+              {:ok, user_info} ->
                 %{user_id: user_id, rate: win_rate, ai_name: user_info.ai_name}
               {:error, _} ->
                 %{user_id: user_id, rate: win_rate, ai_name: "not register yet"}
             end
           end)
-          {:ok, win_rates}
+
+        # 根据胜率排序，并分配排名（相同胜率相同排名）
+        ranked_win_rates =
+          win_rates
+          |> Enum.sort_by(& &1.rate, :desc)  # 按胜率降序排序
+          |> Enum.reduce({[], nil, 0, 1}, fn player_info, {acc, prev_rate, prev_rank, rank} ->
+            if player_info.rate == prev_rate do
+              # 如果胜率相同，保持相同排名
+              {[Map.put(player_info, :rank, prev_rank) | acc], prev_rate, prev_rank, rank + 1}
+            else
+              # 如果胜率不同，分配新的排名
+              {[Map.put(player_info, :rank, rank) | acc], player_info.rate, rank, rank + 1}
+            end
+          end)
+          |> elem(0)
+          |> Enum.reverse()  # 最终将列表反转回来
+
+        {:ok, ranked_win_rates}
 
       {:error, reason} ->
         {:error, []}
@@ -39,6 +56,6 @@ defmodule Battle.Service.WebService.RankList do
   end
 
   def insert_win_rate(user_infos) do
-    Enum.map(user_infos, fn user_info -> RankList.save_rank(user_info.user_id, user_info.ai_name, user_info.rate) end)
+    Enum.map(user_infos, fn user_info -> RankList.save_rank(user_info.user_id, user_info.ai_name, user_info.rate, user_info.rank) end)
   end
 end

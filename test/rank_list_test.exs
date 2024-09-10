@@ -11,11 +11,12 @@ defmodule RankListTest do
 
 
   test "get rank list" do
-    Battle.Mongo.RankList.save_rank("aaa","jahaja", 1.0)
-    Battle.Mongo.RankList.save_rank("acac","haha", 0.2)
+    Battle.Mongo.RankList.save_rank("aaa","jahaja", 1.0,1)
+    Battle.Mongo.RankList.save_rank("acac","haha", 0.2,2)
     User.save_user("aaa","a3", "a33")
     User.save_user("acac","a2c2", "a323")
     {:ok, rank_info} = Battle.Mongo.RankList.get_rank_list(0, 2)
+    IO.inspect(rank_info)
     rank_rate = Enum.reduce(rank_info, [], fn message, acc ->
     acc++[message.rate]
     end)
