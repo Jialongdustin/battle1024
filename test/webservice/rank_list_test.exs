@@ -62,10 +62,10 @@ defmodule BattleTest.WebService.RankListTest do
       {:ok, win_rates} = Battle.Service.WebService.RankList.get_battle_info()
 
       calculate_winrate = [
-        %{user_id: "1", rate: 1.0, ai_name: "hahaha"},
-        %{user_id: "123", rate: 0.5, ai_name: "Biu biu biu~~!!"},
-        %{user_id: "2", rate: 0.0, ai_name: "wawawawa"},
-        %{user_id: "456", rate: 0.5, ai_name: "Biu"}
+        %{user_id: "1", rate: 1.0, ai_name: "hahaha",rank: 1},
+        %{user_id: "123", rate: 0.5, ai_name: "Biu biu biu~~!!",rank: 2},
+        %{user_id: "456", rate: 0.5, ai_name: "Biu",rank: 2},
+        %{user_id: "2", rate: 0.0, ai_name: "wawawawa",rank: 4}
       ]
       UserAi.clean_message("1")
       UserAi.clean_message("123")
