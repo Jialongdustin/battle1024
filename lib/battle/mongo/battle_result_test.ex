@@ -88,7 +88,7 @@ defmodule Battle.Mongo.BattleResultTest do
       [] -> {:error, "no results of test game"}
       res -> battle_info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)
               self_and_opponent = Enum.map(battle_info, fn battle ->
-                if battle.early_hand do
+                if battle.code == 2000 do
                     white = %{
                       time_cost_white: Enum.at(battle.time_cost_2, 0),
                       total_step_white: Enum.at(battle.total_step_2, 0),
@@ -109,7 +109,6 @@ defmodule Battle.Mongo.BattleResultTest do
             {:ok, self_and_opponent}
     end
   end
-
 
   def get_battle_results_within_24_hour() do
     time_query = Battle.Utils.GetTime24.get_time()
