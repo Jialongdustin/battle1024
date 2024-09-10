@@ -493,7 +493,7 @@ defmodule Battle.Web.Router do
           {:error, _} ->
             conn
             |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => "failure", "success" => false}))
+            |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => "failure", "success" => true}))
             |> Conn.halt()
         end
 

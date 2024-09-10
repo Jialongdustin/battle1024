@@ -61,7 +61,9 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   def query(caller, user_id, game_id) do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
-        RoomServer.start_countdown(pid, true)
+        if user_id != "1024" do
+          RoomServer.start_countdown(pid, true)
+        end
         case RoomServer.query(pid, user_id) do
           {:ok, detail} ->
             # 当前询问回合，写回成功
@@ -79,7 +81,9 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   def movement(moves, user_id, game_id) do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
-        RoomServer.start_countdown(pid, true)
+        if user_id != "1024" do
+          RoomServer.start_countdown(pid, true)
+        end
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
             # 将your_step改为opponent_step
