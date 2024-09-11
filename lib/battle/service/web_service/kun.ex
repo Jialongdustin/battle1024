@@ -24,7 +24,7 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "dustin"})
-  def change_config(info) do
+  def change_config(info, attempt \\ 0) do
     user_id = info.user_id
     git_url = info.git_url
     tag = info.tag
@@ -41,11 +41,14 @@ defmodule Battle.Service.WebService.Kun do
             {:error, "build failed"}
         end
 
-      {:error, reason} ->
-        {:error, reason}
+      {:error, 400} ->
+        {:error, "git or tag illegal"}
 
-      _ ->
-        change_config(info)
+      {:error, 500} when attempt < 3 ->
+        change_config(info, attempt + 1)
+
+      {:error, 500} ->
+        {:kun_error, "received 500 error from kun after 3 attempts"}
     end
   end
 
@@ -210,8 +213,8 @@ defmodule Battle.Service.WebService.Kun do
       params, [], make_headers(path, params, "PUT")) do
         {:ok, resp} ->
           resp
-        {:fail, _} ->
-          {:error, "git or tag illegal"}
+        {:fail, reason} ->
+          {:error, reason}
       end
   end
 

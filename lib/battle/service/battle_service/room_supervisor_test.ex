@@ -41,7 +41,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         {:ok, token_ai} = Token.generate_token("1024", game_id)
         child_spec_server = %{
           id: RoomServer,
-          start: {RoomServer, :start_link, [%{white: if(white, do: user_id, else: "1024"), black: if(white, do: "1024", else: user_id), game_id: game_id}]},
+          start: {RoomServer, :start_link, [%{white: if(white, do: user_id, else: "1024"), black: if(white, do: "1024", else: user_id), game_id: game_id, groupName: groupName, groupKey: groupName, appName: appName}]},
           restart: :transient,
           type: :worker
         }
@@ -128,6 +128,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     |> Kun.update_service_group(groupName, groupName)
     create_deploy(groupName, appName, @package_name)
     |> Kun.create_deploy_task()
+    {:ok, "deploy done"}
   end
 
   def end_ai_service(groupName, appName) do
@@ -139,6 +140,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
       [{groupName, app_name_old}] ->
         :ets.insert(:services_ai, {groupName, [appName | app_name_old]})
     end
+    {:ok, "uninstall done"}
   end
 
   defp create_deploy(groupKey, appName, configName) do
