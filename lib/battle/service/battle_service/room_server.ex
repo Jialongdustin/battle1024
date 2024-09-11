@@ -50,6 +50,8 @@ defmodule Battle.Service.BattleService.RoomServer do
       group_name: groupName,
       group_key: groupKey,
       app_name: appName,
+      query_white: false,
+      query_black: false,
       pre_step_white: %{move: [],cnt: 0},
       pre_step_black: %{move: [],cnt: 0},
       time_cost_white: 0,
@@ -183,96 +185,166 @@ defmodule Battle.Service.BattleService.RoomServer do
         board: Convert.convert_array_list(state.board),
         winner: state.winner,
       }
-      {:reply, {:ok, detail}, state}
+      if user_id == state.white do
+        {:reply, {:ok, detail}, %{state | query_white: true}}
+      else
+        {:reply, {:ok, detail}, %{state | query_black: true}}
+      end
+
     else
-      {:reply, {:error, "not your turn, please wait for your opponent move"}, state}
+      if user_id == state.white do
+        {:reply, {:error, "not your turn, please wait for your opponent move"}, %{state | query_white: true}}
+      else
+        {:reply, {:error, "not your turn, please wait for your opponent move"}, %{state | query_black: true}}
+      end
     end
   end
 
   def handle_call({:movement, user_id, moves}, _from, state) do
 
-    white = state.early_hand
-    board = state.board
-    move_list = state.can_move
 
-    winner =
-      case {count_piece([1, 2], board), count_piece([3, 4], board)} do
-        {0, _} -> state.black
-        {_, 0} -> state.white
-        _ -> nil
+    if (user_id == state.white && state.query_white == false) or
+       (user_id == state.black && state.query_black == false) do
+      if user_id == state.white do
+        {:reply,{:error, "send query request before move"},%{state| winner: state.black}}
+      else
+        {:reply,{:error, "send query request before move"},%{state| winner: state.white}}
       end
-    is_match =
-      Enum.any?(move_list, fn path ->
-        path == moves
-      end)
 
-    # 如果路径正确需要更新棋盘
-    case is_match do
-      true ->
+    else
 
-        # 确定 capture 的值
-        capture =
-          case get_captures(moves, state.board) do
-            [] ->
-              # 如果没有捕获的棋子
-              [
-                %{captured: nil, moves: Convert.convert_integer_into_string(moves)}
-              ]
-            res ->
-              # 如果有捕获的棋子，直接使用返回值
-              res
-          end
 
-        # 提取初始位置和最终位置
-        [[x0, y0] | _] = moves
-        [x1, y1] = List.last(moves)
+      white = state.early_hand
+      board = state.board
+      move_list = state.can_move
 
-        {node_value, white_king, black_king} = cal_black_white_and_node_value(moves, state.board)
+      winner =
+        case {count_piece([1, 2], board), count_piece([3, 4], board)} do
+          {0, _} -> state.black
+          {_, 0} -> state.white
+          _ -> nil
+        end
+      is_match =
+        Enum.any?(move_list, fn path ->
+          path == moves
+        end)
 
-        # 获取所有的捕获位置，并将它们更新为 0
-        update = get_update(capture, node_value, x0, y0, x1, y1)
+      # 如果路径正确需要更新棋盘
+      case is_match do
+        true ->
 
-        new_board =
-          Enum.reduce(update, board, fn {row, col, new_value}, acc ->
-            update_row = List.replace_at(Enum.at(acc, row), col, new_value)
-            List.replace_at(acc, row, update_row)
-          end)
+          # 确定 capture 的值
+          capture =
+            case get_captures(moves, state.board) do
+              [] ->
+                # 如果没有捕获的棋子
+                [
+                  %{captured: nil, moves: Convert.convert_integer_into_string(moves)}
+                ]
+              res ->
+                # 如果有捕获的棋子，直接使用返回值
+                res
+            end
 
-        {can_move, flag} = Battle.BattleHandler.move_list(new_board, !white)
+          # 提取初始位置和最终位置
+          [[x0, y0] | _] = moves
+          [x1, y1] = List.last(moves)
 
-        move_detail = %{
-          user_id: user_id,
-          movement: capture
-        }
+          {node_value, white_king, black_king} = cal_black_white_and_node_value(moves, state.board)
 
-        {new_state, detail} =
-          case state.early_hand do
-            # white
-            true ->
-              case check_repeat_move(state, moves, capture) do
-                {:continue, new_detail} ->
-                  {
-                    %{
-                      state |
-                      code: 10003,
-                      board: new_board,
-                      winner: winner,
-                      early_hand: !white,
-                      pre_step_white: new_detail.pre_step_white,
-                      pre_step_black: new_detail.pre_step_black,
-                      can_move: can_move,
-                      steps: state.steps ++ [move_detail],
-                      steps_white: state.steps_white + 1
-                    },
-                    %{
-                      code: 10000,
-                      winner: winner,
-                      king: white_king,
-                      move_detail: move_detail,
-                      board: Convert.convert_array_list(new_board)
+          # 获取所有的捕获位置，并将它们更新为 0
+          update = get_update(capture, node_value, x0, y0, x1, y1)
+
+          new_board =
+            Enum.reduce(update, board, fn {row, col, new_value}, acc ->
+              update_row = List.replace_at(Enum.at(acc, row), col, new_value)
+              List.replace_at(acc, row, update_row)
+            end)
+
+          {can_move, flag} = Battle.BattleHandler.move_list(new_board, !white)
+
+          move_detail = %{
+            user_id: user_id,
+            movement: capture
+          }
+
+          {new_state, detail} =
+            case state.early_hand do
+              # white
+              true ->
+                case check_repeat_move(state, moves, capture) do
+                  {:continue, new_detail} ->
+                    {
+                      %{
+                        state |
+                        code: 10003,
+                        board: new_board,
+                        winner: winner,
+                        early_hand: !white,
+                        pre_step_white: new_detail.pre_step_white,
+                        pre_step_black: new_detail.pre_step_black,
+                        can_move: can_move,
+                        steps: state.steps ++ [move_detail],
+                        steps_white: state.steps_white + 1,
+                        query_white: false
+                      },
+                      %{
+                        code: 10000,
+                        winner: winner,
+                        king: white_king,
+                        move_detail: move_detail,
+                        board: Convert.convert_array_list(new_board)
+                      }
                     }
-                  }
-                {:game_over, winner} ->
+                  {:game_over, winner} ->
+                      {
+                        %{
+                          state |
+                          code: 10001,
+                          board: new_board,
+                          winner: winner,
+                          early_hand: !white,
+                          can_move: can_move,
+                          steps: state.steps ++ [move_detail],
+                          steps_white: state.steps_white + 1
+                        },
+                        %{
+                          code: 30001,
+                          winner: winner,
+                          king: nil,
+                          move_detail: nil,
+                          board: nil
+                        }
+                      }
+                end
+
+              # black
+              false ->
+                case check_repeat_move(state,moves,capture) do
+                  {:continue, new_detail} ->
+                    {
+                      %{
+                        state |
+                        code: 10003,
+                        board: new_board,
+                        winner: winner,
+                        early_hand: !white,
+                        pre_step_white: new_detail.pre_step_white,
+                        pre_step_black: new_detail.pre_step_black,
+                        can_move: can_move,
+                        steps: state.steps ++ [move_detail],
+                        steps_black: state.steps_black + 1,
+                        query_black: false
+                      },
+                      %{
+                        code: 10000,
+                        winner: winner,
+                        king: black_king,
+                        move_detail: move_detail,
+                        board: Convert.convert_array_list(new_board)
+                      }
+                    }
+                  {:game_over, winner} ->
                     {
                       %{
                         state |
@@ -282,7 +354,7 @@ defmodule Battle.Service.BattleService.RoomServer do
                         early_hand: !white,
                         can_move: can_move,
                         steps: state.steps ++ [move_detail],
-                        steps_white: state.steps_white + 1
+                        steps_black: state.steps_black + 1
                       },
                       %{
                         code: 30001,
@@ -292,107 +364,61 @@ defmodule Battle.Service.BattleService.RoomServer do
                         board: nil
                       }
                     }
-              end
+                end
+            end
+          case new_state.winner do
+            nil ->
+              winner = count_total_piece(new_state, capture)
+              {new_state, detail} =
+                case winner do
+                  0 -> # 平局
+                    {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
 
-            # black
-            false ->
-              case check_repeat_move(state,moves,capture) do
-                {:continue, new_detail} ->
-                  {
-                    %{
-                      state |
-                      code: 10003,
-                      board: new_board,
-                      winner: winner,
-                      early_hand: !white,
-                      pre_step_white: new_detail.pre_step_white,
-                      pre_step_black: new_detail.pre_step_black,
-                      can_move: can_move,
-                      steps: state.steps ++ [move_detail],
-                      steps_black: state.steps_black + 1
-                    },
-                    %{
-                      code: 10000,
-                      winner: winner,
-                      king: black_king,
-                      move_detail: move_detail,
-                      board: Convert.convert_array_list(new_board)
-                    }
-                  }
-                {:game_over, winner} ->
-                  {
-                    %{
-                      state |
-                      code: 10001,
-                      board: new_board,
-                      winner: winner,
-                      early_hand: !white,
-                      can_move: can_move,
-                      steps: state.steps ++ [move_detail],
-                      steps_black: state.steps_black + 1
-                    },
-                    %{
-                      code: 30001,
-                      winner: winner,
-                      king: nil,
-                      move_detail: nil,
-                      board: nil
-                    }
-                  }
-              end
+                  winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
+                    {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
+
+                  nil -> # 还没有赢家，继续
+                    {new_state, detail}
+                end
+                {:reply, {:ok, detail}, new_state}
+            _ ->
+              {:reply, {:ok, %{detail | code: 10001}}, new_state}
           end
-        case new_state.winner do
-          nil ->
-            winner = count_total_piece(new_state, capture)
-            {new_state, detail} =
-              case winner do
-                0 -> # 平局
-                  {%{new_state | winner: 0, code: 10001}, %{detail | winner: 0,code: 10001}}
 
-                winner when is_integer(winner) or is_binary(winner) -> # 已经有赢家且 winner 是整数或二进制（字符串）
-                  {%{new_state | winner: winner, code: 10001}, %{detail | winner: winner,code: 10001}}
-
-                nil -> # 还没有赢家，继续
-                  {new_state, detail}
-              end
-              {:reply, {:ok, detail}, new_state}
-          _ ->
-            {:reply, {:ok, %{detail | code: 10001}}, new_state}
-        end
-
-      false ->
-        available_step =
-          Enum.map(state.can_move, fn list ->
-            Enum.map(list, fn inner_list ->
-              Enum.take(inner_list, 2)
+        false ->
+          available_step =
+            Enum.map(state.can_move, fn list ->
+              Enum.map(list, fn inner_list ->
+                Enum.take(inner_list, 2)
+              end)
             end)
-          end)
-        detail = %{
-          code: 20000,
-          winner: nil,
-          king: nil,
-          move_detail: nil,
-          board: Convert.convert_array_list(state.board),
-          # available_step: available_step
-        }
-        {illegal_times_white, illegal_times_black} =
-          state.illegal_times
-          |> case do
-            [white, black] ->
-              if state.white == user_id do
-                {white + 1, black}
-              else
-                {white, black + 1}
-              end
-          end
-        new_winner =
-          cond do
-            state.white == "10" && state.black == "24" && state.app_name == nil -> state.winner
-            state.early_hand == true -> state.black
-            true -> state.white
-          end
+          detail = %{
+            code: 20000,
+            winner: nil,
+            king: nil,
+            move_detail: nil,
+            board: Convert.convert_array_list(state.board),
+            # available_step: available_step
+          }
+          {illegal_times_white, illegal_times_black} =
+            state.illegal_times
+            |> case do
+              [white, black] ->
+                if state.white == user_id do
+                  {white + 1, black}
+                else
+                  {white, black + 1}
+                end
+            end
+          new_winner =
+            cond do
+              state.white == "10" && state.black == "24" && state.app_name == nil -> state.winner
+              state.early_hand == true -> state.black
+              true -> state.white
+            end
 
-        {:reply, {:error, %{detail | winner: new_winner}}, %{state | illegal_times: [illegal_times_white, illegal_times_black], winner: new_winner}}
+          {:reply, {:error, %{detail | winner: new_winner}}, %{state | illegal_times: [illegal_times_white, illegal_times_black], winner: new_winner}}
+      end
     end
   end
 

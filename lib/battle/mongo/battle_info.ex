@@ -12,7 +12,7 @@ defmodule Battle.Mongo.BattleInfo do
 
   field :game_id, :string, required: true
   field :steps, :integer, required: true
-  field :detail, {:list, :map}, required: true
+  field :detail, {:list, :map}, required: false
 #  field :date, :datetime, required: true
 
   def insert_battle(game_id, steps, detail) do
