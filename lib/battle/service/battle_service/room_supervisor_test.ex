@@ -9,7 +9,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   @service_groups ["battle-test6", "battle-test7", "battle-test8", "battle-test9", "battle-test10", "battle-test11", "battle-test12", "battle-test13", "battle-test14", "battle-test15",
                   "battle-test16", "battle-test17", "battle-test18", "battle-test19", "battle-test20"]
   @appNames ["battle-player-python", "battle-player-lua", "battle-player-java", "battle-player-c"]
-  @package_name "plat1024-lingxigou:20240910112301"
+  @package_name "plat1024-lingxigou:20240911142041"
 
   def start_link(_) do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
@@ -37,6 +37,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     case get_first_and_pop() do
       {:ok, {groupName, appName}} ->
         game_id = UUID.uuid4()
+        IO.inspect(game_id)
         {:ok, token_user} = Token.generate_token(user_id, game_id)
         {:ok, token_ai} = Token.generate_token("1024", game_id)
         child_spec_server = %{
@@ -46,9 +47,9 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
           type: :worker
         }
         DynamicSupervisor.start_child(__MODULE__, child_spec_server)
-        start_ai_service(groupName, appName, token_ai, white)
         [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
         RoomServer.start_countdown(pid, true)
+        start_ai_service(groupName, appName, token_ai, white)
         {:ok, %{
           token: token_user,
           game_id: game_id
