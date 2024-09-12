@@ -18,7 +18,6 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
   end
 
   def init_game(white, black, game_id, groupName, groupKey, appName, test \\ false) do
-    # child_spec_server = {RoomServer, white: white, black: black, game_id: game_id}
     child_spec_server = %{
       id: RoomServer,
       start: {RoomServer, :start_link, [%{white: white, black: black, game_id: game_id, groupName: groupName, groupKey: groupKey, appName: appName}]},
