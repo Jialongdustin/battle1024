@@ -4,6 +4,7 @@ defmodule Battle.Service.BattleService.Tournament do
   alias Battle.Service.BattleService.ThreadPool
   alias Battle.Service.WebService.Kun
   alias Battle.Mongo.BattleResult
+  alias Battle.Mongo.GameTime
   alias Battle.Service.WebService.RankList
 
   def start_link(_args) do
@@ -25,7 +26,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   def schedule_tournament do
     now = DateTime.utc_now()
-    noon = "#{Date.to_string(now)} 04:00:00"
+    noon = "#{Date.to_string(now)} 16:00:00"
     {:ok, twelve_noon, _offset} = DateTime.from_iso8601("#{noon}Z")
     now_ms = DateTime.to_unix(now, :millisecond)
     twelve_noon_ms = DateTime.to_unix(twelve_noon, :millisecond)
@@ -55,6 +56,7 @@ defmodule Battle.Service.BattleService.Tournament do
             Map.put(acc, user_id, package_name)
           end)
         user_ids = Map.keys(players)
+        IO.inspect("there are #{length(user_ids)} players now")
         games = length(user_ids) * (length(user_ids) - 1)
         if length(user_ids) > 1 do
           Enum.each(user_ids, fn user_id1 ->

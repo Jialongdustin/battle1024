@@ -40,6 +40,14 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
     GenServer.cast(__MODULE__, {:add_task, task})
   end
 
+  def get_state() do
+    GenServer.call(__MODULE__, :get_state)
+  end
+
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
+  end
+
   def handle_cast({:add_task, task}, state) do
     case get_first_and_pop() do
       {:ok, service} ->
@@ -104,7 +112,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   defp reuse_group_for_task({git, tag, game_id}, {groupName, groupKey, appName}) do
-    package_name = Kun.change_config(%{user_id: 1024, git_url: git, tag: tag})[:package_name]
+    RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName)
+    package_name = Kun.change_config(%{user_id: "1024", git_url: git, tag: tag})[:package_name]
     update_services(groupName, groupKey, appName, game_id)
     [
       %{
@@ -118,14 +127,13 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
         "appConfBuildName": package_name
       },
     ] |> Kun.create_deploy_task()
-    RoomSupervisor.init_game(10, 24, game_id, groupName, groupKey, appName)
   end
 
   # players建立user_id和每个用户的构建包的映射
   defp execute_task({git, tag, game_id}, {groupName, appName}) do
-    case Kun.change_config(%{user_id: 1024, git_url: git, tag: tag}) do
+    case Kun.change_config(%{user_id: "1024", git_url: git, tag: tag}) do
       {:error, reason} ->
-        BattleResultTest.update_battle_result_failed(game_id)
+        BattleResultTest.update_battle_result_failed(game_id, reason)
       %{package_name: package_name, user_id: _} ->
         groupKey =
           Regex.run(~r/test\d+/, groupName)
@@ -157,8 +165,8 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   defp update_services(groupName, groupKey, appName, game_id) do
-    update_service(appName, 10, game_id, true) ++
-    update_service(Map.get(@appNames, appName), 24, game_id, false)
+    update_service(appName, "10", game_id, true) ++
+    update_service(Map.get(@appNames, appName), "24", game_id, false)
     |> Kun.update_service_group(groupName, groupKey)
   end
 

@@ -3,6 +3,7 @@ defmodule BattleTest.TournamentTest do
   import Mock
 
   alias Battle.Service.BattleService.Tournament
+  alias Battle.Mongo.RankList
 
   test "schedules tournament today" do
     now = DateTime.utc_now()
@@ -82,7 +83,7 @@ defmodule BattleTest.TournamentTest do
         end
       ] do
           result = Tournament.update_win_rate(games)
-          Battle.Mongo.RankList.remove_rank("111")
+          RankList.remove_rank("111")
           assert length(result) == 1
       end
     end

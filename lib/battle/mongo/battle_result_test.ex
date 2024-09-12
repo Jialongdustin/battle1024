@@ -39,7 +39,7 @@ defmodule Battle.Mongo.BattleResultTest do
     __MODULE__.psave(info)
   end
 
-  def update_battle_result_failed(game_id) do
+  def update_battle_result_failed(game_id, reason) do
     info =  __MODULE__.pquery2(%{game_id: game_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[game_id: 1]]})
       |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
@@ -47,7 +47,7 @@ defmodule Battle.Mongo.BattleResultTest do
       |> List.first()
 
     bson_id = info._id
-    __MODULE__.pupdate(%{_id: bson_id}, %{info | code: 2002})
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | code: if(reason == "git or tag illegal", do: 2002, else: 2003)})
   end
 
   def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps, code \\ 2001) do
@@ -88,7 +88,7 @@ defmodule Battle.Mongo.BattleResultTest do
       [] -> {:error, "no results of test game"}
       res -> battle_info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end)
               self_and_opponent = Enum.map(battle_info, fn battle ->
-                if battle.early_hand do
+                if battle.code == 2000 do
                     white = %{
                       time_cost_white: Enum.at(battle.time_cost_2, 0),
                       total_step_white: Enum.at(battle.total_step_2, 0),
@@ -109,7 +109,6 @@ defmodule Battle.Mongo.BattleResultTest do
             {:ok, self_and_opponent}
     end
   end
-
 
   def get_battle_results_within_24_hour() do
     time_query = Battle.Utils.GetTime24.get_time()
