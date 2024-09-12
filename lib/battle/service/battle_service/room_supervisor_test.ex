@@ -48,12 +48,18 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         }
         DynamicSupervisor.start_child(__MODULE__, child_spec_server)
         [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-        RoomServer.start_countdown(pid, true)
-        start_ai_service(groupName, appName, token_ai, white)
-        {:ok, %{
-          token: token_user,
-          game_id: game_id
-        }}
+        RoomServer.start_countdown_test(pid)
+        task = Task.async(fn -> start_ai_service(groupName, appName, token_ai, white) end)
+        result = Task.await(task, 40_000)
+        case result do
+          {:ok, _} ->
+            {:ok, %{
+              token: token_user,
+              game_id: game_id
+            }}
+          {:error, reason} ->
+            {:error, reason}
+        end
       {:error, reason} ->
         {:error, reason}
     end
@@ -62,9 +68,6 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   def query(caller, user_id, game_id) do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
-        if user_id != "1024" do
-          RoomServer.start_countdown(pid, true)
-        end
         case RoomServer.query(pid, user_id) do
           {:ok, detail} ->
             # 当前询问回合，写回成功
@@ -83,7 +86,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
         if user_id != "1024" do
-          RoomServer.start_countdown(pid, true)
+          RoomServer.start_countdown_test(pid)
         end
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->

@@ -12,7 +12,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Service.BattleService.RoomSupervisorTest
 
   @timeout 3000
-  @timeout_test 120_000
+  @timeout_test 180_000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1],
@@ -67,9 +67,12 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:ok, state}
   end
 
-  def start_countdown(pid, test \\ false) do
-    timeout = if test, do: @timeout_test, else: @timeout
-    GenServer.call(pid, {:start_countdown, timeout, test})
+  def start_countdown(pid, query \\ false) do
+    GenServer.call(pid, {:start_countdown, @timeout, query})
+  end
+
+  def start_countdown_test(pid) do
+    GenServer.call(pid, {:start_countdown_test, @timeout_test})
   end
 
   # 玩家加入战斗
@@ -143,7 +146,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call(:terminate_game, _from, state) do
-    if state.white == "1024" or state.black == "1024" do
+    if state.white == "10" and state.black == "24" do
       BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
       BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
@@ -163,24 +166,26 @@ defmodule Battle.Service.BattleService.RoomServer do
     {:stop, :normal, :ok, state}
   end
 
-  def handle_call({:start_countdown, timeout, test}, _from, state) do
-    case test do
+  def handle_call({:start_countdown, timeout, query}, _from, state) do
+    case query do
+      ## 如果是query请求
       true ->
-        if state.time_ref_test do
-          Process.cancel_timer(state.time_ref_test)
-        end
-        new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
-        {:reply, :ok, %{state | time_ref_test: new_ref_test}}
+        new_ref = if state.time_ref, do: state.time_ref, else: Process.send_after(self(), :execute_task, timeout)
+        {:reply, :ok, %{state | time_ref: new_ref}}
 
+      ## 如果是move请求
       false ->
-        if state.time_ref do
-          Process.cancel_timer(state.time_ref)
-          {:reply, :ok, %{state | time_ref: nil}}
-        else
-          new_ref = Process.send_after(self(), :execute_task, timeout)
-          {:reply, :ok, %{state | time_ref: new_ref}}
-        end
+        Process.cancel_timer(state.time_ref)
+        {:reply, :ok, %{state | time_ref: nil}}
     end
+  end
+
+  def handle_call({:start_countdown_test, timeout}, _from, state) do
+    if state.time_ref_test do
+      Process.cancel_timer(state.time_ref_test)
+    end
+    new_ref_test = Process.send_after(self(), :execute_task_test, timeout)
+    {:reply, :ok, %{state | time_ref_test: new_ref_test}}
   end
 
   def handle_call({:query, user_id}, _from, state) do
