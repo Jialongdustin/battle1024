@@ -39,7 +39,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
         case RoomServer.query(pid, user_id) do
           {:ok, detail} ->
             # 当前询问回合，写回成功
-            RoomServer.start_countdown(pid)
+            RoomServer.start_countdown(pid, true)
             RoomServer.start_time_step(pid)
             {:ok, detail}
           {:error, detail} ->
@@ -70,7 +70,7 @@ defmodule Battle.Service.BattleService.RoomSupervisor do
                 send(dest, {:query, success_detail})
                 if success_detail.winner == nil do
                   RoomServer.start_time_step(pid)
-                  RoomServer.start_countdown(pid)
+                  RoomServer.start_countdown(pid, true)
                 end
                 {:ok, success_detail}
             end

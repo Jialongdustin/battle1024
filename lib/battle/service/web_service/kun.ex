@@ -111,7 +111,7 @@ defmodule Battle.Service.WebService.Kun do
   # end
 
   # Kun.update_service_group()
-  def update_service_group(services, groupName, groupKey) do
+  def update_service_group(services, groupName, groupKey, attempt \\ 0) do
     path = "/api/env/#{@query_namespace}/serviceGroup/sync"
     groups = [
       %{
@@ -124,8 +124,12 @@ defmodule Battle.Service.WebService.Kun do
     case Battle.Service.WebService.Kun.send_post(path, %{groups: groups}) do
       %{"code" => 0, "data" => data} ->
         data
-      _ ->
-        update_service_group(services, groupName, groupKey)
+
+      {:error, 500} when attempt < 3 ->
+        update_service_group(services, groupName, groupKey, attempt + 1)
+
+      {:error, 500} ->
+        {:error, "received 500 error from kun after 3 attempts"}
     end
   end
 
@@ -139,7 +143,6 @@ defmodule Battle.Service.WebService.Kun do
     case Battle.Service.WebService.Kun.send_post(path, content) do
       %{"code" => 0, "data" => %{"task" => task}} ->
         id = task["ID"]
-        :timer.sleep(5_000)
         Battle.Service.WebService.Kun.get_deploy_result(id)
       _ ->
         create_deploy_task(services)
@@ -155,7 +158,7 @@ defmodule Battle.Service.WebService.Kun do
           true ->
             {:ok, "deploy done"}
           false ->
-            :timer.sleep(10_000)
+            :timer.sleep(2_000)
             get_deploy_result(id)
         end
       _ ->
