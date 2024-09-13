@@ -175,7 +175,9 @@ defmodule Battle.Service.BattleService.RoomServer do
 
       ## 如果是move请求
       false ->
-        Process.cancel_timer(state.time_ref)
+        if state.time_ref do
+          Process.cancel_timer(state.time_ref)
+        end
         {:reply, :ok, %{state | time_ref: nil}}
     end
   end

@@ -22,7 +22,37 @@ defmodule Battle.Mongo.RankList do
   def get_rank_list(page, limit) do
     time_query = Battle.Utils.GetTime24.get_time()
     case __MODULE__.pquery_sort_limit(time_query, [rate: -1], limit, page*limit) do
-      [] -> {:error, "empty rank list" }
+      [] ->
+        time_query_yesterday = Battle.Utils.GetTime24.get_yesterday_time()
+        case __MODULE__.pquery_sort_limit(time_query_yesterday, [rate: -1], limit, page*limit) do
+          [] -> {:error,"no match"}
+          res ->
+            details = res |> Enum.map(fn message ->
+              message = message |> __MODULE__.to_raw()
+              {:ok, user_info} = User.query_user(message.user_id)
+              time_query_48h_before = Battle.Utils.GetTime24.get_48h_before()
+              rank_48h_before =
+                case __MODULE__.pquery2(%{user_id: message.user_id,date: time_query_48h_before.date},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+                  [] -> 0
+                  res -> res
+                         |> Enum.map(fn message ->
+                    message
+                    |> __MODULE__.to_raw()
+                  end)
+                         |> List.first()
+                end
+              %{
+                ai_name: message.ai_name,
+                user_id: message.user_id,
+                rate: message.rate,
+                avatar: user_info.avatar,
+                rank: message.rank,
+                rank_abs: (if rank_48h_before ==0, do: 0, else: rank_48h_before.rank - message.rank),
+                today: false
+              }
+            end)
+            {:ok, details}
+        end
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()
@@ -45,7 +75,8 @@ defmodule Battle.Mongo.RankList do
             rate: message.rate,
             avatar: user_info.avatar,
             rank: message.rank,
-            rank_abs: (if rank_yesterday ==0, do: 0, else: rank_yesterday.rank - message.rank)
+            rank_abs: (if rank_yesterday ==0, do: 0, else: rank_yesterday.rank - message.rank),
+            today: true
           }
         end)
         {:ok, details}
