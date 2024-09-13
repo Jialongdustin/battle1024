@@ -48,10 +48,10 @@ defmodule Battle.Mongo.RankList do
                 avatar: user_info.avatar,
                 rank: message.rank,
                 rank_abs: (if rank_48h_before ==0, do: 0, else: rank_48h_before.rank - message.rank),
-                today: false
+
               }
             end)
-            {:ok, details}
+            {:ok, %{details | today: false}}
         end
       res ->
         details = res |> Enum.map(fn message ->
@@ -76,10 +76,9 @@ defmodule Battle.Mongo.RankList do
             avatar: user_info.avatar,
             rank: message.rank,
             rank_abs: (if rank_yesterday ==0, do: 0, else: rank_yesterday.rank - message.rank),
-            today: true
           }
         end)
-        {:ok, details}
+        {:ok, %{details | today: false}}
     end
   end
 
