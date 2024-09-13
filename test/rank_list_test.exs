@@ -33,17 +33,22 @@ defmodule RankListTest do
     Battle.Mongo.User.save_user(user_id, "12312", "niu")
     Battle.Mongo.UserAi.insert_ai(user_id, ai_name)
     {:error, single_info} = Battle.Mongo.RankList.get_rank_by_user_id(user_id)
+    IO.inspect(single_info)
     Battle.Mongo.User.remove_user(user_id)
     Battle.Mongo.UserAi.clean_message(user_id)
     assert single_info.ai_name == ai_name
   end
 
   test "rank self without commit" do
-    user_id = "aaa"
+    user_id = "ccca"
     Battle.Mongo.User.save_user(user_id,"12sds312","niu11")
+    Battle.Mongo.UserAi.insert_ai(user_id, "11111")
     {:error, single_info} = Battle.Mongo.RankList.get_rank_by_user_id(user_id)
+    IO.inspect(single_info)
     Battle.Mongo.User.remove_user(user_id)
+    Battle.Mongo.UserAi.clean_message(user_id)
     assert single_info.last_submit_date == nil
   end
+
 
 end
