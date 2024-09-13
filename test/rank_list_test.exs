@@ -24,7 +24,7 @@ defmodule RankListTest do
     User.remove_user("acac")
 #    Battle.Mongo.RankList.remove_rank("aaa")
 #    Battle.Mongo.RankList.remove_rank("acac")
-    assert Enum.all?([ 0.2], fn user_info -> user_info in rank_rate.details end)
+    assert Enum.all?([ 0.2], fn user_info -> user_info in rank_rate end)
   end
 
   test "rank self without game" do
