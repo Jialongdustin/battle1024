@@ -2,10 +2,9 @@ defmodule Battle.Utils.GetTime24 do
 
   def get_time() do
     date = DateTime.utc_now()
-
-    # 根据当前日期生成开始和结束时间的字符串
-    start_time_string = "#{Date.to_string(date)} 00:00:00"
-    end_time_string = "#{Date.to_string(date)} 23:59:59"
+    # 固定 start_time_string 为昨天的 16:00:00
+    start_time_string = "#{Date.to_string(date|> Date.add(-1))} 16:00:00"
+    end_time_string = "#{Date.to_string(date)} 16:00:00"
 
     # 将字符串转换为 DateTime 类型
     {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
@@ -30,10 +29,8 @@ defmodule Battle.Utils.GetTime24 do
   def get_yesterday_time() do
     # 获取当前 UTC 时间并减去 1 天
     date = DateTime.utc_now() |> DateTime.add(-86400, :second)
-
-    # 根据昨天的日期生成开始和结束时间的字符串
-    start_time_string = "#{Date.to_string(date)} 00:00:00"
-    end_time_string = "#{Date.to_string(date)} 23:59:59"
+    start_time_string = "#{Date.to_string(date|> Date.add(-1))} 16:00:00"
+    end_time_string = "#{Date.to_string(date)} 16:00:00"
 
     # 将字符串转换为 DateTime 类型
     {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
@@ -58,10 +55,8 @@ defmodule Battle.Utils.GetTime24 do
   def get_48h_before() do
     # 获取当前 UTC 时间并减去 2 天
     date = DateTime.utc_now() |> DateTime.add(-(86400*2), :second)
-
-    # 根据昨天的日期生成开始和结束时间的字符串
-    start_time_string = "#{Date.to_string(date)} 00:00:00"
-    end_time_string = "#{Date.to_string(date)} 23:59:59"
+    start_time_string = "#{Date.to_string(date|> Date.add(-1))} 16:00:00"
+    end_time_string = "#{Date.to_string(date)} 16:00:00"
 
     # 将字符串转换为 DateTime 类型
     {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
