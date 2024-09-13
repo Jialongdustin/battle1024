@@ -51,7 +51,7 @@ defmodule Battle.Mongo.RankList do
 
               }
             end)
-            {:ok, %{details | today: false}}
+            {:ok, details}
         end
       res ->
         details = res |> Enum.map(fn message ->
@@ -75,16 +75,16 @@ defmodule Battle.Mongo.RankList do
             rate: message.rate,
             avatar: user_info.avatar,
             rank: message.rank,
-            rank_abs: (if rank_yesterday ==0, do: 0, else: rank_yesterday.rank - message.rank),
+            rank_abs: (if rank_yesterday ==0, do: 0, else: rank_yesterday.rank - message.rank)
           }
         end)
-        {:ok, %{details | today: false}}
+        {:ok, details}
     end
   end
 
   def get_rank_by_user_id(user_id) do
     {:ok, user_info} = User.query_user(user_id)
-    case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+    case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
       [] ->
         case UserAi.get_newest_ai_by_userId(user_id) do
           {:error, _} ->
@@ -93,6 +93,7 @@ defmodule Battle.Mongo.RankList do
               user_id: user_id,
               last_submit_date: nil,
               rank: 0,
+              update_time: nil,
               ai_name: nil,
               user_name: user_info.user_name
             }}
@@ -109,6 +110,7 @@ defmodule Battle.Mongo.RankList do
                 user_id: user_id,
                 last_submit_date: date,
                 rank: 0,
+                update_time: nil,
                 ai_name: res.ai_name,
                 user_name: user_info.user_name
               }}
@@ -123,6 +125,7 @@ defmodule Battle.Mongo.RankList do
           rate: List.first(res).rate,
           ai_name: user_info_ai.ai_name,
           last_submit_date: user_info_ai.create_time.ms,
+          update_time: List.first(res).date,
           submit_count: cnt,
           user_name: user_info.user_name,
           rank: List.first(res).rank
