@@ -63,7 +63,27 @@ defmodule BattleTest.RoomServerTest do
     IO.inspect(res)
   end
 
+  test "move before query" do
+    BattleStatistics.delete_message()
+    BattleStatistics.save_init()
+    #    Logger.configure(level: :none)
+    {:ok, contest_id} =
+      Battle.Service.BattleService.RoomSupervisor.init_game("123", "456", "11", "groupName", "groupKey", "appName")
 
+    # "66cd6eadeee7d7224be32a91"
+    {:ok, moment_token_123} = Battle.Utils.Token.generate_token("123", contest_id)
+    # "66cd6eadeee7d7224be32a90"
+    {:ok, moment_token_456} = Battle.Utils.Token.generate_token("456", contest_id)
+    #    RoomSupervisor.query(123, contest_id)
+    #    RoomSupervisor.query(456, contest_id)
+#    RoomSupervisor.query(nil,"123",contest_id)
+    RoomSupervisor.movement(Battle.Utils.Convert.convert_integer_into_string([[2, 0], [3, 0]]), "123", contest_id)
+    {:ok,battle_info} = Battle.Mongo.BattleInfo.get_battle_by_game_id(contest_id)
+    Battle.Mongo.BattleInfo.remove_battle(contest_id)
+    BattleResult.remove_battle("123")
+    assert battle_info.steps == 0
+#    RoomSupervisor.query(nil,"456",contest_id)
+  end
 
   test "update capture" do
     board = [
