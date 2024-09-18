@@ -5,6 +5,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   alias Battle.Service.WebService.Kun
   alias Battle.Utils.Token
   alias Battle.Utils.Convert
+  alias Battle.Ai.Simple
 
   @service_groups ["battle-test6", "battle-test7", "battle-test8", "battle-test9", "battle-test10", "battle-test11", "battle-test12", "battle-test13", "battle-test14", "battle-test15",
                   "battle-test16", "battle-test17", "battle-test18", "battle-test19", "battle-test20"]
@@ -34,34 +35,26 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
 
   # game_id = "d9279888-1962-494c-aed9-1058dfd2805a"
   def init_game(user_id, white) do
-    case get_first_and_pop() do
-      {:ok, {groupName, appName}} ->
-        game_id = UUID.uuid4()
-        IO.inspect(game_id)
-        {:ok, token_user} = Token.generate_token(user_id, game_id)
-        {:ok, token_ai} = Token.generate_token("1024", game_id)
-        child_spec_server = %{
-          id: RoomServer,
-          start: {RoomServer, :start_link, [%{white: if(white, do: user_id, else: "1024"), black: if(white, do: "1024", else: user_id), game_id: game_id, groupName: groupName, groupKey: groupName, appName: appName}]},
-          restart: :transient,
-          type: :worker
-        }
-        DynamicSupervisor.start_child(__MODULE__, child_spec_server)
-        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-        RoomServer.start_countdown_test(pid)
-        task = Task.async(fn -> start_ai_service(groupName, appName, token_ai, white) end)
-        result = Task.await(task, 40_000)
-        case result do
-          {:ok, _} ->
-            {:ok, %{
-              token: token_user,
-              game_id: game_id
-            }}
-          {:error, reason} ->
-            {:error, reason}
-        end
-      {:error, reason} ->
-        {:error, reason}
+    game_id = UUID.uuid4()
+    {:ok, token_user} = Token.generate_token(user_id, game_id)
+    child_spec_server = %{
+      id: RoomServer,
+      start: {RoomServer, :start_link, [%{white: if(white, do: user_id, else: "1024"), black: if(white, do: "1024", else: user_id), game_id: game_id, groupName: groupName, groupKey: groupName, appName: appName}]},
+      restart: :transient,
+      type: :worker
+    }
+    DynamicSupervisor.start_child(__MODULE__, child_spec_server)
+    [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+    RoomServer.start_countdown_test(pid)
+    if white do
+      {:ok, %{token: token_user, game_id: game_id}}
+    else
+      battle_state =  RoomServer.get_state(pid)
+      movement = Simple.move(battle_state.board,true)
+      RoomServer.query(pid,"1024")
+      RoomServer.movement(pid,"1024",movement)
+      {:ok, %{token: token_user, game_id: game_id}}
+    end
     end
   end
 
@@ -91,18 +84,19 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
             # 将your_step改为opponent_step
+            battle_state =  RoomServer.get_state(pid)
+            if user_id == battle_state.white do
+              movement = Simple.move(battle_state.board,false)
+              RoomServer.query(pid,"1024")
+              RoomServer.movement(pid,"1024",movement)
+            else
+              movement = Simple.move(battle_state.board,true)
+              RoomServer.query(pid,"1024")
+              RoomServer.movement(pid,"1024",movement)
+            end
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
-            case :ets.lookup(:pid_info_test, game_id) do
-              [] -> # 对方没有查询
-                {:ok, success_detail}
-              [{_, dest}] -> # 对方查询棋盘状态
-                :ets.delete(:pid_info_test, game_id)
-                send(dest, {:query, success_detail})
-                {:ok, success_detail}
-            end
-
           {:error, error_detail} ->
             {:error, error_detail}
         end
