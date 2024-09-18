@@ -78,6 +78,38 @@ defmodule Battle.Utils.GetTime24 do
     time_query
   end
 
+  def get_24h_before_any_date(time) do
+    # 转换毫秒级时间戳为秒级时间戳
+    timestamp_in_sec = div(time, 1000)
 
+    # 将秒级时间戳转换为 DateTime
+    {:ok, datetime} = DateTime.from_unix(timestamp_in_sec)
+
+    # 获取日期部分
+    date = datetime |> DateTime.to_date()
+
+    # 生成昨天 16:00:00 和今天 16:00:00 的字符串
+    start_time_string = "#{Date.to_string(Date.add(date, -2))} 16:00:00"
+    end_time_string = "#{Date.to_string(Date.add(date, -1))} 16:00:00"
+
+    # 将字符串转换为 DateTime 类型
+    {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
+    {:ok, end_time, _offset} = DateTime.from_iso8601("#{end_time_string}Z")
+
+    #    mill = :erlang.system_time()
+
+    # 将 DateTime 转换为 Unix 时间戳（以毫秒为单位）
+    start = DateTime.to_unix(start_time, :millisecond)
+    last = DateTime.to_unix(end_time, :millisecond)
+
+    #    Battle.RankList.get_rank_list()
+
+    time_query = %{
+      date: %{
+        "$gte": %Bson.UTC{ ms: start},
+        "$lte": %Bson.UTC{ ms: last}
+      }
+    }
+  end
 
 end

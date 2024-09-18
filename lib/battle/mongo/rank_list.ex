@@ -34,7 +34,7 @@ defmodule Battle.Mongo.RankList do
               time_query_48h_before = Battle.Utils.GetTime24.get_48h_before()
               rank_48h_before =
                 case __MODULE__.pquery2(%{user_id: message.user_id,date: time_query_48h_before.date},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-                  [] -> 0
+                  [] -> []
                   res -> res
                          |> Enum.map(fn message ->
                     message
@@ -48,7 +48,7 @@ defmodule Battle.Mongo.RankList do
                 rate: message.rate,
                 avatar: user_info.avatar,
                 rank: message.rank,
-                rank_abs: (if rank_48h_before ==0, do: 0, else: rank_48h_before.rank - message.rank),
+                rank_abs: (if rank_48h_before == [], do: nil, else: rank_48h_before.rank - message.rank),
 
               }
             end)
@@ -61,7 +61,7 @@ defmodule Battle.Mongo.RankList do
           time_query_yesterday = Battle.Utils.GetTime24.get_yesterday_time()
           rank_yesterday =
             case __MODULE__.pquery2(%{user_id: message.user_id,date: time_query_yesterday.date},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
-              [] -> 0
+              [] -> []
               res -> res
                      |> Enum.map(fn message ->
                 message
@@ -76,7 +76,7 @@ defmodule Battle.Mongo.RankList do
             rate: message.rate,
             avatar: user_info.avatar,
             rank: message.rank,
-            rank_abs: (if rank_yesterday ==0, do: 0, else: rank_yesterday.rank - message.rank)
+            rank_abs: (if rank_yesterday == [], do: nil, else: rank_yesterday.rank - message.rank)
           }
         end)
         {:ok, details}
@@ -100,7 +100,8 @@ defmodule Battle.Mongo.RankList do
               rank: 0,
               update_time: time,
               ai_name: nil,
-              user_name: user_info.user_name
+              user_name: user_info.user_name,
+              rank_abs: nil
             }}
           {:ok, res} ->
             date = case BattleResultTest.get_newest_time_by_user_id(user_id) do
@@ -117,13 +118,25 @@ defmodule Battle.Mongo.RankList do
                 rank: 0,
                 update_time: time,
                 ai_name: res.ai_name,
-                user_name: user_info.user_name
+                user_name: user_info.user_name,
+                rank_abs: nil
               }}
         end
 
       res ->
         {:ok, user_info_ai} = UserAi.get_newest_ai_by_userId(user_id)
         {:ok, cnt} = BattleResultTest.count_submit(user_id)
+        time_query = Battle.Utils.GetTime24.get_24h_before_any_date(user_info_ai.create_time.ms)
+        rank_yesterday =
+          case __MODULE__.pquery2(%{user_id: user_id,date: time_query.date},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+            [] -> []
+            res -> res
+                   |> Enum.map(fn message ->
+              message
+              |> __MODULE__.to_raw()
+            end)
+                   |> List.first()
+          end
 
         {:ok, %{
           user_id: user_id,
@@ -133,7 +146,8 @@ defmodule Battle.Mongo.RankList do
           update_time: time,
           submit_count: cnt,
           user_name: user_info.user_name,
-          rank: List.first(res).rank
+          rank: List.first(res).rank,
+          rank_abs: (if rank_yesterday == [], do: nil, else: rank_yesterday.rank - List.first(res).rank)
         }
       }
     end
