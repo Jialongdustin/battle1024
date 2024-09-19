@@ -1,0 +1,17 @@
+api: "/user/delete_test"
+request:
+  type: object
+  properties:
+    moment_token:
+      type: string
+  required: [moment_token]
+
+response:
+  type: object
+  properties:
+    code:
+      type: number
+    message:
+      type: string
+    state:
+      type: string

@@ -18,17 +18,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
 
   def init(:ok) do
     :ets.new(:pid_info_test, [:named_table, :public, read_concurrency: true])
-    :ets.new(:services_ai, [:named_table, :public, read_concurrency: true])
-    Enum.each(@service_groups, fn group_name ->
-      Enum.each(@appNames, fn app_name ->
-        case :ets.lookup(:services_ai, group_name) do
-          [] ->
-            :ets.insert(:services_ai, {group_name, [app_name]})
-          [{group_name, app_name_old}] ->
-            :ets.insert(:services_ai, {group_name, [app_name | app_name_old]})
-        end
-      end)
-    end)
+    :ets.new(:user_id_test, [:named_table, :public, read_concurrency: true])
     opts = [strategy: :one_for_one]
     DynamicSupervisor.init(opts)
   end
@@ -45,6 +35,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     }
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+    :ets.insert(:user_id_test,{user_id,game_id})
     RoomServer.start_countdown_test(pid)
     if white do
       {:ok, %{token: token_user, game_id: game_id}}
@@ -55,7 +46,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
       RoomServer.movement(pid,"1024",movement)
       {:ok, %{token: token_user, game_id: game_id}}
     end
-    end
+
   end
 
   def query(caller, user_id, game_id) do
@@ -105,88 +96,16 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     end
   end
 
-  def get_first_and_pop() do
-    case :ets.first(:services_ai) do
-      :"$end_of_table" ->
-        {:error, "ETS is empty"}
-      key ->
-        [{groupName, appName_lists}] = :ets.lookup(:services_ai, key)
-        [head | tail] = appName_lists
-        if tail == [] do
-          :ets.delete(:services_ai, key)
-        else
-          :ets.insert(:services_ai, {groupName, tail})
-        end
-        {:ok, {groupName, head}}
+  def delete_room(user_id) do
+    case :ets.lookup(:user_id_test, user_id) do
+      [] -> # 对方没有查询
+        {:error, "no test of current user"}
+      [{_, game_id}] -> # 对方查询棋盘状态
+        :ets.delete(:user_id_test, game_id)
+        [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
+        RoomServer.terminate_game(pid)
+        {:ok, "delete success"}
     end
   end
 
-  def start_ai_service(groupName, appName, token_ai, white) do
-    update_service(appName, token_ai, white)
-    |> Kun.update_service_group(groupName, groupName)
-    create_deploy(groupName, appName, @package_name)
-    |> Kun.create_deploy_task()
-    {:ok, "deploy done"}
-  end
-
-  def end_ai_service(groupName, appName) do
-    create_uninstall(groupName, appName)
-    |> Kun.create_uninstall_task()
-    case :ets.lookup(:services_ai, groupName) do
-      [] ->
-        :ets.insert(:services_ai, {groupName, appName})
-      [{groupName, app_name_old}] ->
-        :ets.insert(:services_ai, {groupName, [appName | app_name_old]})
-    end
-    {:ok, "uninstall done"}
-  end
-
-  defp create_deploy(groupKey, appName, configName) do
-    [
-      %{
-        "serviceGroup": groupKey,
-        "service": appName,
-        "appConfBuildName": configName,
-      }
-    ]
-  end
-
-  defp create_uninstall(groupKey, appName) do
-    [
-      %{
-        "serviceGroup": groupKey,
-        "service": appName,
-        "deleteExclusivePvc": true
-      }
-    ]
-  end
-
-  defp update_service(appName, token, white) do
-    [%{
-          "name" => appName,
-          "version" => appName,
-          "replicas" => 1,
-          "cpu" => 12,
-          "mem" => 96,
-          "capacity" => 20,
-          "svcCapacity" => 0,
-          "nodepoolId" => "np0f3c8a13074143ff90da1f198a756367",
-          "params" => %{
-            "token" => token,
-            "white" => to_string(!white)
-          },
-          "resources" => %{
-            "kun-run" => %{
-              "requests" => %{
-                "cpu" => 2.0,
-                "mem" => 4.0
-              },
-              "limits" => %{
-                "cpu" => 0.5,
-                "mem" => 2.0
-              }
-            }
-          }
-        }]
-  end
 end
