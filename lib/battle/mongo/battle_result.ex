@@ -38,7 +38,7 @@ defmodule Battle.Mongo.BattleResult do
   end
 
   def get_battle_result_by_user_id(user_id) do
-    case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do
+    case __MODULE__.pquery_sort(%{user_id_2: user_id}, [date: -1]) do
       [] -> {:error, "no games of user"}
       res -> battle_info = res |> Enum.map(&__MODULE__.to_raw/1)
              self_and_opponent = Enum.map(battle_info, fn battle ->
