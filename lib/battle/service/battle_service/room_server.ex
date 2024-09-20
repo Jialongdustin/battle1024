@@ -150,6 +150,8 @@ defmodule Battle.Service.BattleService.RoomServer do
       BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
       BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
+    else if state.white == "1024" or state.black == "1024" do
+      RoomSupervisorTest.end_ai_service(state.group_key, state.app_name)
     else
       # 每一局的信息
       BattleStatistics.update_average_step(state.steps_white + state.steps_black)
@@ -159,6 +161,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     end
     {:stop, :normal, :ok, state}
+    end
   end
 
   def handle_call(:terminate_game_test, _from, state) do
