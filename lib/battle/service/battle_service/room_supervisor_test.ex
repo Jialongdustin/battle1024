@@ -29,7 +29,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     {:ok, token_user} = Token.generate_token(user_id, game_id)
     child_spec_server = %{
       id: RoomServer,
-      start: {RoomServer, :start_link, [%{white: if(white, do: user_id, else: "1024"), black: if(white, do: "1024", else: user_id), game_id: game_id, groupName: groupName, groupKey: groupName, appName: appName}]},
+      start: {RoomServer, :start_link, [%{white: if(white, do: user_id, else: "1024"), black: if(white, do: "1024", else: user_id), game_id: game_id}]},
       restart: :transient,
       type: :worker
     }
@@ -67,6 +67,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   end
 
   def movement(moves, user_id, game_id) do
+    IO.inspect(moves)
     case Registry.lookup(Battle.RoomRegistry, game_id) do
       [{pid, _}] ->
         if user_id != "1024" do
@@ -88,6 +89,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
+            {:ok, success_detail}
           {:error, error_detail} ->
             {:error, error_detail}
         end

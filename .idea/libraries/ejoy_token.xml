@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="ejoy_token" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_token/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_token/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/ejoy_token/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_token/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_token/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_token/lib" />
+    </SOURCES>
+  </library>
+</component>

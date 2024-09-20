@@ -151,18 +151,22 @@ defmodule Battle.Service.BattleService.RoomServer do
       BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     else
-      # 每一局的信息
-      BattleStatistics.update_average_step(state.steps_white + state.steps_black)
-      BattleStatistics.update_average_time_cost(state.time_cost_white + state.time_cost_black)
-      BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
-      BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
-      send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
+      if state.white == "1024" or state.black == "1024" do
+        :ok
+      else
+        # 每一局的信息
+        BattleStatistics.update_average_step(state.steps_white + state.steps_black)
+        BattleStatistics.update_average_time_cost(state.time_cost_white + state.time_cost_black)
+        BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
+        BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
+        send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
+
+      end
     end
     {:stop, :normal, :ok, state}
   end
 
   def handle_call(:terminate_game_test, _from, state) do
-    RoomSupervisorTest.end_ai_service(state.group_key, state.app_name)
     {:stop, :normal, :ok, state}
   end
 
