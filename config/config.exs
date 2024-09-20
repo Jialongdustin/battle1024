@@ -1,5 +1,7 @@
 use Mix.Config
 
+#Logger.configure(level: :none)
+
 config :union_config_app,
   config_db: [
     host: 'localhost',
@@ -39,6 +41,9 @@ config :union_config_app,
       }
     }
   ]
+  # 测试环境
+          # id: "77c49be6e5494740",
+          # secret: "c63871c2231c4d57b52df04f882df192"
 
 config :ejoy_utils, db_pool: 10
 config :ejoy_utils, send_vortex_heartbeat: false
@@ -48,3 +53,4 @@ config :ejoy_etcd, lib_prefix: "test"
 config :ex_json_schema,
        :remote_schema_resolver,
        {Ejoy.Plug.SchamaResolver, :remote_schema_resolver}
+# config :logger, level: :none

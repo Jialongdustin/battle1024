@@ -1,0 +1,19 @@
+api: "/user/update_avatar"
+request:
+  type: object
+  properties:
+    avatar:
+      type: string
+    moment_token:
+      type: string
+  required: [avatar, moment_token]
+
+response:
+  type: object
+  properties:
+    code:
+      type: number
+    data:
+      type: string
+    state:
+      type: boolean

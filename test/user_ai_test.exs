@@ -1,78 +1,71 @@
-defmodule BattleTest.UserAi do
+defmodule Mongo.UserAi do
   use ExUnit.Case
-  doctest Battle.UserAi
+  doctest Battle.Mongo.UserAi
+  alias Battle.Mongo.UserAi
 
-  test "insert ai" do
-    user_id = 1
-    ai_name = "B22"
-    git_url = "ccc.com"
-    tag = "3.0"
 
-    {:ok,user_info_list_before} = Battle.UserAi.get_ai_list_by_userId(user_id)
-    initial_length = length(user_info_list_before)
-    Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
-    {:ok, user_info_list_after} = Battle.UserAi.get_ai_list_by_userId(user_id)
 
-    assert length(user_info_list_after) == initial_length + 1
-
-    assert Enum.any?(user_info_list_after, fn user_info ->
-      user_info.ai_name == ai_name && user_info.user_id == user_id
-    end)
+  test "get ai name " do
+    user_id = "453912"
+    ai_name = "AI_biubiubiu"
+    UserAi.insert_ai(user_id,ai_name)
+    {:ok,name} = UserAi.get_ai_name(user_id)
+    UserAi.clean_message(user_id)
+    assert name == ai_name
   end
 
-  test "get ai by user id" do
-    user_id = 1
-    ai_name = "B22"
-    {:ok, user_info_list} = Battle.UserAi.get_ai_list_by_userId(user_id)
+  test "get all git" do
 
-    assert Enum.any?(user_info_list, fn user_info ->
-      user_info.ai_name == ai_name && user_info.user_id == user_id
-    end)
-
-  end
-
-  test "delete ai info" do
-    user_id = 2
-    ai_name = "Biubiubiu"
-    git_url = "ab.com"
-    tag = "1.0"
-
-    Battle.UserAi.insert_ai(user_id,ai_name,git_url,tag)
-    {:ok,user_info_before} = Battle.UserAi.get_ai_list_by_userId(user_id)
-    initial_size = length(user_info_before)
-    assert initial_size > 0
-    assert Enum.any?(user_info_before, fn user_info ->
-      user_info.ai_name == ai_name && user_info.user_id == user_id
-    end)
-
-    Battle.UserAi.clean_message(user_id)
-    {:ok,user_info_after} = Battle.UserAi.get_ai_list_by_userId(user_id)
-
-    assert length(user_info_after) == 0
-  end
-
-  test "get newest ai info" do
-    user_id = 1
-    ai_name = "Biu biu biu~~!!"
-    git_url = "biu.com"
-    tag = "4.0"
-    Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
-    {:ok,user_info} = Battle.UserAi.get_newest_ai_by_userId(user_id)
-
-    assert user_info.user_id == user_id && user_info.ai_name == ai_name && user_info.git_url == git_url && user_info.tag == tag
-  end
-
-  test "get gits and user_infos"do
-    user_id = 3
-    ai_name = "AI_One"
+    user_id = "453912"
+    ai_name = "AI_biubiubiu"
     git_url = "http://example.com/repo1.git"
     tag = "1.0"
 
-    Battle.UserAi.insert_ai(user_id, ai_name, git_url, tag)
+    user_id_2 = "1212312"
+    ai_name_2 = "biubibui"
+    git_url_2 = "csca.com"
+    tag_2 = "main"
 
-    {:ok, user_infos} = Battle.UserAi.get_all_gits()
-    assert Enum.any?(user_infos, fn message ->
-      message.user_id == user_id && message.git_url == git_url && message.tag == tag
-    end)
+    UserAi.insert_ai(user_id,ai_name)
+    UserAi.update_git(user_id,git_url,tag)
+
+    UserAi.insert_ai(user_id_2,ai_name_2)
+    UserAi.update_git(user_id_2,git_url_2,tag_2)
+
+    {:ok,user_info} = UserAi.get_all_gits()
+
+    UserAi.clean_message(user_id)
+    UserAi.clean_message(user_id_2)
+    insert_info = [%{
+      user_id: user_id,
+      git_url: git_url,
+      tag: tag
+    },
+    %{
+      user_id: user_id_2,
+      git_url: git_url_2,
+      tag: tag_2
+    }
+    ]
+
+    assert insert_info == user_info
   end
+
+  test "get gits and user_infos"do
+
+    user_id = "453912"
+    ai_name = "AI_biubiubiu"
+    git_url = "http://example.com/repo1.git"
+    tag = "1.0"
+
+    UserAi.insert_ai(user_id,ai_name)
+    UserAi.update_git(user_id,git_url,tag)
+    {:ok,user_info} = UserAi.get_newest_ai_by_userId(user_id)
+    UserAi.clean_message(user_id)
+    assert user_info.user_id == user_id && user_info.git_url == git_url && user_info.tag == tag
+
+  end
+
+
+
 end

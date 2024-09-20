@@ -27,6 +27,7 @@ defmodule Battle.MixProject do
       {:ejoy_utils, git: "git@gitlab.alibaba-inc.com:battlenet/ejoy_utils.git"},
       {:mongo_orm, git: "git@gitlab.alibaba-inc.com:battlenet/mongo_orm.git"},
       {:common_utils, git: "git@gitlab.alibaba-inc.com:battlenet/common_utils.git", branch: "platform-battle", override: true},
+      {:websock_adapter, "~> 0.5.6"},
       {:mock, "~> 0.3.0", only: :test}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}

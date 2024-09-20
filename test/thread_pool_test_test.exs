@@ -1,0 +1,77 @@
+defmodule BattleTest.ThreadPoolTestTestTest do
+  use ExUnit.Case
+  import Mock
+
+  alias Battle.Service.BattleService.ThreadPoolTest
+  alias Battle.Service.BattleService.RoomServer
+
+  test "starts with an initial state" do
+    state = ThreadPoolTest.get_state()
+    assert state.workers == []
+    assert state.queue == :queue.new()
+    assert state.busy == %{}
+  end
+
+  test "add tasks" do
+    with_mock Battle.Service.WebService.Kun, [:passthrough], [
+      change_config: fn _ -> %{package_name: "package", user_id: "111"} end,
+      create_deploy_task: fn _ -> {:ok, "create_deploy"} end,
+      create_uninstall_task: fn _ -> {:ok, "create_uninstall"} end,
+      update_service_group: fn _, _, _ -> {:ok, "update params"} end
+    ] do
+      task = {"git", "tag", "game_id"}
+      assert :ok = ThreadPoolTest.add_task(task)
+      :timer.sleep(50)
+      state = ThreadPoolTest.get_state()
+      assert length(state.workers) == 1
+      [{pid, _}] = Registry.lookup(Battle.RoomRegistry, "game_id")
+      server_state = RoomServer.get_state(pid)
+      send(ThreadPoolTest, {:terminate, "game_id", server_state.group_name, server_state.group_key, server_state.app_name})
+      state = ThreadPoolTest.get_state()
+      assert state.workers == []
+    end
+  end
+
+  test "add task when there is no services " do
+    with_mock Battle.Service.WebService.Kun, [:passthrough], [
+      change_config: fn _ -> %{package_name: "package", user_id: "111"} end,
+      create_deploy_task: fn _ -> {:ok, "create_deploy"} end,
+      create_uninstall_task: fn _ -> {:ok, "create_uninstall"} end,
+      update_service_group: fn _, _, _ -> {:ok, "update params"} end
+    ] do
+      task = {"git", "tag", "game_id"}
+      :ets.delete_all_objects(:services_info_test)
+      assert :ok = ThreadPoolTest.add_task(task)
+      state = ThreadPoolTest.get_state()
+      assert :queue.len(state.queue) == 1
+
+      :ets.insert(:services_info_test, {"battle-test1", "battle-player-python"})
+      assert :ok = ThreadPoolTest.add_task(task)
+      send(ThreadPoolTest, {:terminate, "game_id", "battle-test1", "plat1024-test1", "battle-player-python"})
+      :timer.sleep(50)
+      send(ThreadPoolTest, {:terminate, "game_id", "battle-test1", "plat1024-test1", "battle-player-python"})
+      state = ThreadPoolTest.get_state()
+      assert :queue.len(state.queue) == 0
+      assert state.workers == []
+    end
+  end
+
+  test "handle_info/2 {ref, result}" do
+    ref = make_ref()
+    result = :some_result
+    send(self(), {ref, result})
+    assert ThreadPoolTest.handle_info({ref, result}, %{some_state: true}) == {:noreply, %{some_state: true}}
+  end
+
+  test "handle_info/2 handles DOWN messages" do
+    ref = make_ref()
+    pid = self()
+    reason = :normal
+
+    send(self(), {:DOWN, ref, :process, pid, reason})
+
+    # Call the handle_info function directly
+    assert ThreadPoolTest.handle_info({:DOWN, ref, :process, pid, reason}, %{some_state: true}) == {:noreply, %{some_state: true}}
+  end
+
+end

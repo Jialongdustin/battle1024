@@ -2,11 +2,13 @@ api: "/user/update_git"
 request:
   type: object
   properties:
-    user_id: 
+    git_url: 
       type: string
-    git: 
+    tag: 
       type: string
-  required: [user_id, git]
+    moment_token:
+      type: string
+  required: [git_url, tag, moment_token]
 
 response:
   type: object

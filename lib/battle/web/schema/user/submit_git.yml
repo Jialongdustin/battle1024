@@ -1,0 +1,21 @@
+api: "/user/submit_git"
+request:
+  type: object
+  properties:
+    git_url:
+      type: string
+    tag:
+      type: string
+    moment_token:
+      type: string
+  required: [git_url, tag, moment_token]
+
+response:
+  type: object
+  properties:
+    code:
+      type: number
+    message:
+      type: string
+    state:
+      type: string

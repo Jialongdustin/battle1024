@@ -1,0 +1,15 @@
+api: "/user/create_test"
+request:
+  type: object
+  properties:
+    moment_token:
+      type: string
+    white:
+      type: boolean
+  required: [moment_token, white]
+
+response:
+  type: object
+  properties:
+    token:
+      type: string

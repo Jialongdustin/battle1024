@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="elixir_rsyslog_backend" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/elixir_rsyslog_backend/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/elixir_rsyslog_backend/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/elixir_rsyslog_backend/lib" />
+      <root url="file://$PROJECT_DIR$/deps/elixir_rsyslog_backend/lib" />
+      <root url="file://$PROJECT_DIR$/deps/elixir_rsyslog_backend/lib" />
+      <root url="file://$PROJECT_DIR$/deps/elixir_rsyslog_backend/lib" />
+    </SOURCES>
+  </library>
+</component>

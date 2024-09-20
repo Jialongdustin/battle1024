@@ -1,79 +1,203 @@
 defmodule Battle.Service.WebService.Kun do
   @kun_api_url "https://kunapi.ejoy.com"
+  # @kun_api_url "https://kundevapi.ejoy.com"  kun测试环境
   @query_namespace "plat1024-platformbattle"
   @userId "453574"
-  @status_error 1
   @status_success 4
-  @build_name "platform-battle"
+  @status_failure 1
+  @productKey "plat1024"
+  @build_config_name "AI-player"
 
   alias ElixirSense.Log
   alias Battle.Mongo.UserAi
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
 
-  def list_envs() do
-    path = "/api/env/#{@query_namespace}/envs"
-    %{"code" => 0, "data" => %{"envs" => envs}} = send_post(path, %{})
-    envs
-  end
-
-  def get_instances(ns, apps) do
-    path = "/api/env/#{ns}/instances"
-    %{"code" => 0, "data" => %{"instances" => instances}} = send_post(path, %{apps: apps})
-    instances
-  end
-
-  # Kun.get_build_tasks()
-  def get_build_tasks() do
-    path = "/api/env/#{@query_namespace}/buildTasks"
-    %{"code" => 0, "data" => %{"buildTasks" => buildtasks}} = send_post(path, %{name: @build_name, currentPage: 1, pageSize: 5})
-    # Enum.map(buildtasks, fn task -> {id: task.id, status: task.status}) 1 错误, 2 挂起中, 3 运行中, 4 完成
-    buildtasks
-  end
-
   def start_build() do
     case UserAi.get_all_gits() do
       {:error, message} ->
-        {:error, "build failed"}
+        {:error, "no git submit success"}
       {:ok, gits} ->
         gits
-        |> Enum.map(fn info -> build_package(info) end)
+        |> Enum.map(fn info -> change_config(info) end)
     end
   end
 
-  # Kun.build_package(%{user_id: "545", git_url: "git@gitlab.alibaba-inc.com:wilson.wb/platform-battle-test.git", tag: "master"})
-  def build_package(info) do
+  # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "dustin"})
+  def change_config(info, attempt \\ 0) do
     user_id = info.user_id
     git_url = info.git_url
     tag = info.tag
-    path = "/api/env/#{@query_namespace}/buildTask"
-    case send_put(path, %{name: @build_name, branch: tag, userId: @userId, method: 0, comment: "test"}) do
+    path = "/api/v2/product/#{@productKey}/buildConfig/#{@build_config_name}"
+    case Battle.Service.WebService.Kun.send_put(path, %{autoBuild: true, gitRefsType: 0, gitUrl: git_url, refs: tag}) do
       %{"code" => 0, "data" => %{"task" => task}} ->
-        status = 0
+        # build_package(info)
         package_id = task["id"]
-        build_result_check(package_id)
-        %{user_id: user_id, package_id: package_id}
-      _ ->
-        build_package(info)
+        package_name = task["name"]
+        case build_result_check(package_id) do
+          :ok ->
+            %{user_id: user_id, package_name: package_name}
+          :error ->
+            {:error, "build failed"}
+        end
+
+      {:error, 400} ->
+        {:error, "git or tag illegal"}
+
+      {:error, 500} when attempt < 3 ->
+        change_config(info, attempt + 1)
+
+      {:error, 500} ->
+        {:kun_error, "received 500 error from kun after 3 attempts"}
     end
   end
 
+  # def build_package(info) do
+  #   tag = info.tag
+  #   user_id = info.user_id
+  #   build_path = "/api/env/#{@query_namespace}/buildTask"
+  #   case send_put(build_path, %{name: @build_config_name, branch: tag, userId: @userId, method: 0}) do
+  #     %{"code" => 0, "data" => %{"task" => task}} ->
+  #       package_id = task["id"]
+  #       package_name = task["name"]
+  #       build_result_check(package_id)
+  #       %{user_id: user_id, package_name: package_name}
+  #     _ ->
+  #       build_package(info)
+  #   end
+  # end
+
+  # Kun.build_result_check(12024311)
   def build_result_check(package_id) do
-    :timer.sleep(10_000)
-    case get_build_result(package_id) do
+    :timer.sleep(2_000)
+    case Battle.Service.WebService.Kun.get_build_result(package_id) do
       @status_success ->
         :ok
+      @status_failure ->
+        :error
       _ ->
         build_result_check(package_id)
     end
   end
 
-  # Kun.get_build_result(10178294)
+  # Kun.get_build_result(10179621)
   def get_build_result(package_id) do
     path = "/api/env/#{@query_namespace}/buildTask?id=#{package_id}"
-    %{"code" => 0, "data" => %{"task" => task}} = send_get(path, %{})
+    %{"code" => 0, "data" => %{"task" => task}} = Battle.Service.WebService.Kun.send_get(path, %{})
     task["status"]
   end
+
+  # # Kun.create_service_group()
+  # def create_service_group(services) do
+  #   # package_msgs = start_build()
+  #   id = UUID.uuid4()
+  #   services_name = "battle-players#{id}"
+  #   services_key = "players#{id}"
+  #   groups = [
+  #     %{
+  #       "name": services_name,
+  #       "key": services_key,
+  #       "schdule": "",
+  #       "services": services
+  #     }
+  #   ]
+  #   content = %{groups: groups}
+  #   path = "/api/env/#{@query_namespace}/service/create"
+  #   case send_post(path, content) do
+  #     %{"code" => 0, "data" => data} ->
+  #       data
+  #   end
+  #   {:ok, %{name: services_name, key: services_key}}
+  # end
+
+  # Kun.update_service_group()
+  def update_service_group(services, groupName, groupKey, attempt \\ 0) do
+    path = "/api/env/#{@query_namespace}/serviceGroup/sync"
+    groups = [
+      %{
+        "name": groupName,
+        "key": groupKey,
+        "schdule": "",
+        "services": services
+      }
+    ]
+    case Battle.Service.WebService.Kun.send_post(path, %{groups: groups}) do
+      %{"code" => 0, "data" => data} ->
+        data
+
+      {:error, 500} when attempt < 3 ->
+        update_service_group(services, groupName, groupKey, attempt + 1)
+
+      {:error, 500} ->
+        {:error, "received 500 error from kun after 3 attempts"}
+    end
+  end
+
+  # Kun.create_deploy_task(services)
+  def create_deploy_task(services) do
+    path = "/api/env/#{@query_namespace}/createDeployTask"
+    content = %{
+      "services": services,
+      "userId": @userId
+    }
+    case Battle.Service.WebService.Kun.send_post(path, content) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        id = task["ID"]
+        Battle.Service.WebService.Kun.get_deploy_result(id)
+      _ ->
+        create_deploy_task(services)
+    end
+  end
+
+  # Kun.get_deploy_result(11464803)
+  def get_deploy_result(id) do
+    path = "/api/env/#{@query_namespace}/task?id=#{id}"
+    case Battle.Service.WebService.Kun.send_get(path, %{}) do
+      %{"code" => 0, "data" => %{"task" => %{"services" => services}}} ->
+        case Enum.all?(services, fn service -> service["status"] == "ready" end) do
+          true ->
+            {:ok, "deploy done"}
+          false ->
+            :timer.sleep(2_000)
+            get_deploy_result(id)
+        end
+      _ ->
+        {:error, "id not exists"}
+    end
+  end
+
+  # Kun.create_uninstall_task(%{"service_group" => "plat1024", "service_name" => "battle-service"})
+  def create_uninstall_task(services) do
+    path = "/api/env/#{@query_namespace}/createUninstallTask"
+    content = %{
+      "services": services,
+      "userId": @userId
+    }
+    case Battle.Service.WebService.Kun.send_post(path, content) do
+      %{"code" => 0, "data" => %{"task" => task}} ->
+        task
+      _ ->
+        :error
+    end
+  end
+
+  # # Kun.get_service_stage(["battle-players1", "battle-players2"], "battle-player-python")
+  # def get_service_stage(groupName, appName) do
+  #   path = "/api/env/#{@query_namespace}/services"
+  #   content = %{
+  #     currentPage: 1,
+  #     pageSize: 1,
+  #     servicesGroups: [groupName],
+  #     apps: [appName]
+  #   }
+  #   case send_post(path, content) do
+  #     %{"code" => 0, "data" => %{"services" => services}} ->
+  #       # List.first(services)["stage"]
+  #       services
+  #     _ ->
+  #       {:error, "something wrong"}
+  #   end
+  # end
 
   def send_post(path, params) do
     {:ok, resp} = Ejoy.HttpRPC.application_json_post(@kun_api_url <> path,
@@ -88,9 +212,13 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   def send_put(path, params) do
-    {:ok, resp} = Ejoy.HttpRPC.json_put(@kun_api_url <> path,
-      params, [], make_headers(path, params, "PUT"))
-    resp
+    case Ejoy.HttpRPC.json_put(@kun_api_url <> path,
+      params, [], make_headers(path, params, "PUT")) do
+        {:ok, resp} ->
+          resp
+        {:fail, reason} ->
+          {:error, reason}
+      end
   end
 
   def make_headers(path, params, method \\ "POST") do
@@ -110,12 +238,14 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   def cal_content_md5(body) do
-    :crypto.hash(:md5, body) |> Base.encode64()  # 进行md5哈希运算，然后转为base64编码格式
+    message = :crypto.hash(:md5, body) |> Base.encode64()  # 进行md5哈希运算，然后转为base64编码格式
+    message
   end
 
   def make_signature(path, headers, secret, method) do
     sign_bytes = get_bytes_to_sign(path, headers, method)
-    :crypto.mac(:hmac, :sha, secret, sign_bytes) |> Base.encode64()
+    message = :crypto.mac(:hmac, :sha, secret, sign_bytes) |> Base.encode64()
+    message
   end
 
   def get_bytes_to_sign(path, headers, method) do

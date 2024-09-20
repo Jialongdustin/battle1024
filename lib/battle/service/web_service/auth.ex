@@ -1,6 +1,7 @@
 defmodule Battle.Service.WebService.Auth do
 
   require Logger
+  alias Battle.Mongo.User
 
   @client_id "10052"
   @client_secret "l3PUsNyV1WBfUwwFrSTLGw=="
@@ -10,41 +11,29 @@ defmodule Battle.Service.WebService.Auth do
   ]
 
   @callback verify_code(String.t()) :: {:ok, map()} | {:error, any()}
-  def verify_code(code) do
-    params =  %{
-      client_id: @client_id,
-      client_secret: @client_secret,
-      grant_type: "authorization_code",
-      code: code
-    }
-    url = "https://one.ejoy.com/api/oauth_v3/token"
-
-    {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
-    Logger.info(resp)
-
-    case resp do
-      %{
-        "code" => 0, "access_token" => access_token, "account" => account,
-        "expires_in" => expires_in
-
-      } ->
-       {:ok, moment_token} = Battle.Utils.Token.generate_token(account)
-        from_product_code = Map.get(resp, "from_product_code")
-        {:ok,
+  def verify_code(access_token) do
+        url = "https://one.ejoy.com/api/oapi/user/get_user_info"
+        params = %{
+        access_token: access_token
+        }
+        {:ok, resp} = Ejoy.HttpRPC.application_json_post(url, params)
+        case resp do
           %{
-            account: account, access_token: access_token,
-            expires_in: expires_in, from_product_code: from_product_code,
-            moment_token: moment_token
-
-          }
-        }
-      %{"code" => code} when code in @verify_token_invalid_codes ->
-        one_resp = %{
-          code: code,
-          message: Map.get(resp, "message")
-        }
-        {:error, :one_code_error, %{one_resp: one_resp}}
-    end
-
+            "account" => account,
+            "name" =>name
+          } ->
+            res =
+              case User.query_user_by_account(account) do
+                {:error, _} ->
+                  user_id = UUID.uuid1()
+                  User.save_user(user_id, account, name)
+                  user_id
+                {:ok, res} ->
+                  res.user_id
+              end
+          Battle.Utils.Token.generate_token(res)
+        %{"code" => code} ->
+          {:error, code}
+        end
   end
 end
