@@ -26,7 +26,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   def schedule_tournament do
     now = DateTime.utc_now()
-    noon = "#{Date.to_string(now)} 16:00:00"
+    noon = "#{Date.to_string(now)} 02:30:00"
     {:ok, twelve_noon, _offset} = DateTime.from_iso8601("#{noon}Z")
     now_ms = DateTime.to_unix(now, :millisecond)
     twelve_noon_ms = DateTime.to_unix(twelve_noon, :millisecond)
@@ -84,7 +84,7 @@ defmodule Battle.Service.BattleService.Tournament do
         end
 
       {:error, _} ->
-        :timer.sleep(30_000)
+        :timer.sleep(3_000)
         update_win_rate(games)
     end
   end
