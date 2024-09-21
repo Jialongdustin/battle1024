@@ -1,4 +1,4 @@
-defmodule Battle.Mongo.RankList do
+defmodule Battle.Mongo.RankList.pensure_indexes() do
   use Ejoy.Db
 
   alias Battle.Mongo.UserAi
@@ -10,7 +10,7 @@ defmodule Battle.Mongo.RankList do
   @indexes [
     {[rate: 1], false},
     {[user_id: 1], false},
-    {[rate: 1,date: 1]},
+    {[rate: 1,date: 1],false},
     {[date: 1],false}
   ]
   @cleanable false
