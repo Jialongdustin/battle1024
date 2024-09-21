@@ -10,6 +10,7 @@ defmodule Battle.Mongo.RankList do
   @indexes [
     {[rate: 1], false},
     {[user_id: 1], false},
+    {[rate: 1,date: 1]},
     {[date: 1],false}
   ]
   @cleanable false
@@ -22,7 +23,7 @@ defmodule Battle.Mongo.RankList do
 
   def get_rank_list(page, limit) do
     time_query = Battle.Utils.GetTime24.get_time()
-    case __MODULE__.pquery_sort_limit(time_query, [rate: -1], limit, page*limit) do
+    case __MODULE__.pquery_sort_limit(time_query, [rate: -1, date: -1], limit, page*limit) do
       [] ->
         time_query_yesterday = Battle.Utils.GetTime24.get_yesterday_time()
         case __MODULE__.pquery_sort_limit(time_query_yesterday, [rate: -1], limit, page*limit) do
