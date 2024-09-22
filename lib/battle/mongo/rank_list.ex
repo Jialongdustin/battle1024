@@ -25,7 +25,7 @@ defmodule Battle.Mongo.RankList do
     now = DateTime.utc_now().hour
 
     time_query = case now do
-      now >= 4 -> Battle.Utils.GetTime24.get_time()
+      now when now >= 4 -> Battle.Utils.GetTime24.get_time()
       _ -> Battle.Utils.GetTime24.get_yesterday_time()
     end
 
