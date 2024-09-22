@@ -1,4 +1,4 @@
-defmodule Battle.Mongo.RankList do
+defmodule Battle.Mongo.RankList.pensure_indexes() do
   use Ejoy.Db
 
   alias Battle.Mongo.UserAi
@@ -22,7 +22,13 @@ defmodule Battle.Mongo.RankList do
   field :rank, :integer, required: false
 
   def get_rank_list(page, limit) do
-    time_query = Battle.Utils.GetTime24.get_time()
+    now = DateTime.utc_now().hour
+
+    time_query = case now do
+      now >= 4 -> Battle.Utils.GetTime24.get_time()
+      _ -> Battle.Utils.GetTime24.get_yesterday_time()
+    end
+
     case __MODULE__.pquery_sort_limit(time_query, [rate: -1, date: -1], limit, page*limit) do
       [] ->
         time_query_yesterday = Battle.Utils.GetTime24.get_yesterday_time()
