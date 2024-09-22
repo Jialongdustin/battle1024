@@ -20,7 +20,11 @@ defmodule Battle.Utils.Token do
   def verify_token(moment_token) do
     case Ejoy.MomentToken.Service.auth_token(moment_token) do
       {:ok, user_info}->
-        {:ok, user_info.user_id}
+        if user_info.create_time < 1727020800 do
+          {:error, "permission deny"}
+        else
+          {:ok, user_info.user_id}
+        end
       _ ->
         {:error, "permission deny"}
     end
@@ -29,11 +33,7 @@ defmodule Battle.Utils.Token do
   def verify_token_battle(moment_token) do
     case Ejoy.MomentToken.Service.auth_token(moment_token) do
       {:ok, user_info}->
-        if user_info.create_time < 1727020800 do
-          {:error, "permission deny"}
-        else
-          {:ok, user_info}
-        end
+        {:ok, user_info}
       _ ->
         {:error, "permission deny"}
     end
