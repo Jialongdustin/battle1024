@@ -1,4 +1,4 @@
-defmodule Battle.Mongo.RankList.pensure_indexes() do
+defmodule Battle.Mongo.RankList do
   use Ejoy.Db
 
   alias Battle.Mongo.UserAi
