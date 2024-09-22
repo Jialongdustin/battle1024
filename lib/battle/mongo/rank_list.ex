@@ -76,7 +76,6 @@ defmodule Battle.Mongo.RankList do
               end)
                      |> List.first()
             end
-          IO.inspect(rank_yesterday)
           %{
             ai_name: message.ai_name,
             user_id: message.user_id,
