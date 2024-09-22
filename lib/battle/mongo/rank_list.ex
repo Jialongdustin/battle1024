@@ -23,12 +23,12 @@ defmodule Battle.Mongo.RankList do
 
   def get_rank_list(page, limit) do
     now = DateTime.utc_now().hour
-
+#    Battle.Mongo.RankList.get_rank_list(0,0)
     time_query = case now do
-      now when now >= 4 -> Battle.Utils.GetTime24.get_time()
+      now when now >= 4 and now < 16 -> Battle.Utils.GetTime24.get_time()
       _ -> Battle.Utils.GetTime24.get_yesterday_time()
     end
-
+    IO.inspect(time_query)
     case __MODULE__.pquery_sort_limit(time_query, [rate: -1, date: -1], limit, page*limit) do
       [] ->
         {:error,"no match"}

@@ -43,8 +43,23 @@ defmodule Battle.Utils.GetTime24 do
   def get_yesterday_time() do
     # 获取当前 UTC 时间并减去 1 天
     date = DateTime.utc_now() |> DateTime.add(-86400, :second)
-    start_time_string = "#{Date.to_string(date|> Date.add(-1))} 16:00:00"
-    end_time_string = "#{Date.to_string(date)} 16:00:00"
+    current_hour = date.hour
+    {start_time_string, end_time_string} =
+      if current_hour >= 16 do
+        # 设置 start_time_string 为今天的 16:00:00，end_time_string 为明天的 16:00:00
+
+        {
+          "#{Date.to_string(date)} 16:00:00",
+          "#{Date.to_string(date|> Date.add(1))} 16:00:00"
+        }
+      else
+
+        # 设置 start_time_string 为昨天的 16:00:00，end_time_string 为今天的 16:00:00
+        {
+          "#{Date.to_string(date|> Date.add(-1))} 16:00:00",
+          "#{Date.to_string(date)} 16:00:00"
+        }
+      end
 
     # 将字符串转换为 DateTime 类型
     {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
