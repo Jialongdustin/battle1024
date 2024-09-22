@@ -7,7 +7,8 @@ defmodule Battle.Mongo.BattleResult do
   @db "battle"
   @collection "battle_result"
   @indexes [
-    {[user_id_2: 1], false}
+    {[user_id_2: 1], false},
+    {[date: 1],false}
   ]
   @cleanable false
 
