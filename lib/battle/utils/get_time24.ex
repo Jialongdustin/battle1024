@@ -1,23 +1,37 @@
 defmodule Battle.Utils.GetTime24 do
-
   def get_time() do
     date = DateTime.utc_now()
-    # 固定 start_time_string 为昨天的 16:00:00
-    start_time_string = "#{Date.to_string(date|> Date.add(-1))} 16:00:00"
-    end_time_string = "#{Date.to_string(date)} 16:00:00"
+    # 提取当前小时数
+    current_hour = date.hour
+    IO.inspect(current_hour)
+    # 判断当前时间的小时数
+    {start_time_string, end_time_string} =
+      if current_hour >= 16 do
+        # 设置 start_time_string 为今天的 16:00:00，end_time_string 为明天的 16:00:00
+
+        {
+          "#{Date.to_string(date)} 16:00:00",
+          "#{Date.to_string(date|> Date.add(1))} 16:00:00"
+        }
+      else
+
+        # 设置 start_time_string 为昨天的 16:00:00，end_time_string 为今天的 16:00:00
+        {
+          "#{Date.to_string(date|> Date.add(-1))} 16:00:00",
+        "#{Date.to_string(date)} 16:00:00"
+        }
+      end
 
     # 将字符串转换为 DateTime 类型
     {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
     {:ok, end_time, _offset} = DateTime.from_iso8601("#{end_time_string}Z")
 
     #    mill = :erlang.system_time()
-
     # 将 DateTime 转换为 Unix 时间戳（以毫秒为单位）
     start = DateTime.to_unix(start_time, :millisecond)
     last = DateTime.to_unix(end_time, :millisecond)
 
     #    Battle.RankList.get_rank_list()
-
     time_query = %{
       date: %{
         "$gte": %Bson.UTC{ ms: start},
