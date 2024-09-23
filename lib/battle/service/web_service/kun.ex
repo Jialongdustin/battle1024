@@ -20,6 +20,12 @@ defmodule Battle.Service.WebService.Kun do
       {:ok, gits} ->
         gits
         |> Enum.map(fn info -> change_config(info) end)
+        |> Enum.filter(fn result ->
+          case result do
+            {:error, _} -> false
+            _ -> true
+          end
+        end)
     end
   end
 
@@ -48,7 +54,7 @@ defmodule Battle.Service.WebService.Kun do
         change_config(info, attempt + 1)
 
       {:error, 500} ->
-        {:kun_error, "received 500 error from kun after 3 attempts"}
+        {:error, "received 500 error from kun after 3 attempts"}
     end
   end
 

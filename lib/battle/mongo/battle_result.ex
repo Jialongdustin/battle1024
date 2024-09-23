@@ -14,6 +14,8 @@ defmodule Battle.Mongo.BattleResult do
 
   field :user_id_2, {:list, :string}, require: true
   field :game_id, :string, required: true
+
+  # 100: 比赛中, 101: 异常比赛， 200: 正常比赛
   field :code, :integer, required: true
   field :winner, :string, required: false
   field :time_cost_2, {:list, :integer}, required: false

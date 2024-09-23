@@ -58,7 +58,6 @@ defmodule Battle.Service.BattleService.Tournament do
           end)
         user_ids = Map.keys(players)
         IO.inspect("there are #{length(user_ids)} players now")
-        games = length(user_ids) * (length(user_ids) - 1)
         if length(user_ids) > 1 do
           Enum.each(user_ids, fn user_id1 ->
             Enum.each(user_ids -- [user_id1], fn user_id2 ->
