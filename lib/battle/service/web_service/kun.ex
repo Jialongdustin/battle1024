@@ -134,7 +134,7 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   # Kun.create_deploy_task(services)
-  def create_deploy_task(services) do
+  def create_deploy_task(services, attempt \\ 0) do
     path = "/api/env/#{@query_namespace}/createDeployTask"
     content = %{
       "services": services,
@@ -144,8 +144,12 @@ defmodule Battle.Service.WebService.Kun do
       %{"code" => 0, "data" => %{"task" => task}} ->
         id = task["ID"]
         Battle.Service.WebService.Kun.get_deploy_result(id)
-      _ ->
-        create_deploy_task(services)
+
+      {:error, 500} when attempt < 3 ->
+        create_deploy_task(services, attempt + 1)
+
+      {:error, 500} ->
+        {:error, "received 500 error from kun after 3 attempts"}
     end
   end
 

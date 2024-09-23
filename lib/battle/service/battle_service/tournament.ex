@@ -13,6 +13,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   def init(_args) do
     ThreadPool.start_link()  # 启动一个大小为10的线程池
+    :ets.new(:restart_times, [:named_table, :public, read_concurrency: true])
     ref = schedule_tournament()
     {:ok, %{ref: ref}}
   end
@@ -61,31 +62,33 @@ defmodule Battle.Service.BattleService.Tournament do
         if length(user_ids) > 1 do
           Enum.each(user_ids, fn user_id1 ->
             Enum.each(user_ids -- [user_id1], fn user_id2 ->
-              contest_id = UUID.uuid4()
-              ThreadPool.add_task({user_id1, user_id2, contest_id, players})
+              game_id = UUID.uuid4()
+              BattleResult.save_battle_result([user_id1, user_id2], game_id)
+              :ets.insert(:restart_times, {game_id, 0})
+              ThreadPool.add_task({user_id1, user_id2, game_id, players})
             end)
           end)
         end
-        Task.async(fn -> update_win_rate(games) end)
+        Task.async(fn -> update_win_rate() end)
         {:ok, "start tournament"}
     end
   end
 
-  def update_win_rate(games) do
+  def update_win_rate() do
     case BattleResult.get_battle_results_within_24_hour() do
       {:ok, info} ->
-        case length(info) == games do
+        case Enum.all?(info, fn result -> result.code != 100 end) do
           true ->
             {:ok, result} = RankList.get_battle_info()
             RankList.insert_win_rate(result)
           false ->
             :timer.sleep(3_000)
-            update_win_rate(games)
+            update_win_rate()
         end
 
       {:error, _} ->
         :timer.sleep(30_000)
-        update_win_rate(games)
+        update_win_rate()
     end
   end
 end
