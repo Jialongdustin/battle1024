@@ -31,6 +31,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     groupName = opts[:groupName]
     groupKey = opts[:groupKey]
     appName = opts[:appName]
+    package_name = opts[:package_name]
     {init_move, _} = Battle.BattleHandler.move_list(@board_init, true)
     initial_state = %{
       code: 10002,
@@ -59,6 +60,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       time_cost_black: 0,
       time_counter_white: 0,
       time_counter_black: 0,
+      package_name: package_name
     }
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(game_id))
   end

@@ -47,29 +47,36 @@ defmodule Battle.Service.BattleService.Tournament do
 
   def initiate_tournament_logic() do
     IO.inspect("start tournament")
-    case Kun.start_build() do
+    case Battle.Mongo.UserAi.get_all_gits() do
       {:error, reason} ->
         {:error, reason}
-      {:ok, package_info} ->
-        players =
-          package_info
-          |> Enum.reduce(%{}, fn %{user_id: user_id, package_name: package_name}, acc ->
-            Map.put(acc, user_id, package_name)
-          end)
-        user_ids = Map.keys(players)
-        IO.inspect("there are #{length(user_ids)} players now")
-        if length(user_ids) > 1 do
-          Enum.each(user_ids, fn user_id1 ->
-            Enum.each(user_ids -- [user_id1], fn user_id2 ->
-              game_id = UUID.uuid4()
-              BattleResult.save_battle_result([user_id1, user_id2], game_id)
-              :ets.insert(:restart_times, {game_id, 0})
-              ThreadPool.add_task({user_id1, user_id2, game_id, players})
-            end)
-          end)
+      {:ok,package_info} ->
+        case package_info do
+          package_info when length(package_info) == 1 ->
+            info = List.first(package_info)
+            {:ok,ai_name} = Battle.Mongo.UserAi.get_ai_name(info.user_id)
+            Battle.Mongo.RankList.save_rank(info.user_id,ai_name,1.0,1)
+          _ ->
+            players =
+              package_info
+              |> Enum.reduce(%{}, fn %{user_id: user_id, package_name: package_name}, acc ->
+                Map.put(acc, user_id, package_name)
+              end)
+            user_ids = Map.keys(players)
+            IO.inspect("there are #{length(user_ids)} players now")
+            if length(user_ids) > 1 do
+              Enum.each(user_ids, fn user_id1 ->
+                Enum.each(user_ids -- [user_id1], fn user_id2 ->
+                  game_id = UUID.uuid4()
+                  BattleResult.save_battle_result([user_id1, user_id2], game_id)
+                  :ets.insert(:restart_times, {game_id, 0})
+                  ThreadPool.add_task({user_id1, user_id2, game_id, players})
+                end)
+              end)
+            end
+            Task.async(fn -> update_win_rate() end)
+            {:ok, "start tournament"}
         end
-        Task.async(fn -> update_win_rate() end)
-        {:ok, "start tournament"}
     end
   end
 

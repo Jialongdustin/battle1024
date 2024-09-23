@@ -472,8 +472,9 @@ defmodule Battle.Web.Router do
 
   get "/user/get_avatar" do
     moment_token = conn.params["moment_token"]
+    user_id = conn.params["user_id"]
     case Token.verify_token(moment_token) do
-      {:ok, user_id} ->
+      {:ok, _} ->
         message = case Battle.Mongo.User.query_user(user_id) do
           {:error, _} ->
             %{"code" => 200, "data" => [], "success" => true}
