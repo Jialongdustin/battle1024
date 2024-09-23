@@ -50,7 +50,7 @@ defmodule Battle.Mongo.BattleResultTest do
     __MODULE__.pupdate(%{_id: bson_id}, %{info | code: if(reason == "git or tag illegal", do: 2002, else: 2003)})
   end
 
-  def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps, code \\ 2001) do
+  def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps, code \\ 2001, package_name) do
     info =  __MODULE__.pquery2(%{game_id: game_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[game_id: 1]]})
       |> Enum.map(fn message ->
         message |> __MODULE__.to_raw()
@@ -69,7 +69,7 @@ defmodule Battle.Mongo.BattleResultTest do
       end
       BattleStatistics.submit_increment()
       BattleStatistics.update_last_commit_time(Ejoy.Bson.utc_now())
-      UserAi.update_git(user_id, git_url, tag)
+      UserAi.update_git(user_id, git_url, tag, package_name)
     end
     __MODULE__.pupdate(%{_id: bson_id}, %{info | winner: winner, time_cost_2: time_costs, memory_cost_2: memory_costs, early_hand: early_hand, total_step_2: total_steps, code: code})
   end

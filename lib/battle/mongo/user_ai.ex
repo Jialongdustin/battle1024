@@ -41,7 +41,8 @@ defmodule Battle.Mongo.UserAi do
     info = %{
       user_id: user_id,
       ai_name: ai_name,
-      create_time: Ejoy.Bson.utc_now()
+      create_time: Ejoy.Bson.utc_now(),
+      code: 100
     }
     __MODULE__.psave(info)
   end
@@ -73,4 +74,6 @@ defmodule Battle.Mongo.UserAi do
   def clean_message(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
   end
+
+
 end
