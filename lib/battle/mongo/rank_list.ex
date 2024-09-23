@@ -36,7 +36,6 @@ defmodule Battle.Mongo.RankList do
       res ->
         details = res |> Enum.map(fn message ->
           message = message |> __MODULE__.to_raw()
-          {:ok, user_info} = User.query_user(message.user_id)
           time_query_yesterday = Battle.Utils.GetTime24.get_yesterday_time()
           rank_yesterday =
             case __MODULE__.pquery2(%{user_id: message.user_id,date: time_query_yesterday.date},expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
@@ -52,7 +51,6 @@ defmodule Battle.Mongo.RankList do
             ai_name: message.ai_name,
             user_id: message.user_id,
             rate: message.rate,
-            avatar: user_info.avatar,
             rank: message.rank,
             rank_abs: (if rank_yesterday == [], do: nil, else: rank_yesterday.rank - message.rank)
           }
