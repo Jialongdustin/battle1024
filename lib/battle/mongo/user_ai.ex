@@ -28,12 +28,26 @@ defmodule Battle.Mongo.UserAi do
     time_24 = mill - rem(mill, 86400)  # 计算当天 00:00:00 的秒级时间戳
 
     # 查询条件，将 create_time 小于或等于 time_24 的记录取出
-    time_query = %{create_time: %{"$lte": time_24}}
+    time_query = %{create_time: %{"$lte": %Bson.UTC{ ms: time_24*1000}}}
+    IO.inspect(time_query)
 
     case __MODULE__.pquery(time_query) do
-      [] -> {:error, "no user_info"}
-      res ->{:ok, res|> Enum.filter(fn message -> message.git_url != nil and message.tag != nil end)
-                  |> Enum.map(fn message -> %{user_id: message.user_id, package_name: message.package_name} end)}
+      [] ->
+        {:error, "no user_info"}
+      res ->
+        info = res
+        |> Enum.filter(fn message -> message.git_url != nil and message.tag != nil end)  # 过滤出 git_url 和 tag 不为空的记录
+        |> Enum.group_by(& &1.user_id)  # 根据 user_id 进行分组
+#        IO.inspect(info)
+        |> Enum.map(fn {user_id, messages} ->
+          # 对于每个 user_id 的记录，按 create_time 排序，取时间最近的一条
+          latest_message = Enum.max_by(messages, & &1.create_time)
+          %{
+            user_id: latest_message.user_id,
+            package_name: latest_message.package_name
+          }
+        end)
+        |> fn filtered_messages -> {:ok, filtered_messages} end.()
     end
   end
 
@@ -63,7 +77,7 @@ defmodule Battle.Mongo.UserAi do
       ai_name: user_info.ai_name,
       create_time: Ejoy.Bson.utc_now(),
       code: 100,
-      url: url,
+      git_url: url,
       tag: tag,
       package_name: package_name,
       create_time: Ejoy.Bson.utc_now()
