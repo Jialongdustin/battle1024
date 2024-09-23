@@ -14,6 +14,8 @@ defmodule Battle.Mongo.UserAi do
   field :git_url, :string, required: false
   field :tag, :string, required: false
   field :create_time, :datetime, required: false
+  field :package_name, :string, required: false
+  field :code, :string, required: false
 
   def get_newest_ai_by_userId(user_id)do
     case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
@@ -33,7 +35,8 @@ defmodule Battle.Mongo.UserAi do
     info = %{
       user_id: user_id,
       ai_name: ai_name,
-      create_time: Ejoy.Bson.utc_now()
+      create_time: Ejoy.Bson.utc_now(),
+      code: 100
     }
     __MODULE__.psave(info)
   end
@@ -47,13 +50,22 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-  def update_git(user_id, url, tag) do
+  def update_git(user_id, url, tag,package_name) do
       {:ok, user_info} = get_newest_ai_by_userId(user_id)
       bson_id = user_info._id
-      __MODULE__.pupdate(%{_id: bson_id}, %{user_info | git_url: url, tag: tag, create_time: Ejoy.Bson.utc_now()})
+      __MODULE__.pupdate(%{_id: bson_id},
+        %{user_info | git_url: url, tag: tag, create_time: Ejoy.Bson.utc_now(), package_name: package_name})
   end
 
   def clean_message(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
+  end
+
+  def get_package_name() do
+    case __MODULE__.pquery(%{}) do
+      [] -> {:error, "no user_info"}
+      res ->{:ok, res|> Enum.filter(fn message -> message.git_url != nil and message.tag != nil end)
+                  |> Enum.map(fn message -> %{user_id: message.user_id, package_name: message.package_name} end)}
+    end
   end
 end

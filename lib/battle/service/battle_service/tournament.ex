@@ -50,7 +50,7 @@ defmodule Battle.Service.BattleService.Tournament do
     case Kun.start_build() do
       {:error, reason} ->
         {:error, reason}
-      package_info ->
+      {:ok, package_info} ->
         players =
           package_info
           |> Enum.reduce(%{}, fn %{user_id: user_id, package_name: package_name}, acc ->
