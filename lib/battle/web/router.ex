@@ -502,7 +502,6 @@ defmodule Battle.Web.Router do
     end
   end
 
-
   # 更新git仓库
   json_rpc "/user/update_git", "schema/user/update_git" do
     moment_token = conn.params["moment_token"]
@@ -535,7 +534,7 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
     end
   end
-
+  
   # 创建测试比赛
   json_rpc "/user/create_test", "schema/user/create_test" do
     token = conn.params["moment_token"]
@@ -549,7 +548,7 @@ defmodule Battle.Web.Router do
             |> Conn.put_resp_content_type("application/json")
             |> Conn.send_resp(200, Ejoy.Jiffy.encode!(%{"code" => 200, "data" => info, "success" => true}))
             |> Conn.halt()
-            
+
           {:error, _} ->
             conn
             |> Conn.put_resp_content_type("application/json")

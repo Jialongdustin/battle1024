@@ -598,9 +598,13 @@ defmodule Battle.Service.BattleService.RoomServer do
         %{captured: nil, moves: _} ->
         if state.early_hand do
           if [[x0, y0], [x1, y1]] == state.pre_step_white.move do
-            if state.pre_step_white.cnt == 2 do
+            if state.pre_step_white.cnt >= 2 do
               # 重复下子超过3次
-              new_state = %{state | winner: state.black}
+              if state.pre_step_black.cnt >2 do
+                new_state = %{state | winner: 0}
+              else
+                new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
+              end
             else
               new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
             end
@@ -609,9 +613,14 @@ defmodule Battle.Service.BattleService.RoomServer do
           end
         else
           if [[x0, y0], [x1, y1]] == state.pre_step_black.move do
-            if state.pre_step_black.cnt == 2 do
+            if state.pre_step_black.cnt >= 2 do
               # 重复下子超过3次
-              new_state = %{state | winner: state.white}
+              if state.pre_step_white.cnt >2 do
+                new_state = %{state | winner: 0}
+              else
+                new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
+              end
+
             else
               new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
             end

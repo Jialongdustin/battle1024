@@ -35,15 +35,15 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     }
     DynamicSupervisor.start_child(__MODULE__, child_spec_server)
     [{pid, _}] = Registry.lookup(Battle.RoomRegistry, game_id)
-    :ets.insert(:user_id_test,{user_id,game_id})
+    :ets.insert(:user_id_test, {user_id, game_id})
     RoomServer.start_countdown_test(pid)
     if white do
       {:ok, %{token: token_user, game_id: game_id}}
     else
-      battle_state =  RoomServer.get_state(pid)
-      movement = Simple.move(battle_state.board,true)
-      RoomServer.query(pid,"1024")
-      RoomServer.movement(pid,"1024",movement)
+      battle_state = RoomServer.get_state(pid)
+      movement = Simple.move(battle_state.board, true)
+      RoomServer.query(pid, "1024")
+      RoomServer.movement(pid, "1024", movement)
       {:ok, %{token: token_user, game_id: game_id}}
     end
 
@@ -75,17 +75,10 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         end
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
-            # 将your_step改为opponent_step
-            battle_state =  RoomServer.get_state(pid)
-            if user_id == battle_state.white do
-              movement = Simple.move(battle_state.board,false)
-              RoomServer.query(pid,"1024")
-              RoomServer.movement(pid,"1024",movement)
-            else
-              movement = Simple.move(battle_state.board,true)
-              RoomServer.query(pid,"1024")
-              RoomServer.movement(pid,"1024",movement)
-            end
+            battle_state = RoomServer.get_state(pid)
+            movement = Simple.move(battle_state.board, user_id == battle_state.black)
+            RoomServer.query(pid,"1024")
+            RoomServer.movement(pid,"1024",movement)
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
