@@ -88,7 +88,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
       {:error, _} ->
         :timer.sleep(3_000)
-        update_win_rate(games)
+        update_win_rate()
     end
   end
 end
