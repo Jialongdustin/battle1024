@@ -29,7 +29,7 @@ defmodule Battle.Service.WebService.Kun do
     end
   end
 
-  # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "dustin"})
+  # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "main"})
   def change_config(info, attempt \\ 0) do
     user_id = info.user_id
     git_url = info.git_url
