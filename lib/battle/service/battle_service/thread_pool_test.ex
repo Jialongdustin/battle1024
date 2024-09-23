@@ -112,8 +112,9 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
   end
 
   defp reuse_group_for_task({git, tag, game_id}, {groupName, groupKey, appName}) do
-    RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName)
+
     package_name = Kun.change_config(%{user_id: "1024", git_url: git, tag: tag})[:package_name]
+    RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName, package_name)
     update_services(groupName, groupKey, appName, game_id)
     [
       %{

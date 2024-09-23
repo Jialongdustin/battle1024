@@ -14,6 +14,7 @@ defmodule Battle.Mongo.UserAi do
   field :git_url, :string, required: false
   field :tag, :string, required: false
   field :create_time, :datetime, required: false
+  field :package_name, :string, required: false
 
   def get_newest_ai_by_userId(user_id)do
     case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
@@ -23,9 +24,16 @@ defmodule Battle.Mongo.UserAi do
   end
 
   def get_all_gits() do
-    case __MODULE__.pquery(%{}) do
+    mill = :erlang.system_time(:second)  # 获取当前时间的秒级时间戳
+    time_24 = mill - rem(mill, 86400)  # 计算当天 00:00:00 的秒级时间戳
+
+    # 查询条件，将 create_time 小于或等于 time_24 的记录取出
+    time_query = %{create_time: %{"$lte": time_24}}
+
+    case __MODULE__.pquery(time_query) do
       [] -> {:error, "no user_info"}
-      res ->{:ok, res|> Enum.filter(fn message -> message.git_url != nil and message.tag != nil end) |> Enum.map(fn message -> %{user_id: message.user_id, git_url: message.git_url, tag: message.tag} end)}
+      res ->{:ok, res|> Enum.filter(fn message -> message.git_url != nil and message.tag != nil end)
+                  |> Enum.map(fn message -> %{user_id: message.user_id, package_name: message.package_name} end)}
     end
   end
 
@@ -47,10 +55,19 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-  def update_git(user_id, url, tag) do
-      {:ok, user_info} = get_newest_ai_by_userId(user_id)
-      bson_id = user_info._id
-      __MODULE__.pupdate(%{_id: bson_id}, %{user_info | git_url: url, tag: tag, create_time: Ejoy.Bson.utc_now()})
+  def update_git(user_id, url, tag, package_name) do
+    {:ok, user_info} = get_newest_ai_by_userId(user_id)
+    info = %{
+      user_id: user_id,
+      ai_name: user_info.ai_name,
+      create_time: Ejoy.Bson.utc_now(),
+      code: 100,
+      url: url,
+      tag: tag,
+      package_name: package_name,
+      create_time: Ejoy.Bson.utc_now()
+    }
+    __MODULE__.psave(info)
   end
 
   def clean_message(user_id) do
