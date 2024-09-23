@@ -1168,4 +1168,25 @@ defmodule BattleTest.RouterTest do
     end
   end
 
+  test "return 200 delete game /user/get_avatar" do
+    Battle.Mongo.User.save_user("11","842","ben")
+    Battle.Mongo.User.update_avatar("11","asdasds")
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "11"}
+      end
+    ] do
+      request_body = %{"moment_token" => "askfasfkasf"}
+      conn =
+        :get
+        |> conn("/user/get_avatar", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body)["data"] == "asdasds"
+    end
+    Battle.Mongo.User.remove_user("11")
+  end
+
 end

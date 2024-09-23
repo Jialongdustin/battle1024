@@ -470,6 +470,38 @@ defmodule Battle.Web.Router do
     end
   end
 
+  get "/user/get_avatar" do
+    moment_token = conn.params["moment_token"]
+    case Token.verify_token(moment_token) do
+      {:ok, user_id} ->
+        message = case Battle.Mongo.User.query_user(user_id) do
+          {:error, _} ->
+            %{"code" => 200, "data" => [], "success" => true}
+          {:ok, info} ->
+            %{"code" => 200, "data" => info.avatar, "success" => true}
+        end
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, Ejoy.Jiffy.encode!(message))
+        |> Conn.halt()
+
+      {:error, _} ->
+        conn
+        |> Conn.put_resp_header("location", @uri)
+        |> Conn.send_resp(401, "")
+        |> Conn.halt()
+
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
+
   # 更新git仓库
   json_rpc "/user/update_git", "schema/user/update_git" do
     moment_token = conn.params["moment_token"]
@@ -606,6 +638,7 @@ defmodule Battle.Web.Router do
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = user_info.user_id
     game_id = user_info.ext.game_id
+    type = user_info.ext.type
 
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisor.query(self(), user_id, game_id) do
