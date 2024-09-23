@@ -1148,4 +1148,24 @@ defmodule BattleTest.RouterTest do
     end
   end
 
+  test "return 200 delete game /user/delete_test" do
+    {:ok, info} = RoomSupervisorTest.init_game("aaa",true)
+    with_mock Battle.Utils.Token, [:passthrough], [
+      verify_token: fn _ ->
+        {:ok, "aaa"}
+      end
+    ] do
+      request_body = %{"moment_token" => "askfasfkasf"}
+      conn =
+        :post
+        |> conn("/user/delete_test", Ejoy.Jiffy.encode!(request_body))
+        |> put_req_header("content-type", "application/json")
+        |> Router.call(@opts)
+      assert conn.state == :sent
+      assert conn.status == 200
+      assert Ejoy.Jiffy.decode!(conn.resp_body)["data"] == "delete success"
+
+    end
+  end
+
 end

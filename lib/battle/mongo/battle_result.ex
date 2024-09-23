@@ -7,7 +7,8 @@ defmodule Battle.Mongo.BattleResult do
   @db "battle"
   @collection "battle_result"
   @indexes [
-    {[user_id_2: 1], false}
+    {[user_id_2: 1], false},
+    {[date: 1],false}
   ]
   @cleanable false
 
@@ -64,7 +65,7 @@ defmodule Battle.Mongo.BattleResult do
   end
 
   def get_battle_result_by_user_id(user_id) do
-    case pquery2(%{user_id_2: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id_2: 1]]}) do
+    case __MODULE__.pquery_sort(%{user_id_2: user_id}, [date: -1]) do
       [] -> {:error, "no games of user"}
       res -> battle_info = res |> Enum.map(&__MODULE__.to_raw/1)
              self_and_opponent = Enum.map(battle_info, fn battle ->
@@ -77,7 +78,7 @@ defmodule Battle.Mongo.BattleResult do
                    {:error, "Self user id not found"}
                  self_index ->
                    opponent_index = if self_index == 0, do: 1, else: 0
-
+                   {:ok,early_hand_name} = UserAi.get_ai_name(battle.early_hand)
                    self = %{
                      user_id_self: self_id,
                      ai_name_self: self_ai_name,
@@ -85,8 +86,9 @@ defmodule Battle.Mongo.BattleResult do
                      total_step_self: Enum.at(battle.total_step_2, self_index),
                      memory_cost_self: Enum.at(battle.memory_cost_2, self_index),
                      game_id: battle.game_id,
-                     early_hand: battle.early_hand,
-                     winner: battle.winner
+                     early_hand: early_hand_name,
+                     winner: battle.winner,
+                     date: battle.date.ms
                    }
 
                    opponent_id = Enum.at(user_ids, opponent_index)
@@ -98,8 +100,9 @@ defmodule Battle.Mongo.BattleResult do
                      total_step_opponent: Enum.at(battle.total_step_2, opponent_index),
                      memory_cost_opponent: Enum.at(battle.memory_cost_2, opponent_index),
                      game_id: battle.game_id,
-                     early_hand: battle.early_hand,
-                     winner: battle.winner
+                     early_hand: early_hand_name,
+                     winner: battle.winner,
+                     date: battle.date.ms
                    }
 
                    %{self: self, opponent: opponent}

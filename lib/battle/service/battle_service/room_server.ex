@@ -165,7 +165,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call(:terminate_game_test, _from, state) do
-    RoomSupervisorTest.end_ai_service(state.group_key, state.app_name)
     {:stop, :normal, :ok, state}
   end
 

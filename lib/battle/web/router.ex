@@ -367,6 +367,32 @@ defmodule Battle.Web.Router do
     end
   end
 
+  json_rpc "/user/delete_test", "schema/user/delete_test" do
+    token = conn.params["moment_token"]
+    case Token.verify_token(token) do
+      {:ok, user_id} ->
+        {_,data} = RoomSupervisorTest.delete_room(user_id)
+        body = Ejoy.Jiffy.encode!(%{code: 200, data: data, success: true})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(200, body)
+        |> Conn.halt()
+
+      {:error, _} ->  # 假设 `verify_code` 中的错误返回格式为 {:error, reason}
+        conn
+        |> Conn.put_resp_header("location", @uri)
+        |> Conn.send_resp(401, "")
+        |> Conn.halt()
+      _ ->
+        Logger.error("Unexpected result from verify_code")
+        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
+        conn
+        |> Conn.put_resp_content_type("application/json")
+        |> Conn.send_resp(500, body)
+        |> Conn.halt()
+    end
+  end
+
   # 检查git的测试结果
   get "/user/check_update" do
     moment_token = conn.params["moment_token"]
