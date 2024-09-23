@@ -4,8 +4,10 @@ defmodule Battle.Service.BattleService.ThreadPool do
   alias Battle.Service.BattleService.RoomSupervisor
   alias Battle.Utils.Token
   alias Battle.Service.WebService.Kun
+  alias Battle.Mongo.BattleResult
   @service_groups ["battle-players1", "battle-players2", "battle-players3", "battle-players4", "battle-players5", "battle-players6", "battle-players7", "battle-players8", "battle-players9", "battle-players10",
-                  "battle-players11", "battle-players12", "battle-players13", "battle-players14"]
+                  "battle-players11", "battle-players12", "battle-players13", "battle-players14"] #, "battle-players15", "battle-players16", "battle-players17", "battle-players18", "battle-players19", "battle-players20",
+                  # "battle-players21", "battle-players22", "battle-players23", "battle-players24", "battle-players25", "battle-players26", "battle-players27", "battle-players28"]
   @appNames %{"battle-player-python" =>"battle-player-lua", "battle-player-java" => "battle-player-c"}
 
   def start_link() do
@@ -111,19 +113,40 @@ defmodule Battle.Service.BattleService.ThreadPool do
 
   # players建立user_id和每个用户的构建包的映射
   defp execute_task({user_id1, user_id2, game_id, players}, {groupName, appName}) do
-    # {groupName, appName} = Kun.get_idle_service()
     groupKey =
       Regex.run(~r/players\d+/, groupName)
       |> List.first()
       |> (fn name -> "plat1024-#{name}" end).()
-    RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
+    if Registry.lookup(Battle.RoomRegistry, game_id) == [] do
+      RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
+    end
     case update_services(groupName, groupKey, appName, user_id1, user_id2, game_id) do
       {:error, _} ->
-        :error
+        if get_restart_time(game_id) < 3 do
+          execute_task({user_id1, user_id2, game_id, players}, {groupName, appName})
+        else
+          BattleResult.update_battle_result_failed(game_id)
+        end
       _ ->
-        create_deploys(groupKey, appName, user_id1, user_id2, players)
-
+        case create_deploys(groupKey, appName, user_id1, user_id2, players) do
+          {:error, _} ->
+            if get_restart_time(game_id) < 3 do
+              execute_task({user_id1, user_id2, game_id, players}, {groupName, appName})
+            else
+              BattleResult.update_battle_result_failed(game_id)
+            end
+          {:ok, _} ->
+            :ok
+        end
     end
+  end
+
+  defp get_restart_time(game_id) do
+    [{_, restart_times}] = :ets.lookup(:restart_times, game_id)
+    if restart_times < 3 do
+      :ets.insert(:restart_times, {game_id, restart_times + 1})
+    end
+    restart_times
   end
 
   defp terminate_service(groupKey, appName) do
