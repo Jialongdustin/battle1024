@@ -31,6 +31,7 @@ defmodule Battle.Service.BattleService.RoomServer do
     groupName = opts[:groupName]
     groupKey = opts[:groupKey]
     appName = opts[:appName]
+    package_name = opts[:package_name]
     {init_move, _} = Battle.BattleHandler.move_list(@board_init, true)
     initial_state = %{
       code: 10002,
@@ -59,6 +60,7 @@ defmodule Battle.Service.BattleService.RoomServer do
       time_cost_black: 0,
       time_counter_white: 0,
       time_counter_black: 0,
+      package_name: package_name
     }
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(game_id))
   end
@@ -116,9 +118,11 @@ defmodule Battle.Service.BattleService.RoomServer do
   def handle_call(:time_counter, _from, state) do
     if state.time_ref_verify do
       Process.cancel_timer(state.time_ref_verify)
+      {:reply, :ok, %{state | time_ref_verify: nil}}
+    else
+      new_ref_test = Process.send_after(self(), :execute_task_verify, @timeout_test)
+      {:reply, :ok, %{state | time_ref_verify: new_ref_test}}
     end
-    new_ref_test = Process.send_after(self(), :execute_task_verify, @timeout_test)
-    {:reply, :ok, %{state | time_ref_verify: new_ref_test}}
   end
 
   def handle_call(:start_time_step, _from, state) do
@@ -147,22 +151,25 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_call(:terminate_game, _from, state) do
     if state.white == "10" and state.black == "24" do
-      BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black])
+      BattleResultTest.update_battle_result(state.game_id, state.white, state.winner,
+        [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black], state.package_name)
       BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
       send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
+    else if state.white == "1024" or state.black == "1024" do
+      :ok
     else
       # 每一局的信息
       BattleStatistics.update_average_step(state.steps_white + state.steps_black)
       BattleStatistics.update_average_time_cost(state.time_cost_white + state.time_cost_black)
       BattleInfo.insert_battle(state.game_id, state.steps_white + state.steps_black, state.steps)
-      BattleResult.save_battle_result([state.white, state.black], state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
+      BattleResult.update_battle_result_success(state.game_id, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], state.white, [state.steps_white, state.steps_black])
       send(Battle.Service.BattleService.ThreadPool, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     end
     {:stop, :normal, :ok, state}
+    end
   end
 
   def handle_call(:terminate_game_test, _from, state) do
-    RoomSupervisorTest.end_ai_service(state.group_key, state.app_name)
     {:stop, :normal, :ok, state}
   end
 
@@ -214,8 +221,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call({:movement, user_id, moves}, _from, state) do
-
-
     if (user_id == state.white && state.query_white == false) or
        (user_id == state.black && state.query_black == false) do
       if user_id == state.white do
@@ -453,7 +458,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_info(:execute_task_verify, state) do
     IO.puts "overtime operation of verify"
-    BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black], 2002)
+    BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black], 2002, state.package_name)
     send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     {:stop, :normal, state}
   end
@@ -593,9 +598,13 @@ defmodule Battle.Service.BattleService.RoomServer do
         %{captured: nil, moves: _} ->
         if state.early_hand do
           if [[x0, y0], [x1, y1]] == state.pre_step_white.move do
-            if state.pre_step_white.cnt == 2 do
+            if state.pre_step_white.cnt >= 2 do
               # 重复下子超过3次
-              new_state = %{state | winner: state.black}
+              if state.pre_step_black.cnt >2 do
+                new_state = %{state | winner: 0}
+              else
+                new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
+              end
             else
               new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
             end
@@ -604,9 +613,14 @@ defmodule Battle.Service.BattleService.RoomServer do
           end
         else
           if [[x0, y0], [x1, y1]] == state.pre_step_black.move do
-            if state.pre_step_black.cnt == 2 do
+            if state.pre_step_black.cnt >= 2 do
               # 重复下子超过3次
-              new_state = %{state | winner: state.white}
+              if state.pre_step_white.cnt >2 do
+                new_state = %{state | winner: 0}
+              else
+                new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
+              end
+
             else
               new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
             end

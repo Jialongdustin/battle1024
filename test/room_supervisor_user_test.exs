@@ -11,7 +11,7 @@ defmodule BattleTest.RoomSupervisorUserTest do
   test "battle test for user" do
 
     #    Logger.configure(level: :none)
-    {:ok,contest_info} =Battle.Service.BattleService.RoomSupervisorTest.init_game()
+    {:ok,contest_info} =Battle.Service.BattleService.RoomSupervisorTest.init_game("656599a4-65b4-11ef-bdb1-b2a3d4b2d740",true)
     #token_black: "66c8088b4d783922fa779fd0"
     #token_white: "66c8088b4d783922fa779fcf"
 

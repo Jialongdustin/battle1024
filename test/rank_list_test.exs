@@ -50,5 +50,17 @@ defmodule RankListTest do
     assert single_info.last_submit_date == nil
   end
 
+  test "get rank self with game" do
+    user_id = "wuqidashi"
+    ai_name = "ljl"
+    Battle.Mongo.User.save_user(user_id, "12312", "niu")
+    Battle.Mongo.UserAi.insert_ai(user_id, ai_name)
+    Battle.Mongo.RankList.save_rank(user_id,ai_name, 0.8,2)
+    {:ok,user_info} = Battle.Mongo.RankList.get_rank_by_user_id(user_id)
+    IO.inspect(user_info)
+    Battle.Mongo.RankList.remove_rank(user_id)
+    Battle.Mongo.User.remove_user(user_id)
+    Battle.Mongo.UserAi.clean_message(user_id)
 
+  end
 end

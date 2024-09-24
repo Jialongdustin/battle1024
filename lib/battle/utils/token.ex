@@ -12,15 +12,18 @@ defmodule Battle.Utils.Token do
 
   def generate_token(user_id, game_id) do
 #    user_info = %{user_id: user_id,contest_id: contest_id}
-    {:ok,moment_token,token_info} = Ejoy.MomentToken.new_token_info(1, 1, user_id, %{game_id: game_id})
-
+    {:ok, moment_token, token_info} = Ejoy.MomentToken.new_token_info(1, 1, user_id, %{game_id: game_id})
     {:ok, moment_token}
   end
 
   def verify_token(moment_token) do
     case Ejoy.MomentToken.Service.auth_token(moment_token) do
       {:ok, user_info}->
-        {:ok, user_info.user_id}
+        if user_info.create_time < 1727020800 do
+          {:error, "permission deny"}
+        else
+          {:ok, user_info.user_id}
+        end
       _ ->
         {:error, "permission deny"}
     end
@@ -29,11 +32,9 @@ defmodule Battle.Utils.Token do
   def verify_token_battle(moment_token) do
     case Ejoy.MomentToken.Service.auth_token(moment_token) do
       {:ok, user_info}->
-        Logger.info(user_info)
         {:ok, user_info}
       _ ->
         {:error, "permission deny"}
     end
   end
-
 end

@@ -7,7 +7,7 @@ request:
     move:
       items:
         type: array
-  required: [token, move]
+  required: ["token", "move"]
 
 response:
   type: object

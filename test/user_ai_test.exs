@@ -66,6 +66,15 @@ defmodule Mongo.UserAi do
 
   end
 
-
-
+  test "get all package_name distinct" do
+#    UserAi.insert_ai("11","hahaha")
+#    UserAi.update_git("11","ben.com","main","111")
+#    UserAi.update_git("11","ljl.com","master","aa11")
+#    UserAi.update_git("11","ljl.com","ben","aa11222")
+#    UserAi.insert_ai("22","biubiubiu")
+#    UserAi.update_git("22","ben.com","main","111")
+    UserAi.update_git("22","ljl.com","mainnnn","111111")
+    info = UserAi.get_all_gits()
+    IO.inspect(info)
+  end
 end

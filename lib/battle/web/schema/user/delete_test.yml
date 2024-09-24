@@ -1,12 +1,10 @@
-api: "/user/create_ai"
+api: "/user/delete_test"
 request:
   type: object
   properties:
-    ai_name:
-      type: string
     moment_token:
       type: string
-  required: [ai_name, moment_token]
+  required: [moment_token]
 
 response:
   type: object

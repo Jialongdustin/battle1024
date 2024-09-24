@@ -195,4 +195,13 @@ defmodule BattleTest.RoomServerTest do
 
   end
 
+  test "demo" do
+    time = 1726588872025
+    timestamp_in_sec = div(time, 1000)
+
+    # 将秒级时间戳转换为 DateTime
+    {:ok, datetime} = DateTime.from_unix(timestamp_in_sec)
+    IO.inspect(datetime)
+  end
+
 end

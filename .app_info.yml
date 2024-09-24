@@ -2,4 +2,4 @@ config_migrate: []
 kun:  
   deploy:    
     app_config:      
-      version: battle-service
+      version: battle-service-20240923

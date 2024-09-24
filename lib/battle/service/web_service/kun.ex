@@ -13,6 +13,10 @@ defmodule Battle.Service.WebService.Kun do
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
 
+  def get_namespace() do
+    System.get_env("KUN_NAMESPACE") || @query_namespace
+  end
+
   def start_build() do
     case UserAi.get_all_gits() do
       {:error, message} ->
@@ -20,10 +24,16 @@ defmodule Battle.Service.WebService.Kun do
       {:ok, gits} ->
         gits
         |> Enum.map(fn info -> change_config(info) end)
+        |> Enum.filter(fn result ->
+          case result do
+            {:error, _} -> false
+            _ -> true
+          end
+        end)
     end
   end
 
-  # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "dustin"})
+  # Kun.change_config(%{user_id: "123", git_url: "git@gitlab.alibaba-inc.com:Test_elixir/battle1024_python_3.12.5.git", tag: "main"})
   def change_config(info, attempt \\ 0) do
     user_id = info.user_id
     git_url = info.git_url
@@ -48,7 +58,7 @@ defmodule Battle.Service.WebService.Kun do
         change_config(info, attempt + 1)
 
       {:error, 500} ->
-        {:kun_error, "received 500 error from kun after 3 attempts"}
+        {:error, "received 500 error from kun after 3 attempts"}
     end
   end
 
@@ -82,7 +92,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.get_build_result(10179621)
   def get_build_result(package_id) do
-    path = "/api/env/#{@query_namespace}/buildTask?id=#{package_id}"
+    path = "/api/env/#{get_namespace()}/buildTask?id=#{package_id}"
     %{"code" => 0, "data" => %{"task" => task}} = Battle.Service.WebService.Kun.send_get(path, %{})
     task["status"]
   end
@@ -112,7 +122,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.update_service_group()
   def update_service_group(services, groupName, groupKey, attempt \\ 0) do
-    path = "/api/env/#{@query_namespace}/serviceGroup/sync"
+    path = "/api/env/#{get_namespace()}/serviceGroup/sync"
     groups = [
       %{
         "name": groupName,
@@ -134,8 +144,8 @@ defmodule Battle.Service.WebService.Kun do
   end
 
   # Kun.create_deploy_task(services)
-  def create_deploy_task(services) do
-    path = "/api/env/#{@query_namespace}/createDeployTask"
+  def create_deploy_task(services, attempt \\ 0) do
+    path = "/api/env/#{get_namespace()}/createDeployTask"
     content = %{
       "services": services,
       "userId": @userId
@@ -144,14 +154,18 @@ defmodule Battle.Service.WebService.Kun do
       %{"code" => 0, "data" => %{"task" => task}} ->
         id = task["ID"]
         Battle.Service.WebService.Kun.get_deploy_result(id)
-      _ ->
-        create_deploy_task(services)
+
+      {:error, 500} when attempt < 3 ->
+        create_deploy_task(services, attempt + 1)
+
+      {:error, 500} ->
+        {:error, "received 500 error from kun after 3 attempts"}
     end
   end
 
   # Kun.get_deploy_result(11464803)
   def get_deploy_result(id) do
-    path = "/api/env/#{@query_namespace}/task?id=#{id}"
+    path = "/api/env/#{get_namespace()}/task?id=#{id}"
     case Battle.Service.WebService.Kun.send_get(path, %{}) do
       %{"code" => 0, "data" => %{"task" => %{"services" => services}}} ->
         case Enum.all?(services, fn service -> service["status"] == "ready" end) do
@@ -168,7 +182,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.create_uninstall_task(%{"service_group" => "plat1024", "service_name" => "battle-service"})
   def create_uninstall_task(services) do
-    path = "/api/env/#{@query_namespace}/createUninstallTask"
+    path = "/api/env/#{get_namespace()}/createUninstallTask"
     content = %{
       "services": services,
       "userId": @userId
