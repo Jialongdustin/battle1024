@@ -63,5 +63,4 @@ defmodule RankListTest do
     Battle.Mongo.UserAi.clean_message(user_id)
 
   end
-
 end

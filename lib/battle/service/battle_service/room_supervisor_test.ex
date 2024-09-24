@@ -46,7 +46,6 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
       RoomServer.movement(pid, "1024", movement)
       {:ok, %{token: token_user, game_id: game_id}}
     end
-
   end
 
   def query(caller, user_id, game_id) do
@@ -102,5 +101,4 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         {:ok, "delete success"}
     end
   end
-
 end

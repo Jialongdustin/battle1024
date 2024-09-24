@@ -3,9 +3,27 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
       <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/mongo_orm/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/mongo_orm/ebin" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
+      <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
+      <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
+      <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
+      <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
+      <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
       <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
       <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />
       <root url="file://$PROJECT_DIR$/deps/mongo_orm/lib" />

@@ -21,7 +21,6 @@ defmodule Battle.Utils.GetTime24 do
         "#{Date.to_string(date)} 16:00:00"
         }
       end
-
     # 将字符串转换为 DateTime 类型
     {:ok, start_time, _offset} = DateTime.from_iso8601("#{start_time_string}Z")
     {:ok, end_time, _offset} = DateTime.from_iso8601("#{end_time_string}Z")
@@ -140,5 +139,4 @@ defmodule Battle.Utils.GetTime24 do
       }
     }
   end
-
 end

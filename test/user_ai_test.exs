@@ -77,6 +77,4 @@ defmodule Mongo.UserAi do
     info = UserAi.get_all_gits()
     IO.inspect(info)
   end
-
-
 end

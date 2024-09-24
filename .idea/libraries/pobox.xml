@@ -3,9 +3,27 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
       <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/pobox/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/pobox/ebin" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/pobox/src" />
+      <root url="file://$PROJECT_DIR$/deps/pobox/src" />
+      <root url="file://$PROJECT_DIR$/deps/pobox/src" />
+      <root url="file://$PROJECT_DIR$/deps/pobox/src" />
+      <root url="file://$PROJECT_DIR$/deps/pobox/src" />
+      <root url="file://$PROJECT_DIR$/deps/pobox/src" />
       <root url="file://$PROJECT_DIR$/deps/pobox/src" />
       <root url="file://$PROJECT_DIR$/deps/pobox/src" />
       <root url="file://$PROJECT_DIR$/deps/pobox/src" />

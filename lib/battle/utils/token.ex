@@ -13,7 +13,6 @@ defmodule Battle.Utils.Token do
   def generate_token(user_id, game_id) do
 #    user_info = %{user_id: user_id,contest_id: contest_id}
     {:ok, moment_token, token_info} = Ejoy.MomentToken.new_token_info(1, 1, user_id, %{game_id: game_id})
-
     {:ok, moment_token}
   end
 
@@ -38,5 +37,4 @@ defmodule Battle.Utils.Token do
         {:error, "permission deny"}
     end
   end
-
 end

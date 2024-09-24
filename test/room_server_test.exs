@@ -194,6 +194,7 @@ defmodule BattleTest.RoomServerTest do
       assert battle_info.steps == 2
 
   end
+
   test "demo" do
     time = 1726588872025
     timestamp_in_sec = div(time, 1000)

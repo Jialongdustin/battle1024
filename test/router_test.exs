@@ -1188,5 +1188,4 @@ defmodule BattleTest.RouterTest do
     end
     Battle.Mongo.User.remove_user("11")
   end
-
 end

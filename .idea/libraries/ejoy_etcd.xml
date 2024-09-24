@@ -3,9 +3,27 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
       <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/ejoy_etcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/ejoy_etcd/ebin" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
+      <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
       <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
       <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />
       <root url="file://$PROJECT_DIR$/deps/ejoy_etcd/lib" />

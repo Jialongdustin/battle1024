@@ -89,6 +89,4 @@ defmodule Battle.Mongo.UserAi do
   def clean_message(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
   end
-
-
 end

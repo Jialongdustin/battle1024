@@ -3,9 +3,33 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
       <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/eetcd/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/eetcd/ebin" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
+      <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
       <root url="file://$PROJECT_DIR$/deps/eetcd/src" />
       <root url="file://$PROJECT_DIR$/deps/eetcd/priv" />
       <root url="file://$PROJECT_DIR$/deps/eetcd/src" />

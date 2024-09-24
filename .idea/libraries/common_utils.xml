@@ -5,6 +5,20 @@
       <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
       <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
       <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/common_utils/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/test/lib/common_utils/ebin" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -16,6 +30,33 @@
       <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
       <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
       <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/priv" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/priv" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/priv" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/priv" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/priv" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
+      <root url="file://$PROJECT_DIR$/deps/common_utils/priv" />
       <root url="file://$PROJECT_DIR$/deps/common_utils/c_src" />
       <root url="file://$PROJECT_DIR$/deps/common_utils/lib" />
       <root url="file://$PROJECT_DIR$/deps/common_utils/src" />
