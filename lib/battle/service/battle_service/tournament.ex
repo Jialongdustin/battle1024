@@ -27,7 +27,7 @@ defmodule Battle.Service.BattleService.Tournament do
 
   def schedule_tournament do
     now = DateTime.utc_now()
-    noon = "#{Date.to_string(now)} 16:00:01"
+    noon = "#{Date.to_string(now)} 16:00:00"
     {:ok, twelve_noon, _offset} = DateTime.from_iso8601("#{noon}Z")
     now_ms = DateTime.to_unix(now, :millisecond)
     twelve_noon_ms = DateTime.to_unix(twelve_noon, :millisecond)
@@ -50,12 +50,12 @@ defmodule Battle.Service.BattleService.Tournament do
     case Battle.Mongo.UserAi.get_all_gits() do
       {:error, reason} ->
         {:error, reason}
-      {:ok,package_info} ->
+      {:ok, package_info} ->
         case package_info do
           package_info when length(package_info) == 1 ->
             info = List.first(package_info)
-            {:ok,ai_name} = Battle.Mongo.UserAi.get_ai_name(info.user_id)
-            Battle.Mongo.RankList.save_rank(info.user_id,ai_name,1.0,1)
+            {:ok, ai_name} = Battle.Mongo.UserAi.get_ai_name(info.user_id)
+            Battle.Mongo.RankList.save_rank(info.user_id, ai_name, 1.0, 1)
           _ ->
             players =
               package_info

@@ -475,7 +475,7 @@ defmodule Battle.Web.Router do
     user_id = conn.params["user_id"]
     case Token.verify_token(moment_token) do
       {:ok, _} ->
-        message = case Battle.Mongo.User.query_user(user_id) do
+        message = case User.query_user(user_id) do
           {:error, _} ->
             %{"code" => 200, "data" => [], "success" => true}
           {:ok, info} ->
@@ -534,7 +534,7 @@ defmodule Battle.Web.Router do
         |> Conn.halt()
     end
   end
-  
+
   # 创建测试比赛
   json_rpc "/user/create_test", "schema/user/create_test" do
     token = conn.params["moment_token"]

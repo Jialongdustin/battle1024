@@ -70,6 +70,7 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
+  # Battle.Mongo.UserAi.update_git("111", "git.com", "dustin", "plat1024")
   def update_git(user_id, url, tag, package_name) do
     {:ok, user_info} = get_newest_ai_by_userId(user_id)
     info = %{
