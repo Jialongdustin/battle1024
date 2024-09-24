@@ -118,9 +118,11 @@ defmodule Battle.Service.BattleService.RoomServer do
   def handle_call(:time_counter, _from, state) do
     if state.time_ref_verify do
       Process.cancel_timer(state.time_ref_verify)
+      {:reply, :ok, %{state | time_ref_verify: nil}}
+    else
+      new_ref_test = Process.send_after(self(), :execute_task_verify, @timeout_test)
+      {:reply, :ok, %{state | time_ref_verify: new_ref_test}}
     end
-    new_ref_test = Process.send_after(self(), :execute_task_verify, @timeout_test)
-    {:reply, :ok, %{state | time_ref_verify: new_ref_test}}
   end
 
   def handle_call(:start_time_step, _from, state) do
@@ -219,8 +221,6 @@ defmodule Battle.Service.BattleService.RoomServer do
   end
 
   def handle_call({:movement, user_id, moves}, _from, state) do
-
-
     if (user_id == state.white && state.query_white == false) or
        (user_id == state.black && state.query_black == false) do
       if user_id == state.white do

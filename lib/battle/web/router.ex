@@ -603,7 +603,6 @@ defmodule Battle.Web.Router do
     {:ok, user_info} = Token.verify_token_battle(token)
     user_id = user_info.user_id
     game_id = user_info.ext.game_id
-    type = user_info.ext.type
 
     # 检查是否是白棋, 因为对局总是白棋先行
     case RoomSupervisor.query(self(), user_id, game_id) do

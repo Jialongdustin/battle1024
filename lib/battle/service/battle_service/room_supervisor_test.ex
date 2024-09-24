@@ -78,7 +78,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
             battle_state = RoomServer.get_state(pid)
             movement = Simple.move(battle_state.board, user_id == battle_state.black)
             RoomServer.query(pid,"1024")
-            RoomServer.movement(pid,"1024",movement)
+            RoomServer.movement(pid, "1024", movement)
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
             end
