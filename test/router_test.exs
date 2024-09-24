@@ -895,7 +895,7 @@ defmodule BattleTest.RouterTest do
       end
     ] do
       BattleResultTest.save_battle_result("111", "666", "牛逼", "git@fuckyourselr.com", "maybe")
-      BattleResultTest.update_battle_result("666", "111", nil, [1, 2], ["1g", "2g"], [30, 31])
+      BattleResultTest.update_battle_result("666", "111", nil, [1, 2], ["1g", "2g"], [30, 31], 2000, "package")
       conn =
         :get
         |> conn("/test/all", %{"moment_token" => "sgkjaags"})
@@ -944,7 +944,7 @@ defmodule BattleTest.RouterTest do
         {:ok, "111"}
       end
     ] do
-      request_body = %{"moment_token" => "abcdefghijklmn"}
+      request_body = %{"moment_token" => "abcdefghijklmn", "white" => true}
       conn =
         :post
         |> conn("/user/create_test", Ejoy.Jiffy.encode!(request_body))
@@ -962,7 +962,7 @@ defmodule BattleTest.RouterTest do
         {:error, "invalid token"}
       end
     ] do
-      request_body = %{"moment_token" => "abcdefghijklmn"}
+      request_body = %{"moment_token" => "abcdefghijklmn", "white" => true}
       conn =
         :post
         |> conn("/user/create_test", Ejoy.Jiffy.encode!(request_body))
@@ -979,7 +979,7 @@ defmodule BattleTest.RouterTest do
         {:server_error, "internal server error"}
       end
     ] do
-      request_body = %{"moment_token" => "abcdefghijklmn"}
+      request_body = %{"moment_token" => "abcdefghijklmn", "white" => true}
       conn =
         :post
         |> conn("/user/create_test", Ejoy.Jiffy.encode!(request_body))
@@ -1028,7 +1028,7 @@ defmodule BattleTest.RouterTest do
   end
 
   test "return 200 with game info when white move in test game on /test/move" do
-    {:ok, info} = RoomSupervisorTest.init_game()
+    {:ok, info} = RoomSupervisorTest.init_game("10", true)
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
         {:ok, %{user_id: "10", ext: %{game_id: info.game_id}}}
@@ -1047,7 +1047,7 @@ defmodule BattleTest.RouterTest do
   end
 
   test "return 400 with illegal move when white move in test game on /test/move" do
-    {:ok, info} = RoomSupervisorTest.init_game()
+    {:ok, info} = RoomSupervisorTest.init_game("10", true)
     with_mock Battle.Utils.Token, [:passthrough], [
       verify_token_battle: fn _ ->
         {:ok, %{user_id: "10", ext: %{game_id: info.game_id}}}
