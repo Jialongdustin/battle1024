@@ -23,7 +23,6 @@ defmodule Battle.Mongo.BattleStatistics do
   end
 
 
-
   # 这里初始化就往db插一条数据，方便后续拿数据计算，项目启动后只需要调用一次
   def save_init() do
     info = %{user_count: 0,
@@ -37,14 +36,14 @@ defmodule Battle.Mongo.BattleStatistics do
   def user_increment() do
     {:ok, info} = query_statistics_info()
     bson_id = info._id
-    count = info.submit_count+1
+    count = info.submit_count + 1
     __MODULE__.pupdate(%{_id: bson_id}, %{info | user_count: count})
   end
 
   def submit_increment() do
     {:ok, info} = query_statistics_info()
     bson_id = info._id
-    count = info.submit_count+1
+    count = info.submit_count + 1
     __MODULE__.pupdate(%{_id: bson_id}, %{info | submit_count: count})
   end
 

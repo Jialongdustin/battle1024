@@ -63,8 +63,7 @@ defmodule Battle.Mongo.BattleResultTest do
       user_id = info.user_id
       git_url = info.git_url
       tag = info.tag
-      {:ok, user_info} = UserAi.get_newest_ai_by_userId(user_id)
-      if user_info.git_url == nil do
+      if !UserAi.submitted_user?(user_id) do
         BattleStatistics.user_increment()
       end
       BattleStatistics.submit_increment()
@@ -119,7 +118,6 @@ defmodule Battle.Mongo.BattleResultTest do
       end)}
     end
   end
-
 
   def get_newest_time_by_user_id(user_id) do
     case __MODULE__.pquery_sort_limit(%{user_id: user_id}, [date: -1], 1) do

@@ -86,6 +86,14 @@ defmodule Battle.Mongo.UserAi do
     __MODULE__.psave(info)
   end
 
+  # Battle.Mongo.UserAi.submitted_user?("111")
+  def submitted_user?(user_id) do
+    case __MODULE__.pquery2(%{user_id: user_id}, expected_explain: %Mongo2.ExpectedExplain{indexes_plan: [[user_id: 1]]}) do
+      [] -> {:error, "Battle.UserAi error"}
+      res -> res|> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> Enum.any?(fn info -> info.git_url != nil end)
+    end
+  end
+
   def clean_message(user_id) do
     __MODULE__.pdelete(%{user_id: user_id}, false)
   end
