@@ -24,6 +24,8 @@ defmodule Battle.Mongo.BattleResultTest do
   field :memory_cost_2, {:list, :string}, required: false
   field :early_hand, :string, required: false
   field :total_step_2, {:list, :integer}, required: false
+
+  # 2000-提交成功, 2001-提交中, 2002-git or tag 不合法, 2003-构建问题， 2004-一直未发请求，超时
   field :code, :integer, required: true
 
   def save_battle_result(user_id, game_id, ai_name, git_url, tag) do
@@ -45,9 +47,16 @@ defmodule Battle.Mongo.BattleResultTest do
         message |> __MODULE__.to_raw()
       end)
       |> List.first()
-
+    code = case reason do
+      "git or tag illegal" ->
+        2002
+      "overtime" ->
+        2004
+      _ ->
+        2003
+    end
     bson_id = info._id
-    __MODULE__.pupdate(%{_id: bson_id}, %{info | code: if(reason == "git or tag illegal", do: 2002, else: 2003)})
+    __MODULE__.pupdate(%{_id: bson_id}, %{info | code: code})
   end
 
   def update_battle_result(game_id, early_hand, winner, time_costs, memory_costs, total_steps, code \\ 2001, package_name) do

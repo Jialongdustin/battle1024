@@ -5,6 +5,7 @@ defmodule Battle.Service.BattleService.Tournament do
   alias Battle.Service.WebService.Kun
   alias Battle.Mongo.BattleResult
   alias Battle.Mongo.GameTime
+  alias Battle.Mongo.UserAi
   alias Battle.Service.WebService.RankList
 
   def start_link(_args) do
@@ -12,9 +13,10 @@ defmodule Battle.Service.BattleService.Tournament do
   end
 
   def init(_args) do
-    ThreadPool.start_link()  # 启动一个大小为10的线程池
+    ThreadPool.start_link()
     :ets.new(:restart_times, [:named_table, :public, read_concurrency: true])
     ref = schedule_tournament()
+    Task.async(fn -> check_state() end)
     {:ok, %{ref: ref}}
   end
 
@@ -95,6 +97,46 @@ defmodule Battle.Service.BattleService.Tournament do
       {:error, _} ->
         :timer.sleep(3_000)
         update_win_rate()
+    end
+  end
+
+  def check_state() do
+    thread_pool_state = ThreadPool.get_state()
+    if thread_pool_state.workers == [] and :queue.is_empty(thread_pool_state.queue) do
+      case BattleResult.get_battle_results_within_24_hour() do
+        {:ok, info} ->
+          case Enum.filter(info, fn result -> result.code != 200 end) do
+            [] ->
+              check_state()
+            info ->
+              {players, filter_info} =
+                info
+                |> Enum.flat_map(& &1)
+                |> Enum.uniq()
+                |> Enum.reduce({%{}, info}, fn user_id, {acc, current_info} ->
+                      case UserAi.get_package_name(user_id) do
+                        {:ok, package_name} ->
+                          new_acc = Map.put(acc, user_id, package_name)
+                          {new_acc, current_info}
+                        {:error, _} ->
+                          filtered_info = Enum.filter(current_info, fn item ->
+                            !Enum.member?(item, user_id)
+                          end)
+                          {acc, filtered_info}
+                      end
+                  end)
+              Enum.each(filter_info, fn [user_id1, user_id2] ->
+                game_id = UUID.uuid4()
+                :ets.insert(:restart_times, {game_id, 0})
+                ThreadPool.add_task({user_id1, user_id2, game_id, players})
+              end)
+          end
+
+        {:error, _} ->
+          check_state()
+      end
+    else
+      check_state()
     end
   end
 end

@@ -457,7 +457,7 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_info(:execute_task_verify, state) do
     IO.puts "overtime operation of verify"
-    BattleResultTest.update_battle_result(state.game_id, state.white, state.winner, [state.time_cost_white, state.time_cost_black], ["1G", "2G"], [state.steps_white, state.steps_black], 2002, state.package_name)
+    BattleResultTest.update_battle_result_failed(state.game_id, "overtime")
     send(Battle.Service.BattleService.ThreadPoolTest, {:terminate, state.game_id, state.group_name, state.group_key, state.app_name})
     {:stop, :normal, state}
   end

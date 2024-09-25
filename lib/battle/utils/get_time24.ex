@@ -3,7 +3,6 @@ defmodule Battle.Utils.GetTime24 do
     date = DateTime.utc_now()
     # 提取当前小时数
     current_hour = date.hour
-    IO.inspect(current_hour)
     # 判断当前时间的小时数
     {start_time_string, end_time_string} =
       if current_hour >= 16 do

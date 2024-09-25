@@ -132,6 +132,7 @@ defmodule Battle.Mongo.BattleResult do
     end
   end
 
+
   def count_battle() do
     {:ok, count} = __MODULE__.pcount(%{})
     count

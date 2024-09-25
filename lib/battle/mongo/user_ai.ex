@@ -51,6 +51,22 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
+  def get_package_name(user_id) do
+    mill = :erlang.system_time(:second)  # 获取当前时间的秒级时间戳
+    time_24 = mill - rem(mill, 86400)  # 计算当天 00:00:00 的秒级时间戳
+
+    # 查询条件，将 create_time 小于或等于 time_24 的记录取出
+    time_query = %{user_id: user_id, package_name: %{"$ne" => nil},
+                    create_time: %{"$lte": %Bson.UTC{ ms: time_24*1000}}}
+    case __MODULE__.pquery(time_query) do
+      [] ->
+        {:error, "not submit success before"}
+      res ->
+        result = Enum.max_by(res, & &1.create_time)
+        {:ok, result.package_name}
+    end
+  end
+
   def insert_ai(user_id, ai_name) do
     info = %{
       user_id: user_id,
