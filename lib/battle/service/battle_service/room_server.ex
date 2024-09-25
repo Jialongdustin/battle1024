@@ -452,7 +452,6 @@ defmodule Battle.Service.BattleService.RoomServer do
 
   def handle_info(:execute_task_test, state) do
     IO.puts "overtime operation of testing"
-    RoomSupervisorTest.end_ai_service(state.group_key, state.app_name)
     {:stop, :normal, state}
   end
 
