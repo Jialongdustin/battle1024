@@ -6,14 +6,6 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   alias Battle.Utils.Token
   alias Battle.Utils.Convert
   alias Battle.Ai.Simple
-<<<<<<< HEAD
-=======
-
-  @service_groups ["battle-test6", "battle-test7", "battle-test8", "battle-test9", "battle-test10", "battle-test11", "battle-test12", "battle-test13", "battle-test14", "battle-test15",
-                  "battle-test16", "battle-test17", "battle-test18", "battle-test19", "battle-test20"]
-  @appNames ["battle-player-python", "battle-player-lua", "battle-player-java", "battle-player-c"]
-  @package_name "plat1024-lingxigou:20240911142041"
->>>>>>> 4fbcededd1a1f45f2237e2b7bacc143ee316aafa
 
   def start_link(_) do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
