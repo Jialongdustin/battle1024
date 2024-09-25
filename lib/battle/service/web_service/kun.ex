@@ -13,6 +13,10 @@ defmodule Battle.Service.WebService.Kun do
   # alias Battle.Service.WebService.Kun
   # Logger.configure(level: :none)
 
+  def get_namespace() do
+    System.get_env("KUN_NAMESPACE") || @query_namespace
+  end
+
   def start_build() do
     case UserAi.get_all_gits() do
       {:error, message} ->
@@ -88,7 +92,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.get_build_result(10179621)
   def get_build_result(package_id) do
-    path = "/api/env/#{@query_namespace}/buildTask?id=#{package_id}"
+    path = "/api/env/#{get_namespace()}/buildTask?id=#{package_id}"
     %{"code" => 0, "data" => %{"task" => task}} = Battle.Service.WebService.Kun.send_get(path, %{})
     task["status"]
   end
@@ -118,7 +122,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.update_service_group()
   def update_service_group(services, groupName, groupKey, attempt \\ 0) do
-    path = "/api/env/#{@query_namespace}/serviceGroup/sync"
+    path = "/api/env/#{get_namespace()}/serviceGroup/sync"
     groups = [
       %{
         "name": groupName,
@@ -141,7 +145,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.create_deploy_task(services)
   def create_deploy_task(services, attempt \\ 0) do
-    path = "/api/env/#{@query_namespace}/createDeployTask"
+    path = "/api/env/#{get_namespace()}/createDeployTask"
     content = %{
       "services": services,
       "userId": @userId
@@ -161,7 +165,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.get_deploy_result(11464803)
   def get_deploy_result(id) do
-    path = "/api/env/#{@query_namespace}/task?id=#{id}"
+    path = "/api/env/#{get_namespace()}/task?id=#{id}"
     case Battle.Service.WebService.Kun.send_get(path, %{}) do
       %{"code" => 0, "data" => %{"task" => %{"services" => services}}} ->
         case Enum.all?(services, fn service -> service["status"] == "ready" end) do
@@ -178,7 +182,7 @@ defmodule Battle.Service.WebService.Kun do
 
   # Kun.create_uninstall_task(%{"service_group" => "plat1024", "service_name" => "battle-service"})
   def create_uninstall_task(services) do
-    path = "/api/env/#{@query_namespace}/createUninstallTask"
+    path = "/api/env/#{get_namespace()}/createUninstallTask"
     content = %{
       "services": services,
       "userId": @userId

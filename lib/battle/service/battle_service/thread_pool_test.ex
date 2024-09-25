@@ -139,7 +139,7 @@ defmodule Battle.Service.BattleService.ThreadPoolTest do
           Regex.run(~r/test\d+/, groupName)
           |> List.first()
           |> (fn name -> "plat1024-#{name}" end).()
-        RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName, true)
+        RoomSupervisor.init_game("10", "24", game_id, groupName, groupKey, appName, true, package_name)
         update_services(groupName, groupKey, appName, game_id)
         [
           %{
