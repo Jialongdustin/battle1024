@@ -7,11 +7,6 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
   alias Battle.Utils.Convert
   alias Battle.Ai.Simple
 
-  @service_groups ["battle-test6", "battle-test7", "battle-test8", "battle-test9", "battle-test10", "battle-test11", "battle-test12", "battle-test13", "battle-test14", "battle-test15",
-                  "battle-test16", "battle-test17", "battle-test18", "battle-test19", "battle-test20"]
-  @appNames ["battle-player-python", "battle-player-lua", "battle-player-java", "battle-player-c"]
-  @package_name "plat1024-lingxigou:20240911142041"
-
   def start_link(_) do
     DynamicSupervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
@@ -23,7 +18,7 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
     DynamicSupervisor.init(opts)
   end
 
-  # game_id = "d9279888-1962-494c-aed9-1058dfd2805a"
+  # Battle.Service.BattleService.RoomSupervisorTest.init_game("111", false)
   def init_game(user_id, white) do
     game_id = UUID.uuid4()
     {:ok, token_user} = Token.generate_token(user_id, game_id)
@@ -75,11 +70,12 @@ defmodule Battle.Service.BattleService.RoomSupervisorTest do
         case RoomServer.movement(pid, user_id, Convert.convert_index_into_integer(moves)) do
           {:ok, success_detail} ->
             battle_state = RoomServer.get_state(pid)
-            movement = Simple.move(battle_state.board, user_id == battle_state.black)
-            RoomServer.query(pid,"1024")
-            RoomServer.movement(pid, "1024", movement)
             if success_detail.winner do
               RoomServer.terminate_game_test(pid)
+            else
+              movement = Simple.move(battle_state.board, user_id == battle_state.black)
+              RoomServer.query(pid, "1024")
+              RoomServer.movement(pid, "1024", movement)
             end
             {:ok, success_detail}
           {:error, error_detail} ->

@@ -4,7 +4,7 @@ defmodule Battle.Utils.Token do
 
   def generate_token(account) do
     user = "battle_user"
-    {:ok,moment_token,token_info} = Ejoy.MomentToken.new_token_info(1, 1, account, %{})
+    {:ok, moment_token, token_info} = Ejoy.MomentToken.new_token_info(1, 1, account, %{})
     Logger.info(moment_token)
     {:ok, moment_token}
 #WB01483622

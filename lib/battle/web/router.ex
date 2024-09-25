@@ -231,41 +231,6 @@ defmodule Battle.Web.Router do
     end
   end
 
-  get "user/get_avatar" do
-    token = conn.params["moment_token"]
-    case Token.verify_token(token) do
-      {:ok, user_id} ->
-        case User.query_user(user_id) do
-          {:ok, message} ->
-            body = Ejoy.Jiffy.encode!(%{code: 200, data: message.avatar, success: true})
-            conn
-            |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(200, body)
-            |> Conn.halt()
-
-          {:error, reason} ->
-            body = Ejoy.Jiffy.encode!(%{code: 2006, data: reason, success: false})
-            conn
-            |> Conn.put_resp_content_type("application/json")
-            |> Conn.send_resp(200, body)
-            |> Conn.halt()
-        end
-
-      {:error, _} ->
-        conn
-        |> Conn.put_resp_header("location", @uri)
-        |> Conn.send_resp(401, "")
-        |> Conn.halt()
-
-      _ ->
-        body = Ejoy.Jiffy.encode!(%{error: "Internal Server Error"})
-        conn
-        |> Conn.put_resp_content_type("application/json")
-        |> Conn.send_resp(500, body)
-        |> Conn.halt()
-    end
-  end
-
   # 复盘
   get "/game/detail" do
     moment_token = conn.params["moment_token"]

@@ -30,7 +30,7 @@ defmodule BattleTest.RoomSupervisorTest do
     user_id_1 = "123"
     user_id_2 = "456"
     game_id = "aa"
-    {:ok,contest_id} = RoomSupervisor.init_game(user_id_1,user_id_2,game_id,"a","b","c")
+    {:ok, contest_id} = RoomSupervisor.init_game(user_id_1,user_id_2,game_id,"a","b","c")
 
     # 模拟黑子用户的行为
 
