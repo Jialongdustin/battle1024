@@ -25,7 +25,7 @@ defmodule Battle.Mongo.BattleResult do
   field :date, :datetime, required: true
 
 
-  #  Battle.Mongo.BattleResult.save_battle_result([1,2],1,1,[11,22],["11","22"],1,[20,30])
+  #  Battle.Mongo.BattleResult.save_battle_result(["222", "111"], "2302")
 
   def save_battle_result(users, game_id) do
     info = %{

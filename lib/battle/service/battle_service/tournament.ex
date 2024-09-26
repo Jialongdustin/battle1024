@@ -27,6 +27,17 @@ defmodule Battle.Service.BattleService.Tournament do
     {:noreply, state}
   end
 
+  def handle_info({ref, :ok}, state) do
+    IO.inspect("finsh add_tasks of abnormal games")
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, ref, :process, pid, reason}, state) do
+    IO.puts("Falut-tolerant process #{inspect(pid)} has terminated: #{inspect(reason)}")
+    {:noreply, state}
+  end
+
+
   def schedule_tournament do
     now = DateTime.utc_now()
     noon = "#{Date.to_string(now)} 16:00:00"
@@ -101,6 +112,7 @@ defmodule Battle.Service.BattleService.Tournament do
   end
 
   def check_state() do
+    IO.inspect("check state pid is #{inspect(self())}")
     thread_pool_state = ThreadPool.get_state()
     if thread_pool_state.workers == [] and :queue.is_empty(thread_pool_state.queue) do
       case BattleResult.get_battle_results_within_24_hour() do
@@ -108,12 +120,15 @@ defmodule Battle.Service.BattleService.Tournament do
           case Enum.filter(info, fn result -> result.code != 200 end) do
             [] ->
               check_state()
-            info ->
+            unsuccess_info ->
+              user_id_info =
+                unsuccess_info
+                |> Enum.map(fn info -> info.user_id_2 end)
               {players, filter_info} =
-                info
+                user_id_info
                 |> Enum.flat_map(& &1)
                 |> Enum.uniq()
-                |> Enum.reduce({%{}, info}, fn user_id, {acc, current_info} ->
+                |> Enum.reduce({%{}, user_id_info}, fn user_id, {acc, current_info} ->
                       case UserAi.get_package_name(user_id) do
                         {:ok, package_name} ->
                           new_acc = Map.put(acc, user_id, package_name)
@@ -130,6 +145,8 @@ defmodule Battle.Service.BattleService.Tournament do
                 :ets.insert(:restart_times, {game_id, 0})
                 ThreadPool.add_task({user_id1, user_id2, game_id, players})
               end)
+              IO.inspect("done retry games")
+              :ok
           end
 
         {:error, _} ->

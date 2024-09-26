@@ -51,6 +51,7 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
+  # Battle.Mongo.UserAi.get_package_name("222")
   def get_package_name(user_id) do
     mill = :erlang.system_time(:second)  # 获取当前时间的秒级时间戳
     time_24 = mill - rem(mill, 86400)  # 计算当天 00:00:00 的秒级时间戳
@@ -67,6 +68,7 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
+  # Battle.Mongo.UserAi.insert_ai("222", "999")
   def insert_ai(user_id, ai_name) do
     info = %{
       user_id: user_id,
@@ -86,20 +88,14 @@ defmodule Battle.Mongo.UserAi do
     end
   end
 
-  # Battle.Mongo.UserAi.update_git("111", "git.com", "dustin", "plat1024")
+  # Battle.Mongo.UserAi.update_git("222", "git.com", "dustin", "plat1024")
   def update_git(user_id, url, tag, package_name) do
-    {:ok, user_info} = get_newest_ai_by_userId(user_id)
-    info = %{
-      user_id: user_id,
-      ai_name: user_info.ai_name,
-      create_time: Ejoy.Bson.utc_now(),
-      code: 100,
-      git_url: url,
-      tag: tag,
-      package_name: package_name,
-      create_time: Ejoy.Bson.utc_now()
-    }
-    __MODULE__.psave(info)
+    case get_newest_ai_by_userId(user_id) do
+      {:error, _} ->
+        {:error, "User ai error"}
+      {:ok, user_info} ->
+        __MODULE__.pupdate(%{_id: user_info._id}, %{user_info | git_url: url, tag: tag, package_name: package_name})
+    end
   end
 
   # Battle.Mongo.UserAi.submitted_user?("111")
