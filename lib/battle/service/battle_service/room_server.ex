@@ -600,7 +600,7 @@ defmodule Battle.Service.BattleService.RoomServer do
             if state.pre_step_white.cnt >= 2 do
               # 重复下子超过3次
               if state.pre_step_black.cnt >2 do
-                new_state = %{state | winner: 0}
+                new_state = %{state | winner: "0"}
               else
                 new_state = %{state | pre_step_white: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_white.cnt + 1}}
               end
@@ -615,7 +615,7 @@ defmodule Battle.Service.BattleService.RoomServer do
             if state.pre_step_black.cnt >= 2 do
               # 重复下子超过3次
               if state.pre_step_white.cnt >2 do
-                new_state = %{state | winner: 0}
+                new_state = %{state | winner: "0"}
               else
                 new_state = %{state | pre_step_black: %{move: [[x1, y1], [x0, y0]], cnt: state.pre_step_black.cnt + 1}}
               end

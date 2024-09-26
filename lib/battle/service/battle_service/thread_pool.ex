@@ -118,7 +118,7 @@ defmodule Battle.Service.BattleService.ThreadPool do
       |> List.first()
       |> (fn name -> "plat1024-#{name}" end).()
     if Registry.lookup(Battle.RoomRegistry, game_id) == [] do
-      RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName, players.package_name)
+      RoomSupervisor.init_game(user_id1, user_id2, game_id, groupName, groupKey, appName)
     end
     case update_services(groupName, groupKey, appName, user_id1, user_id2, game_id) do
       {:error, _} ->
