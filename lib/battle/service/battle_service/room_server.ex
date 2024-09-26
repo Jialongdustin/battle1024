@@ -11,7 +11,7 @@ defmodule Battle.Service.BattleService.RoomServer do
   alias Battle.Utils.Convert
   alias Battle.Service.BattleService.RoomSupervisorTest
 
-  @timeout 3000
+  @timeout 60_000
   @timeout_test 180_000
   @board_init [
     [0, 0, 0, 0, 0, 0, 0, 0],
