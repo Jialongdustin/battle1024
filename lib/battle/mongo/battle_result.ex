@@ -28,13 +28,22 @@ defmodule Battle.Mongo.BattleResult do
   #  Battle.Mongo.BattleResult.save_battle_result(["222", "111"], "2302")
 
   def save_battle_result(users, game_id) do
-    info = %{
-      user_id_2: users,
-      game_id: game_id,
-      code: 100,
-      date: Ejoy.Bson.utc_now()
-    }
-    __MODULE__.psave(info)
+    time_query = Battle.Utils.GetTime24.get_time()
+    query = Map.put(time_query, :user_id_2, users)
+    case __MODULE__.pquery(query) do
+      [] ->
+        info = %{
+          user_id_2: users,
+          game_id: game_id,
+          code: 100,
+          date: Ejoy.Bson.utc_now()
+        }
+        __MODULE__.psave(info)
+      res ->
+        info = res |> Enum.map(fn message -> message |> __MODULE__.to_raw() end) |> List.first()
+        bson_id = info._id
+        __MODULE__.pupate(%{_id: bson_id}, %{info | game_id: game_id})
+      end
   end
 
   def update_battle_result_failed(game_id) do

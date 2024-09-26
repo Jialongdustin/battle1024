@@ -112,41 +112,36 @@ defmodule Battle.Service.BattleService.Tournament do
   end
 
   def check_state() do
-    IO.inspect("check state pid is #{inspect(self())}")
     thread_pool_state = ThreadPool.get_state()
     if thread_pool_state.workers == [] and :queue.is_empty(thread_pool_state.queue) do
       case BattleResult.get_battle_results_within_24_hour() do
         {:ok, info} ->
-          case Enum.filter(info, fn result -> result.code != 200 end) do
+          case Enum.filter(info, fn result -> result.code == 200 or result.code == 101 end) do
             [] ->
               check_state()
-            unsuccess_info ->
-              user_id_info =
-                unsuccess_info
-                |> Enum.map(fn info -> info.user_id_2 end)
-              {players, filter_info} =
-                user_id_info
-                |> Enum.flat_map(& &1)
-                |> Enum.uniq()
-                |> Enum.reduce({%{}, user_id_info}, fn user_id, {acc, current_info} ->
-                      case UserAi.get_package_name(user_id) do
-                        {:ok, package_name} ->
-                          new_acc = Map.put(acc, user_id, package_name)
-                          {new_acc, current_info}
-                        {:error, _} ->
-                          filtered_info = Enum.filter(current_info, fn item ->
-                            !Enum.member?(item, user_id)
-                          end)
-                          {acc, filtered_info}
-                      end
+            success_info ->
+              case Battle.Mongo.UserAi.get_all_gits() do
+                {:error, reason} ->
+                  check_state()
+                {:ok, package_info} ->
+                  IO.inspect("get package info")
+                  players = Enum.reduce(package_info, %{}, fn %{user_id: user_id, package_name: package_name}, acc ->
+                            Map.put(acc, user_id, package_name) end)
+                  all_users = Map.keys(players) |> List.combinations(2)
+                  user_id_info =
+                    success_info
+                    |> Enum.map(fn info -> info.user_id_2 end)
+                  filter_info = Enum.filter(all_users, fn info -> !Enum.member?(user_id_info, info) end)
+                  Enum.each(filter_info, fn [user_id1, user_id2] ->
+                    game_id = UUID.uuid4()
+                    BattleResult.save_battle_result([user_id1, user_id2], game_id)
+                    :ets.insert(:restart_times, {game_id, 0})
+                    ThreadPool.add_task({user_id1, user_id2, game_id, players})
                   end)
-              Enum.each(filter_info, fn [user_id1, user_id2] ->
-                game_id = UUID.uuid4()
-                :ets.insert(:restart_times, {game_id, 0})
-                ThreadPool.add_task({user_id1, user_id2, game_id, players})
-              end)
-              IO.inspect("done retry games")
-              :ok
+                  IO.inspect("done retry games")
+                  :ok
+                end
+
           end
 
         {:error, _} ->
