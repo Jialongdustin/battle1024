@@ -20,7 +20,7 @@ defmodule Battle.Mongo.BattleResult do
   field :winner, :string, required: false
   field :time_cost_2, {:list, :integer}, required: false
   field :memory_cost_2, {:list,:string}, required: false
-  field :early_hand, :string, required: true
+  field :early_hand, :string, required: false
   field :total_step_2, {:list, :integer}, required: false
   field :date, :datetime, required: true
 
