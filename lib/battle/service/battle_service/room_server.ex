@@ -484,10 +484,10 @@ defmodule Battle.Service.BattleService.RoomServer do
         new_state.black  # 黑方胜
       # 双方各有一个普通棋子
       {{1, 0, 1, 0}, %{captured: nil, moves: _}} ->
-        0  # 平局
+        "0"  # 平局
       # 双方各有一个王棋
       {{0, 1, 0, 1}, %{captured: nil, moves: _}} ->
-        0  # 平局
+        "0"  # 平局
       # 如果有其他情况，暂时设置为没有赢家
       {{0, 0, _, _}, _} ->
         new_state.black
